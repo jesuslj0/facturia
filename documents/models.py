@@ -14,6 +14,7 @@ class Document(models.Model):
         ("error", "Error"),
     ]
 
+    external_id = models.CharField(max_length=255, unique=True)
     file = models.FileField(upload_to="documents/")
     original_name = models.CharField(max_length=255)
     document_type = models.CharField(max_length=20, choices=TYPE_CHOICES)

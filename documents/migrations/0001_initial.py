@@ -15,6 +15,7 @@ class Migration(migrations.Migration):
             name='Document',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('external_id', models.CharField(max_length=255, unique=True)),
                 ('file', models.FileField(upload_to='documents/')),
                 ('original_name', models.CharField(max_length=255)),
                 ('document_type', models.CharField(choices=[('invoice', 'Factura'), ('delivery', 'Albarán'), ('other', 'Otro')], max_length=20)),
