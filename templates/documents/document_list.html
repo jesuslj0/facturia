@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block styles %}
+{% load static %}
+  <link rel="stylesheet" href="{% static 'css/documents/document_list.css' %}">
+{% endblock%}
+
+{% block content %}
+<h1 class="page-title">Documentos</h1>
+
+<div class="table-wrapper">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Proveedor</th>
+        <th>Total</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for doc in documents %}
+      <tr>
+        <td>
+          <a href="{{ doc.get_absolute_url }}">
+            {{ doc.original_name }}
+          </a>
+        </td>
+        <td>{{ doc.provider_name }}</td>
+        <td class="amount">{{ doc.total_amount }} €</td>
+        <td>
+          <span class="status {{ doc.status }}">
+            {{ doc.get_status_display }}
+          </span>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4">No hay documentos</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

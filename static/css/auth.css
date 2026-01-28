@@ -1,0 +1,93 @@
+/* Contenedor centrado */
+.form-container {
+  min-height: calc(100vh - 64px); /* descuenta el header */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #020617; /* slate-950 */
+  padding: 2rem;
+}
+
+/* Formulario */
+.login-form {
+  width: 100%;
+  max-width: 380px;
+}
+
+/* Fieldset */
+.login-form fieldset {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 2rem;
+  background: #0f172a; /* slate-900 */
+}
+
+/* Título */
+.login-form legend {
+  padding: 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+/* Labels */
+.login-form label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+  color: #cbd5f5;
+}
+
+/* Inputs */
+.login-form input[type="text"],
+.login-form input[type="password"] {
+  width: 90%;
+  padding: 0.6rem 0.7rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #020617;
+  color: #f8fafc;
+  font-size: 0.9rem;
+}
+
+.login-form input::placeholder {
+  color: #94a3b8;
+}
+
+.login-form input:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4);
+}
+
+/* Botón */
+.login-form button {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.65rem;
+  border-radius: 8px;
+  border: none;
+  background: #38bdf8;
+  color: #020617;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.05s;
+}
+
+.login-form button:hover {
+  background: #0ea5e9;
+}
+
+.login-form button:active {
+  transform: translateY(1px);
+}
+
+/* Errores Django */
+.login-form .errorlist {
+  margin-bottom: 1rem;
+  padding: 0;
+  list-style: none;
+  color: #fca5a5;
+  font-size: 0.8rem;
+}

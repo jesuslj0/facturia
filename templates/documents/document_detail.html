@@ -1,0 +1,27 @@
+{% block title %}Documentos - Billing AI{% endblock %}
+
+{% block content %}
+<div class="layout">
+    
+    <div class="pdf">
+        <iframe src="{{ document.file.url }}" width="100%" height="600"></iframe>
+    </div>
+    
+    <div class="data">
+        <form method="post">
+            {% csrf_token %}
+            <label>Proveedor</label>
+            <input name="provider_name" value="{{ document.provider_name }}">
+            
+            <label>Total</label>
+            <input name="total_amount" value="{{ document.total_amount }}">
+            
+            <button type="submit">Guardar</button>
+            <a href="#">
+                Aprobar
+            </a>
+        </form>
+    </div>
+    
+</div>
+{% endblock %}

@@ -1,4 +1,5 @@
 from django.db import models
+from clients.models import Client
 
 class Document(models.Model):
     TYPE_CHOICES = [
@@ -14,6 +15,7 @@ class Document(models.Model):
         ("error", "Error"),
     ]
 
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="documents")
     external_id = models.CharField(max_length=255, unique=True)
     file = models.FileField(upload_to="documents/")
     original_name = models.CharField(max_length=255)

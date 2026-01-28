@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block styles %}
+{% load static %}
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+{% block title %}Billing AI - Login{% endblock %}
+{% block content %}
+    <div class="form-container">
+        <form method="POST" class="login-form">
+            {% csrf_token %}
+            <fieldset>
+                <legend>Iniciar sesión</legend>
+                {{ form.as_p }}
+                <button type="submit">Entrar</button>
+            </fieldset>
+        </form>
+    </div>
+{% endblock %}

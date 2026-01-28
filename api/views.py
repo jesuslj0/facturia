@@ -1,6 +1,7 @@
-from .serializers import DocumentIngestSerializer, DocumentSerializer
+from .serializers import DocumentIngestSerializer, DocumentSerializer, DocumentListSerializer
 from documents.models import Document
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -38,3 +39,15 @@ class DocumentIngestAPIView(APIView):
             DocumentSerializer(document).data,
             status=status.HTTP_201_CREATED,
         )
+
+
+class DocumentListAPIView(ListAPIView):
+    serializer_class = DocumentListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return (
+            Document.objects.filter(client__clientuser__user=self.request.user)
+            .order_by("-created_at")
+        )
+    

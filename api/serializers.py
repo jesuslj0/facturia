@@ -18,3 +18,29 @@ class DocumentSerializer(serializers.ModelSerializer):
         model = Document
         fields = "__all__"
 
+
+from rest_framework import serializers
+from documents.models import Document
+
+
+class DocumentListSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Document
+        fields = [
+            "id",
+            "original_name",
+            "document_type",
+            "status",
+            "confidence",
+            "total_amount",
+            "created_at",
+            "file_url",
+        ]
+
+    def get_file_url(self, obj):
+        request = self.context.get("request")
+        if obj.file and request:
+            return request.build_absolute_uri(obj.file.url)
+        return None

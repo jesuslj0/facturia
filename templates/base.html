@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  {% block styles %}{% endblock %}
+
+  <title>
+    {% block title %}Billing AI{% endblock %}
+  </title>
+</head>
+<body>
+
+  <!-- Header / Nav -->
+  <header class="app-header">
+    <div class="container">
+      <div class="logo">
+        Billing AI
+      </div>
+
+      <nav class="nav">
+        <a href="{% url 'documents:list' %}">Documentos</a>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit">Salir</button>
+        </form>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="app-main container">
+
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="message {{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% block title_h1 %}
+    {% endblock %}
+
+    {% block content %}
+    {% endblock %}
+
+  </main>
+
+  {% block scripts %}{% endblock %}
+
+</body>
+</html>
