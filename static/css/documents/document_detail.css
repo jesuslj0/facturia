@@ -1,0 +1,255 @@
+/* Layout general */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 1.25rem;
+  padding: 1.25rem 0;
+}
+
+/* Visor documento */
+.pdf {
+  background: #020617;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.pdf iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 70vh;
+  border: none;
+}
+
+.pdf img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.pdf > h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--body-fg-color);
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Panel datos */
+.data {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.25rem;
+  height: fit-content;
+}
+
+/* Formulario */
+.data form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.field .label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.field .value {
+  font-size: 0.95rem;
+  color: #f8fafc;
+  background: #020617;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Acciones */
+.data .actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+/* Botón */
+.data button {
+  flex: 1;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: none;
+  color: #020617;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.05s;
+}
+
+.actions .btn-approve {
+  background: #4ade80;
+}
+
+.actions .btn-reject {
+  background: #f87171;
+}
+
+.data button:hover {
+  filter: brightness(0.8);
+}
+
+/* Link aprobar */
+.data a {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #f8fafc;
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.data a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pdf iframe {
+    min-height: 60vh;
+  }
+}
+
+
+/* Toolbar general */
+.pdf-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0f172a;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Botones de toolbar */
+.pdf-toolbar button {
+  background: #1e293b; /* gris oscuro suave */
+  color: #f8fafc;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.05s;
+}
+
+.pdf-toolbar button:hover {
+  background: #334155; /* más claro al hover */
+  transform: scale(1.05);
+}
+
+/* Zoom buttons un poco más destacados */
+.pdf-toolbar #zoom-in, .pdf-toolbar #zoom-out {
+  background: #3b82f6; /* azul coherente con enlaces y highlights */
+  color: #f8fafc;
+  border: none;
+}
+
+.pdf-toolbar #zoom-in:hover, .pdf-toolbar #zoom-out:hover {
+  background: #2563eb;
+}
+
+/* Texto de página */
+.pdf-toolbar span {
+  margin: 0 0.25rem;
+  font-weight: 500;
+  color: #cbd5f5;
+}
+
+/* Responsive: en móvil los botones más pequeños */
+@media (max-width: 768px) {
+  .pdf-toolbar {
+    font-size: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .pdf-toolbar button {
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+.pdf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  padding: 0.75rem;
+}
+
+.pdf-header h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.pdf-badges {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.badge {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.badge.type {
+  background: #1e293b;
+  color: #cbd5f5;
+}
+
+.badge.status-approved {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.badge.status-error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.badge.status-pending {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.badge.status-needs_review {
+  background: rgba(251, 191, 36, 0.15);
+  color: #facc15;
+}
+

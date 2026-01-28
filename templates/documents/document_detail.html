@@ -1,27 +1,123 @@
+{% extends "base.html" %}
 {% block title %}Documentos - Billing AI{% endblock %}
+{% block styles %}
+{% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/documents/document_detail.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="layout">
-    
+
+    <!-- Panel PDF -->
     <div class="pdf">
-        <iframe src="{{ document.file.url }}" width="100%" height="600"></iframe>
+        <div class="pdf-header">
+            <h3>{{ document.original_name }}</h3>
+            
+            <div class="pdf-badges">
+                <span class="badge type">{{ document.get_document_type_display }}</span>
+                <span class="badge status status-{{ document.status }}">
+                    {{ document.get_status_display }}
+                </span>
+            </div>
+        </div>
+        
+        {% if document.is_pdf %}
+        <div class="pdf-toolbar">
+            <button id="prev-page">◀</button>
+            <span>Pagina <span id="page-num"></span> / <span id="page-count"></span></span>
+            <button id="next-page">▶</button>
+            <button id="zoom-in">+</button>
+            <button id="zoom-out">-</button>
+        </div>
+        {% endif %}
+
+        {% if document.is_pdf %}
+            <div id="pdf-viewer" style="width:100%; height:600px; overflow:auto;"></div>
+            <p id="pdf-fallback" style="display:none;">
+                No se puede visualizar el PDF.
+                <a href="{{ document.file.url }}" target="_blank">Descargar PDF</a>
+            </p>
+        {% elif document.is_image %}
+            <img src="{{ document.file.url }}" style="max-width:100%;" />
+        {% else %}
+            <p>No se puede visualizar el archivo</p>
+        {% endif %}
     </div>
-    
+
+    <!-- Panel de datos solo lectura -->
     <div class="data">
-        <form method="post">
-            {% csrf_token %}
-            <label>Proveedor</label>
-            <input name="provider_name" value="{{ document.provider_name }}">
-            
-            <label>Total</label>
-            <input name="total_amount" value="{{ document.total_amount }}">
-            
-            <button type="submit">Guardar</button>
-            <a href="#">
-                Aprobar
-            </a>
-        </form>
+        <div class="field">
+            <span class="label">Proveedor</span>
+            <span class="value">{{ document.provider_name }}</span>
+        </div>
+
+        <div class="field">
+            <span class="label">CIF/NIF</span>
+            <span class="value">{{ document.provider_tax_id }}</span>
+        </div>
+
+        <div class="field">
+            <span class="label">Fecha</span>
+            <span class="value">{{ document.issue_date }}</span>
+        </div>
+
+        <div class="field">
+            <span class="label">Total</span>
+            <span class="value">{{ document.total_amount }} €</span>
+        </div>
+
+        <div class="actions">
+            <form method="post" action="#">
+                {% csrf_token %}
+                <button class="btn-approve" type="submit">Aprobar</button>
+            </form>
+            <form method="post" action="#">
+                {% csrf_token %}
+                <button class="btn-reject" type="submit">Rechazar</button>
+            </form>
+        </div>
     </div>
-    
+
 </div>
+{% endblock %}
+{% block scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
+    <script>
+        const url = "{{ document.file.url }}";
+        const container = document.getElementById('pdf-viewer');
+        const fallback = document.getElementById('pdf-fallback');
+        let pdfDoc = null, pageNum = 1; scale = 1.2;
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.worker.min.js';
+
+        function renderPage(num) {
+            pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale });
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                // Limpia container
+                container.innerHTML = '';
+                container.appendChild(canvas);
+
+                page.render({ canvasContext: ctx, viewport: viewport });
+
+                document.getElementById('page-num').textContent = pageNum;
+                document.getElementById('page-count').textContent = pdfDoc.numPages;
+            });
+        }
+
+        pdfjsLib.getDocument(url).promise.then(pdf => {
+            pdfDoc = pdf;
+            renderPage(pageNum);
+        });
+
+        // Toolbar events
+        document.getElementById('prev-page').onclick = () => { if(pageNum>1){ pageNum--; renderPage(pageNum); } };
+        document.getElementById('next-page').onclick = () => { if(pageNum<pdfDoc.numPages){ pageNum++; renderPage(pageNum); } };
+        document.getElementById('zoom-in').onclick = () => { scale+=0.2; renderPage(pageNum); };
+        document.getElementById('zoom-out').onclick = () => { scale=Math.max(0.2, scale-0.2); renderPage(pageNum); };
+    </script>
 {% endblock %}

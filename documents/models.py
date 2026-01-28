@@ -1,5 +1,6 @@
 from django.db import models
 from clients.models import Client
+import os
 
 class Document(models.Model):
     TYPE_CHOICES = [
@@ -9,11 +10,29 @@ class Document(models.Model):
     ]
 
     STATUS_CHOICES = [
-        ("pending", "Pendientes"),
+        ("pending", "Pendiente"),
         ("approved", "Aprobado"),
         ("needs_review", "Revisión"),
         ("error", "Error"),
     ]
+    @property
+    def extension(self):
+        if not self.file:
+            return ""
+        return os.path.splitext(self.file.name)[1].lower()
+
+    @property
+    def is_pdf(self):
+        if not self.file:
+            return False
+        return self.file.name.lower().endswith(".pdf")
+    
+    @property
+    def is_image(self):
+        if not self.file:
+            return False
+        return self.extension in [".jpg", ".jpeg", ".png", ".webp"]
+
 
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="documents")
     external_id = models.CharField(max_length=255, unique=True)

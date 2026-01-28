@@ -5,7 +5,7 @@
 {% endblock%}
 
 {% block content %}
-<h1 class="page-title">Documentos</h1>
+<h1 class="page-title">Documentos <span class="client-name">- {{ client.name }}</span></h1>
 
 <div class="table-wrapper">
   <table class="table">
@@ -15,6 +15,7 @@
         <th>Proveedor</th>
         <th>Total</th>
         <th>Estado</th>
+        <th>Acción</th>
       </tr>
     </thead>
 
@@ -22,7 +23,7 @@
       {% for doc in documents %}
       <tr>
         <td>
-          <a href="{{ doc.get_absolute_url }}">
+          <a href="{{ doc.file.url}}">
             {{ doc.original_name }}
           </a>
         </td>
@@ -32,6 +33,9 @@
           <span class="status {{ doc.status }}">
             {{ doc.get_status_display }}
           </span>
+        </td>
+        <td>
+          <a class="btn-action" href="{% url "documents:detail" doc.id %}">Ver</a>
         </td>
       </tr>
       {% empty %}

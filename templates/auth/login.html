@@ -10,9 +10,25 @@
             {% csrf_token %}
             <fieldset>
                 <legend>Iniciar sesión</legend>
-                {{ form.as_p }}
+                {% for field in form %}
+                    <div class="form-row">
+                        {{ field.label_tag }}
+                        {{ field.errors }}
+                        {{ field }}
+                    </div>
+                {% endfor %}
                 <button type="submit">Entrar</button>
             </fieldset>
         </form>
     </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const usernameInput = document.getElementById('id_username');
+    const passwordInput = document.getElementById('id_password');
+    
+    usernameInput.placeholder = "ej. John";
+    passwordInput.placeholder = "ej. hardpass123";
+</script>
 {% endblock %}

@@ -4,7 +4,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #020617; /* slate-950 */
+  background: var(--body-bg-color);
   padding: 2rem;
 }
 
@@ -19,7 +19,14 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 2rem;
-  background: #0f172a; /* slate-900 */
+  background: var(--card-bg-color);
+}
+
+.login-form fieldset > legend {
+  text-transform: uppercase;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--body-fg-color);
 }
 
 /* Título */
@@ -27,7 +34,7 @@
   padding: 0 0.5rem;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #f8fafc;
+  color: var(--body-fg-color);
 }
 
 /* Labels */
@@ -41,7 +48,7 @@
 /* Inputs */
 .login-form input[type="text"],
 .login-form input[type="password"] {
-  width: 90%;
+  width: 92%;
   padding: 0.6rem 0.7rem;
   margin-bottom: 1rem;
   border-radius: 8px;
@@ -51,13 +58,9 @@
   font-size: 0.9rem;
 }
 
-.login-form input::placeholder {
-  color: #94a3b8;
-}
-
 .login-form input:focus {
   outline: none;
-  border-color: #38bdf8;
+  border-color: var(--enfasis-color);
   box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4);
 }
 
@@ -68,7 +71,7 @@
   padding: 0.65rem;
   border-radius: 8px;
   border: none;
-  background: #38bdf8;
+  background: var(--enfasis-color);
   color: #020617;
   font-weight: 600;
   cursor: pointer;
@@ -76,7 +79,7 @@
 }
 
 .login-form button:hover {
-  background: #0ea5e9;
+  filter: brightness(0.85);
 }
 
 .login-form button:active {
