@@ -12,6 +12,10 @@ class DocumentIngestSerializer(serializers.Serializer):
         if Document.objects.filter(external_id=data["external_id"]).exists():
             raise serializers.ValidationError("Document already ingested")
         return data
+    
+    class Meta: 
+        model = Document
+        fields = "__all__"
 
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:

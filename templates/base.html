@@ -8,10 +8,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   {% load static %}
+  <link rel="icon" type="image/x-icon" href="{% static "icons/icons8-invoice-pulsar-color-16.png" %}">
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
   {% block styles %}{% endblock %}
 
   <title>
+    {% load static %}
     {% block title %}Billing AI{% endblock %}
   </title>
 </head>
@@ -21,6 +23,7 @@
   <header class="app-header">
     <div class="container">
       <div class="logo">
+        <img src="{% static "icons/icons8-invoice-pulsar-color-32.png" %}" /> 
         Billing AI
       </div>
 

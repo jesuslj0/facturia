@@ -2,11 +2,13 @@ from .serializers import DocumentIngestSerializer, DocumentSerializer, DocumentL
 from documents.models import Document
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
-from rest_framework.permissions import IsAuthenticated
+from .permissions import HasApiKey
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 
 class DocumentIngestAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasApiKey]
 
     def post(self, request):
         serializer = DocumentIngestSerializer(data=request.data)
@@ -33,6 +35,8 @@ class DocumentIngestAPIView(APIView):
             provider_name=extracted.get("proveedor"),
             provider_tax_id=extracted.get("cif_nif"),
             total_amount=extracted.get("total"),
+            issue_date=extracted.get("fecha"),
+            client=request.client
         )
 
         return Response(

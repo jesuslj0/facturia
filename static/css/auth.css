@@ -1,6 +1,5 @@
 /* Contenedor centrado */
 .form-container {
-  min-height: calc(100vh - 64px); /* descuenta el header */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12,6 +11,7 @@
 .login-form {
   width: 100%;
   max-width: 380px;
+  margin-top: 50px;
 }
 
 /* Fieldset */
@@ -93,4 +93,41 @@
   list-style: none;
   color: #fca5a5;
   font-size: 0.8rem;
+}
+
+/* Contenedor del texto */
+.text-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Título */
+.text-container > h2 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--body-fg-color);
+  letter-spacing: -0.01em;
+}
+
+/* Texto descriptivo */
+.text-container > p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--enfasis-color);
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.text-container > small {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--muted-color);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }

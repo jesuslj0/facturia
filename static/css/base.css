@@ -3,8 +3,8 @@
   --body-fg-color: #f8fafc;
   --card-bg-color: #0f172a;
   --enfasis-color: #38bdf8;
+  --muted-color: #64748b;
 }
-
 
 body {
   margin: 0;
@@ -14,6 +14,10 @@ body {
   line-height: 1.5;
   letter-spacing: -0.01em;
   background-color: #020617;
+}
+
+h1, h2, h3, h4, h5, p {
+  color: var(--body-fg-color);
 }
 
 /* Header base */
@@ -39,6 +43,12 @@ body {
   font-size: 1.1rem;
   font-weight: 600;
   letter-spacing: 0.4px;
+  display: flex;
+  align-items: center;
+}
+
+.app-header .logo > img {
+  margin-right: 5px;
 }
 
 /* Navegación */
