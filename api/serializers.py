@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from documents.models import Document
 
-class DocumentIngestSerializer(serializers.Serializer):
+class DocumentIngestSerializer(serializers.ModelSerializer):
+    file = serializers.FileField(required=True)
     external_id = serializers.CharField(max_length=255)
     original_name = serializers.CharField(max_length=255)
     document_type = serializers.ChoiceField(choices=["invoice", "delivery", "other"])
@@ -15,7 +16,8 @@ class DocumentIngestSerializer(serializers.Serializer):
     
     class Meta: 
         model = Document
-        fields = "__all__"
+        fields = ['file', 'external_id', 'original_name', 
+            'document_type', 'confidence', 'extracted_data']
 
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:

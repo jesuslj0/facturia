@@ -5,7 +5,7 @@ from rest_framework.generics import ListAPIView
 from .permissions import HasApiKey
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
+from rest_framework import status as rst_status
 
 class DocumentIngestAPIView(APIView):
     permission_classes = [HasApiKey]
@@ -26,7 +26,9 @@ class DocumentIngestAPIView(APIView):
         extracted = data["extracted_data"]
 
         document = Document.objects.create(
+            client=request.client,
             external_id=data["external_id"],
+            file=data["file"],
             original_name=data["original_name"],
             document_type=data["document_type"],
             confidence=confidence,
@@ -36,12 +38,11 @@ class DocumentIngestAPIView(APIView):
             provider_tax_id=extracted.get("cif_nif"),
             total_amount=extracted.get("total"),
             issue_date=extracted.get("fecha"),
-            client=request.client
         )
 
         return Response(
             DocumentSerializer(document).data,
-            status=status.HTTP_201_CREATED,
+            status=rst_status.HTTP_201_CREATED,
         )
 
 
