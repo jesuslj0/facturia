@@ -6,11 +6,11 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
     external_id = serializers.CharField(max_length=255)
     original_name = serializers.CharField(max_length=255)
     document_type = serializers.ChoiceField(choices=["invoice", "delivery", "other"])
-    confidence = serializers.FloatField(min_value=0.0, max_value=1.0)
+    confidence = serializers.JSONField(default=dict)
     extracted_data = serializers.JSONField()
     base_amount = serializers.FloatField()
     tax_amount = serializers.FloatField()
-    tax_percentage = serializers.FloatField()
+    tax_percentage = serializers.FloatField(min_value=0.0, max_value=100.0)
     total_amount = serializers.FloatField()
 
     def validate(self, data):

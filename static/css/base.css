@@ -4,6 +4,11 @@
   --card-bg-color: #0f172a;
   --enfasis-color: #38bdf8;
   --muted-color: #7c8b9d;
+
+  --color-success: #22c55e;
+  --color-warning: #facc15;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
 }
 
 body {
@@ -94,4 +99,37 @@ h1, h2, h3, h4, h5, p {
   padding: 2rem 1.25rem;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.messages {
+    list-style: none;
+    padding: 0;
+    margin: 1em 0;
+}
+
+.messages .message {
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    font-weight: 500;
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Tipos de mensaje */
+.messages .success {
+    background-color: var(--color-success); /* verde */
+}
+
+.messages .error {
+    background-color: var(--color-danger); /* rojo */
+}
+
+.messages .warning {
+    background-color: var(--color-warning); /* naranja */
+    color: #000;
+}
+
+.messages .info {
+    background-color: var(--color-info); /* azul */
 }

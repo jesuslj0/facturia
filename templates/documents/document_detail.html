@@ -58,7 +58,7 @@
 
         <div class="field">
             <span class="label">Fecha</span>
-            <span class="value">{{ document.issue_date|date:"h:m d/m/Y" }}</span>
+            <span class="value">{{ document.issue_date|date:"d/m/Y" }}</span>
         </div>
 
         <div class="field">
@@ -84,11 +84,11 @@
 
         <div class="actions">
             {% if document.status == 'pending' %}
-                <form method="post" action="#">
+                <form method="post" action="{% url 'documents:approve' document.id %}">
                     {% csrf_token %}
                     <button class="btn-approve" type="submit">Aprobar</button>
                 </form>
-                <form method="post" action="#">
+                <form method="post" action="{% url 'documents:reject' document.id %}">
                     {% csrf_token %}
                     <button class="btn-reject" type="submit">Rechazar</button>
                 </form>

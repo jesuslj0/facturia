@@ -52,7 +52,7 @@ class Document(models.Model):
     file = models.FileField(upload_to="documents/")
     original_name = models.CharField(max_length=255)
     document_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    confidence = models.FloatField(default=0)
+    confidence = models.JSONField(default=dict)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     review_level = models.CharField(max_length=20, choices=REVIEW_LEVEL_CHOICES, default='required')
     extracted_data = models.JSONField()

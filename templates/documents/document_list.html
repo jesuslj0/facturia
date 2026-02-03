@@ -12,8 +12,8 @@
       <tr>
         <th>Nombre</th>
         <th>Proveedor</th>
-        <th>Total</th>
-        <th>Fecha</th>
+        <th>Total (€)</th>
+        {% comment %} <th>Fecha</th> {% endcomment %}
         <th>Estado</th>
         <th>Revisión</th>
         <th>Acción</th>
@@ -36,20 +36,20 @@
         <!-- Total con formato decimal -->
         <td class="amount">
           {% if doc.total_amount %}
-            {{ doc.total_amount|floatformat:2 }} €
+            {{ doc.total_amount|floatformat:2 }}
           {% else %}
             -
           {% endif %}
         </td>
 
-        <!-- Fecha formateada -->
+        {% comment %} <!-- Fecha formateada -->
         <td class="issue_date">
           {% if doc.issue_date %}
             {{ doc.issue_date|date:"d/m/Y" }}
           {% else %}
             -
           {% endif %}
-        </td>
+        </td> {% endcomment %}
 
         <!-- Estado (status) -->
         <td>
@@ -72,7 +72,7 @@
             {% endif %}
           </span>
           {% if doc.confidence %}
-            ({{ doc.confidence|floatformat:2 }})
+            ({{ doc.confidence.confianza_extraccion|floatformat:2 }})
           {% endif %}
         </td>
 
