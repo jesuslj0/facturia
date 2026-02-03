@@ -8,6 +8,10 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
     document_type = serializers.ChoiceField(choices=["invoice", "delivery", "other"])
     confidence = serializers.FloatField(min_value=0.0, max_value=1.0)
     extracted_data = serializers.JSONField()
+    base_amount = serializers.FloatField()
+    tax_amount = serializers.FloatField()
+    tax_percentage = serializers.FloatField()
+    total_amount = serializers.FloatField()
 
     def validate(self, data):
         if Document.objects.filter(external_id=data["external_id"]).exists():
@@ -16,8 +20,8 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
     
     class Meta: 
         model = Document
-        fields = ['file', 'external_id', 'original_name', 
-            'document_type', 'confidence', 'extracted_data']
+        fields = ['file', 'external_id', 'original_name', 'document_type', 'confidence', 
+                  'extracted_data', 'base_amount', 'tax_amount', 'tax_percentage', 'total_amount']
 
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:

@@ -86,6 +86,8 @@
 .table td.amount {
   text-align: right;
   font-variant-numeric: tabular-nums;
+  color: var(--muted-color);
+  width: fit-content;
 }
 
 /* Estado */
@@ -124,6 +126,6 @@
   }
 
   .table-wrapper {
-    max-width: 1000px;
+    max-width: 1200px;
   }
 }

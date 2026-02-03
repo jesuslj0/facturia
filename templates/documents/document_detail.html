@@ -58,23 +58,41 @@
 
         <div class="field">
             <span class="label">Fecha</span>
-            <span class="value">{{ document.issue_date }}</span>
+            <span class="value">{{ document.issue_date|date:"h:m d/m/Y" }}</span>
+        </div>
+
+        <div class="field">
+            <span class="label">Base</span>
+            <span class="value">{% if document.base_amount %}{{ document.base_amount }} €{% else %}-{% endif %}</span>
+        </div>
+
+        <div class="field">
+            <span class="label">Calculo IVA</span>
+            <span class="value">
+                {% if document.base_amount and document.tax_percentage and document.tax_amount %}
+                    {{ document.base_amount }} × {{ document.tax_percentage }}% = {{ document.tax_amount }} €
+                {% else %}
+                    -
+                {% endif %}
+            </span>
         </div>
 
         <div class="field">
             <span class="label">Total</span>
-            <span class="value">{{ document.total_amount }} €</span>
+            <span class="value">{% if document.total_amount %}{{ document.total_amount }} €{% else %}-{% endif %}</span>
         </div>
 
         <div class="actions">
-            <form method="post" action="#">
-                {% csrf_token %}
-                <button class="btn-approve" type="submit">Aprobar</button>
-            </form>
-            <form method="post" action="#">
-                {% csrf_token %}
-                <button class="btn-reject" type="submit">Rechazar</button>
-            </form>
+            {% if document.status == 'pending' %}
+                <form method="post" action="#">
+                    {% csrf_token %}
+                    <button class="btn-approve" type="submit">Aprobar</button>
+                </form>
+                <form method="post" action="#">
+                    {% csrf_token %}
+                    <button class="btn-reject" type="submit">Rechazar</button>
+                </form>
+            {% endif %}
         </div>
     </div>
 

@@ -6,7 +6,6 @@
 
 {% block content %}
 <h1 class="page-title">Tus documentos <span class="client-name">- {{ client.name }}</span></h1>
-
 <div class="table-wrapper">
   <table class="table">
     <thead>
@@ -14,7 +13,9 @@
         <th>Nombre</th>
         <th>Proveedor</th>
         <th>Total</th>
+        <th>Fecha</th>
         <th>Estado</th>
+        <th>Revisión</th>
         <th>Acción</th>
       </tr>
     </thead>
@@ -22,25 +23,67 @@
     <tbody>
       {% for doc in documents %}
       <tr>
+        <!-- Nombre / enlace al archivo -->
         <td>
-          <a href="{{ doc.file.url}}">
+          <a href="{{ doc.file.url }}">
             {{ doc.original_name }}
           </a>
         </td>
-        <td>{{ doc.provider_name }}</td>
-        <td class="amount">{{ doc.total_amount }} €</td>
+
+        <!-- Proveedor -->
+        <td>{{ doc.provider_name|default:"-" }}</td>
+
+        <!-- Total con formato decimal -->
+        <td class="amount">
+          {% if doc.total_amount %}
+            {{ doc.total_amount|floatformat:2 }} €
+          {% else %}
+            -
+          {% endif %}
+        </td>
+
+        <!-- Fecha formateada -->
+        <td class="issue_date">
+          {% if doc.issue_date %}
+            {{ doc.issue_date|date:"d/m/Y" }}
+          {% else %}
+            -
+          {% endif %}
+        </td>
+
+        <!-- Estado (status) -->
         <td>
           <span class="status {{ doc.status }}">
             {{ doc.get_status_display }}
           </span>
         </td>
+
+        <!-- Nivel de revisión -->
+        <td>
+          <span class="review_level {{ doc.review_level }}">
+            {% if doc.review_level == "auto" %}
+              Auto
+            {% elif doc.review_level == "recommended" %}
+              Revisión recomendada
+            {% elif doc.review_level == "required" %}
+              Revisión obligatoria
+            {% else %}
+              -
+            {% endif %}
+          </span>
+          {% if doc.confidence %}
+            ({{ doc.confidence|floatformat:2 }})
+          {% endif %}
+        </td>
+
+        <!-- Acción -->
         <td>
           <a class="btn-action" href="{% url "documents:detail" doc.id %}">Ver</a>
         </td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="4">No hay documentos</td>
+        <td colspan="7">No hay documentos</td>
       </tr>
       {% endfor %}
     </tbody>

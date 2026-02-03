@@ -9,12 +9,25 @@ class Document(models.Model):
         ("other", "Otro"),
     ]
 
+    TOTAL_SOURCE_CHOICES = [
+        ('explicit', 'Explicit'),
+        ('base_tax', 'Base + Tax'),
+        ('base', 'Base only'),
+        ('unknown', 'Unknown'),
+    ]
+
     STATUS_CHOICES = [
         ("pending", "Pendiente"),
         ("approved", "Aprobado"),
-        ("needs_review", "Revisión"),
-        ("error", "Error"),
+        ("rejected", "Rechazado"),
     ]
+
+    REVIEW_LEVEL_CHOICES = [
+        ('auto', 'Aprovado automáticamente'),
+        ('recommended', 'Revisión recomendada'),
+        ('required', 'Revisión requerida'),
+    ]
+
     @property
     def extension(self):
         if not self.file:
@@ -39,12 +52,17 @@ class Document(models.Model):
     file = models.FileField(upload_to="documents/")
     original_name = models.CharField(max_length=255)
     document_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    confidence = models.FloatField()
+    confidence = models.FloatField(default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    review_level = models.CharField(max_length=20, choices=REVIEW_LEVEL_CHOICES, default='required')
     extracted_data = models.JSONField()
     provider_name = models.CharField(max_length=255, null=True, blank=True)
     provider_tax_id = models.CharField(max_length=50, null=True, blank=True)
-    issue_date = models.DateField(null=True, blank=True)
+    issue_date = models.DateTimeField(null=True, blank=True)
+    base_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tax_percentage = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_source = models.CharField(max_length=10, choices=TOTAL_SOURCE_CHOICES, default="unknown")
     created_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
