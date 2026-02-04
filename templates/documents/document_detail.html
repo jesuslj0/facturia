@@ -43,59 +43,105 @@
             <p>No se puede visualizar el archivo</p>
         {% endif %}
     </div>
-
-    <!-- Panel de datos solo lectura -->
-    <div class="data">
-        <div class="field">
-            <span class="label">Proveedor</span>
-            <span class="value">{{ document.provider_name }}</span>
-        </div>
-
-        <div class="field">
-            <span class="label">CIF/NIF</span>
-            <span class="value">{{ document.provider_tax_id }}</span>
-        </div>
-
-        <div class="field">
-            <span class="label">Fecha</span>
-            <span class="value">{{ document.issue_date|date:"d/m/Y" }}</span>
-        </div>
-
-        <div class="field">
-            <span class="label">Base</span>
-            <span class="value">{% if document.base_amount %}{{ document.base_amount }} €{% else %}-{% endif %}</span>
-        </div>
-
-        <div class="field">
-            <span class="label">Calculo IVA</span>
-            <span class="value">
-                {% if document.base_amount and document.tax_percentage and document.tax_amount %}
-                    {{ document.base_amount }} × {{ document.tax_percentage }}% = {{ document.tax_amount }} €
-                {% else %}
-                    -
-                {% endif %}
-            </span>
-        </div>
-
-        <div class="field">
-            <span class="label">Total</span>
-            <span class="value">{% if document.total_amount %}{{ document.total_amount }} €{% else %}-{% endif %}</span>
-        </div>
-
+    <!-- Panel de datos con revisión editable -->
+    <div class="data-form">
+        <form method="post" id="review-form">
+            {% csrf_token %}
+            <div class="data">
+    
+                <!-- Proveedor -->
+                <div class="field">
+                    <span class="label">Proveedor</span>
+                    {% if document.review_level in "required recommended" %}
+                        <input type="text" name="provider_name" value="{{ document.provider_name }}" class="editable-field">
+                    {% else %}
+                        <span class="value">{{ document.provider_name }}</span>
+                    {% endif %}
+                </div>
+    
+                <!-- CIF/NIF -->
+                <div class="field">
+                    <span class="label">CIF/NIF</span>
+                    {% if document.review_level in "required recommended" %}
+                        <input type="text" name="provider_tax_id" value="{{ document.provider_tax_id }}" class="editable-field">
+                    {% else %}
+                        <span class="value">{{ document.provider_tax_id }}</span>
+                    {% endif %}
+                </div>
+    
+                <!-- Fecha -->
+                <div class="field">
+                    <span class="label">Fecha</span>
+                    {% if document.review_level in "required recommended" %}
+                        <input type="date" name="issue_date" value="{{ document.issue_date|date:'Y-m-d' }}" class="editable-field">
+                    {% else %}
+                        <span class="value">{{ document.issue_date|date:"d/m/Y" }}</span>
+                    {% endif %}
+                </div>
+    
+                <!-- Base -->
+                <div class="field">
+                    <span class="label">Base</span>
+                    {% if document.review_level in "required recommended" %}
+                        <input type="number" step="0.01" name="base_amount" value="{{ document.base_amount }}" class="editable-field">
+                    {% else %}
+                        <span class="value">{% if document.base_amount %}{{ document.base_amount }} €{% else %}-{% endif %}</span>
+                    {% endif %}
+                </div>
+    
+                <!-- Cálculo IVA -->
+                <div class="field">
+                    <span class="label">Cálculo IVA</span>
+                    {% if document.review_level in "required recommended" %}
+                        <input type="number" step="0.01" name="tax_percentage" value="{{ document.tax_percentage }}" class="editable-field" placeholder="IVA %">
+                        <input type="number" step="0.01" name="tax_amount" value="{{ document.tax_amount }}" class="editable-field" placeholder="IVA €">
+                    {% else %}
+                        <span class="value">
+                            {% if document.base_amount and document.tax_percentage and document.tax_amount %}
+                                {{ document.base_amount }} × {{ document.tax_percentage }}% = {{ document.tax_amount }} €
+                            {% else %}
+                                -
+                            {% endif %}
+                        </span>
+                    {% endif %}
+                </div>
+    
+                <!-- Total -->
+                <div class="field">
+                    <span class="label">Total</span>
+                    {% if document.review_level in "required recommended" %}
+                        <input type="number" step="0.01" name="total_amount" value="{{ document.total_amount }}" class="editable-field">
+                    {% else %}
+                        <span class="value">{% if document.total_amount %}{{ document.total_amount }} €{% else %}-{% endif %}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+        <!-- Acciones -->
         <div class="actions">
+            <!-- Formulario para guardar cambios de revisión -->
+            {% if document.review_level in "required recommended" %}
+            <form method="post" id="review-form">
+                {% csrf_token %}
+                <!-- campos editables aquí -->
+                <button type="submit" class="btn-save">Guardar cambios</button>
+            </form>
+            {% endif %}
+    
+            <!-- Formulario para aprobar -->
             {% if document.status == 'pending' %}
-                <form method="post" action="{% url 'documents:approve' document.id %}">
-                    {% csrf_token %}
-                    <button class="btn-approve" type="submit">Aprobar</button>
-                </form>
-                <form method="post" action="{% url 'documents:reject' document.id %}">
-                    {% csrf_token %}
-                    <button class="btn-reject" type="submit">Rechazar</button>
-                </form>
+            <form method="post" action="{% url 'documents:approve' document.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-approve">Aprobar</button>
+            </form>
+    
+            <form method="post" action="{% url 'documents:reject' document.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-reject">Rechazar</button>
+            </form>
             {% endif %}
         </div>
     </div>
-
 </div>
 {% endblock %}
 {% block scripts %}

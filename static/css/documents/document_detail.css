@@ -52,6 +52,32 @@
   gap: 0.75rem;
 }
 
+#review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+#review-form input {
+  flex: 1;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--body-bg-color);
+  color: var(--body-fg-color);
+  font-weight: 600;
+  transition: border 0.2s;
+}
+
+#review-form input::placeholder {
+  color: var(--muted-color);
+}
+
+#review-form input:focus {
+  border-color: var(--enfasis-color);
+  outline: none;
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -76,14 +102,14 @@
 }
 
 /* Acciones */
-.data .actions {
+.data-form .actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.75rem;
+  margin-top: 1rem;
 }
 
 /* Botón */
-.data button {
+.data-form .actions button {
   flex: 1;
   padding: 0.6rem;
   border-radius: 8px;

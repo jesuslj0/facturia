@@ -1,0 +1,205 @@
+/* =========================
+   Dashboard
+========================= */
+
+.dashboard {
+  margin-top: 1.5rem;
+}
+
+/* =========================
+   Dashboard header
+========================= */
+
+.dashboard-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* menos centrado, más app */
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--body-fg-color);
+  line-height: 1.2;
+}
+
+.dashboard-header p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted-color);
+}
+
+/* Desktop: deja aire y permite CTA a la derecha */
+@media (min-width: 768px) {
+  .dashboard-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .dashboard-header p {
+    font-size: 0.85rem;
+  }
+}
+
+/* =========================
+   KPI cards
+========================= */
+
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-cards .card {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+}
+
+.dashboard-cards .card h3 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #cbd5f5;
+  margin-bottom: 0.5rem;
+}
+
+/* KPI número */
+.dashboard-cards .kpi {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--body-fg-color);
+}
+
+/* Colores de estado (reutilizan tus utilidades) */
+.kpi.text-danger {
+  color: var(--color-danger);
+}
+
+.kpi.text-warning {
+  color: var(--color-warning);
+}
+
+/* =========================
+   Card genérica (tabla)
+========================= */
+
+.dashboard .card.mt-4 {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.25rem 0.75rem;
+}
+
+.dashboard .card.mt-4 h2 {
+  padding: 0 1.5rem 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--body-fg-color);
+}
+
+/* Ajuste botón Ver */
+.dashboard .btn.btn-primary {
+  background: transparent;
+  border: none;
+  color: var(--enfasis-color);
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+}
+
+.dashboard .btn.btn-primary:hover {
+  text-decoration: underline;
+}
+
+/* Texto vacío */
+.dashboard .text-muted {
+  padding: 0 1.5rem 1rem;
+  font-size: 0.9rem;
+  color: var(--muted-color);
+}
+
+/* =========================
+   Tabla de pendientes (Dashboard)
+========================= */
+
+/* Wrapper específico dashboard */
+
+.dashboard .table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0;
+}
+
+.dashboard .table-wrapper {
+  margin-top: 0.5rem;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.dashboard .table td {
+    color: var(--muted-color)
+}
+
+/* Cabecera ligeramente más marcada */
+.dashboard .table thead th {
+  background: #020617;
+  color: #e0e7ff;
+}
+
+/* Filas más compactas */
+.dashboard .table td {
+  font-size: 0.88rem;
+}
+
+/* Hover más sutil (menos ruido visual) */
+.dashboard .table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Última columna (acción) */
+.dashboard .table td.text-end {
+  white-space: nowrap;
+}
+
+/* Botón "Ver" coherente con lista */
+.dashboard .table a.btn.btn-primary {
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.25rem 0.4rem;
+  color: var(--body-fg-color);
+  text-decoration: none;
+}
+
+.dashboard .table a.btn.btn-primary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  text-decoration: none;
+}
+
+/* Review level más compacto en dashboard */
+.dashboard .table td .review_level {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Espaciado horizontal algo mayor en desktop */
+@media (min-width: 768px) {
+  .dashboard .table td {
+    padding: 0.65rem 1.5rem;
+  }
+}
+
+/* Estado vacío más discreto */
+.dashboard .card.mt-4 p.text-muted {
+  margin: 0;
+  padding: 0.75rem 1.5rem 1rem;
+}
