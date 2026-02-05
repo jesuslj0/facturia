@@ -24,6 +24,7 @@ class Document(models.Model):
 
     REVIEW_LEVEL_CHOICES = [
         ('auto', 'Aprovado automáticamente'),
+        ('manual', 'Manual'),
         ('recommended', 'Revisión recomendada'),
         ('required', 'Revisión requerida'),
     ]
@@ -58,11 +59,12 @@ class Document(models.Model):
     extracted_data = models.JSONField()
     provider_name = models.CharField(max_length=255, null=True, blank=True)
     provider_tax_id = models.CharField(max_length=50, null=True, blank=True)
-    issue_date = models.DateTimeField(null=True, blank=True)
+    issue_date = models.DateField(null=True, blank=True)
     base_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     tax_percentage = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_source = models.CharField(max_length=10, choices=TOTAL_SOURCE_CHOICES, default="unknown")
     created_at = models.DateTimeField(auto_now_add=True)
-    reviewed_at = models.DateTimeField(null=True, blank=True)
+    edited_at = models.DateTimeField(blank=True, null=True)
+    approved_at = models.DateTimeField(blank=True, null=True)

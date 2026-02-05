@@ -4,6 +4,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib import messages
 from django.utils import timezone
+from django.db.models import Q
+from datetime import datetime
 
 # Create your views here.
 class DocumentListView(LoginRequiredMixin, ListView): 
@@ -12,15 +14,51 @@ class DocumentListView(LoginRequiredMixin, ListView):
     context_object_name = "documents"
     
     def get_queryset(self):
-        return Document.objects.filter(
+        qs = Document.objects.filter(
             client__clientuser__user=self.request.user
-        ).order_by("-created_at")
+        )
+        q = self.request.GET.get("q")
+        status = self.request.GET.get("status")
+        review = self.request.GET.get("review")
+        date_from = self.request.GET.get("date_from")
+        date_to = self.request.GET.get("date_to")
+        document_type = self.request.GET.get("document_type")
+
+        if q:
+            qs = qs.filter(
+                Q(original_name__icontains=q) | Q(provider_name__icontains=q)
+            )
+
+        if status:
+            qs = qs.filter(status=status)
+
+        if review:
+            qs = qs.filter(review_level=review)
+        
+        if date_from:
+            qs = qs.filter(created_at__gte=date_from)
+
+        if date_to:
+            qs = qs.filter(
+                issue_date__lte=datetime.combine(
+                    datetime.fromisoformat(date_to).date(), 
+                    datetime.max.time()
+                )
+            )
+
+        if document_type: 
+            qs = qs.filter(document_type=document_type)
+            
+        return qs.order_by("-created_at")
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         first_doc = self.get_queryset().first()
         context["client"] = first_doc.client if first_doc else None
+        context["document_types"] = Document.TYPE_CHOICES
         return context
+    
+        
     
 
 class DocumentDetailView(LoginRequiredMixin, DetailView):
@@ -65,10 +103,10 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
             self.object.total_amount = float(total_amount)
 
         # Marcar como revisado
-        self.object.review_level = "auto"
+        self.object.review_level = "manual"
 
         # Marcar fecha de revisión
-        self.object.reviewed_at = timezone.now()
+        self.object.edited_at = timezone.now()
 
         # Guardar cambios
         self.object.save()
@@ -81,7 +119,8 @@ def approve_document(request, pk):
     if request.method == "POST":
         document = get_object_or_404(Document, pk=pk)
         document.status = "approved"
-        document.reviewed_at = timezone.now()
+        document.review_level = "manual"
+        document.approved_at = timezone.now()
         document.save()
         messages.success(request, "El documento ha sido aprobado.")
         return redirect("documents:detail", pk=document.pk)
@@ -93,7 +132,6 @@ def reject_document(request, pk):
     if request.method == "POST":
         document = get_object_or_404(Document, pk=pk)
         document.status = "rejected"
-        document.reviewed_at = timezone.now()
         document.save()
         messages.success(request, "El documento ha sido rechazado.")
         return redirect("documents:detail", pk=document.pk)
@@ -111,14 +149,18 @@ class DashboardView(LoginRequiredMixin,TemplateView):
         pending_count = qs.count()
         required_count = qs.filter(review_level="required").count()
         recommended_count = qs.filter(review_level="recommended").count()
+        client = Document.objects.filter(client__clientuser__user=self.request.user).first().client
 
         context = {
             "pending_documents": qs.order_by("-created_at")[:5],
             "pending_count": pending_count,
             "required_review_count": required_count,
-            "recommended_review_count": recommended_count
+            "recommended_review_count": recommended_count,
+            "client": client
         }
 
         return context
     
 
+class ExportView(LoginRequiredMixin, ListView):
+    pass

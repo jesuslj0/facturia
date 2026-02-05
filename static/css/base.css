@@ -3,7 +3,9 @@
   --body-fg-color: #f8fafc;
   --card-bg-color: #0f172a;
   --enfasis-color: #38bdf8;
+  --enfasis-color-dark: #0a7bb0;
   --muted-color: #7c8b9d;
+  --border-color: rgba(255, 255, 255, 0.08);
 
   --color-success: #22c55e;
   --color-warning: #facc15;

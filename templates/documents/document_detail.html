@@ -91,12 +91,15 @@
     
                 <!-- Cálculo IVA -->
                 <div class="field">
-                    <span class="label">Cálculo IVA</span>
                     {% if document.review_level in "required recommended" %}
-                        <input type="number" step="0.01" name="tax_percentage" value="{{ document.tax_percentage }}" class="editable-field" placeholder="IVA %">
-                        <input type="number" step="0.01" name="tax_amount" value="{{ document.tax_amount }}" class="editable-field" placeholder="IVA €">
+                    <span class="label">% / Total IVA</span>
+                    <div class="iva-fields">
+                        <input type="number" step="0.01" name="tax_percentage" value="{{ document.tax_percentage }}" class="editable-field" placeholder="IVA %"><span>%</span>
+                        <input type="number" step="0.01" name="tax_amount" value="{{ document.tax_amount }}" class="editable-field" placeholder="IVA €"><span>€</span>
+                    </di>
                     {% else %}
-                        <span class="value">
+                    <span class="label">Cálculo IVA</span>
+                    <span class="value">
                             {% if document.base_amount and document.tax_percentage and document.tax_amount %}
                                 {{ document.base_amount }} × {{ document.tax_percentage }}% = {{ document.tax_amount }} €
                             {% else %}
@@ -139,6 +142,48 @@
                 {% csrf_token %}
                 <button type="submit" class="btn-reject">Rechazar</button>
             </form>
+            {% endif %}
+        </div>
+
+        <div class="review_info">
+            <span class="label">Estado del documento</span>
+
+            {% if document.approved_at %}
+                <span class="content">
+                Documento aprobado el {{ document.approved_at|date:"d/m/Y" }}.
+                </span>
+            {% elif document.edited_at %}
+                <span class="content">
+                Documento editado manualmente el {{ document.edited_at|date:"d/m/Y" }}.
+                </span>
+            {% elif document.status == "rejected" %}
+                <span class="content">
+                El documento ha sido rechazado.
+                </span>
+            {% elif document.status == "approved" and not document.approved_at %}
+                <span class="content">
+                Documento aprovado automaticamente.
+                </span>
+            {% else %}
+                <span class="content">
+                Documento pendiente de revisión.
+                </span>
+            {% endif %}
+
+            <span class="label">Nivel de confianza</span>
+
+            {% if document.review_level == "required" %}
+                <span class="content">
+                Revisión obligatoria. Los datos extraídos pueden ser incorrectos.
+                </span>
+            {% elif document.review_level == "recommended" %}
+                <span class="content">
+                Revisión recomendada. Algunos campos podrían no ser exactos.
+                </span>
+            {% else %}
+                <span class="content">
+                Alta confianza. Los datos extraídos son consistentes.
+                </span>
             {% endif %}
         </div>
     </div>

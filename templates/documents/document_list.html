@@ -5,7 +5,60 @@
 {% endblock%}
 
 {% block content %}
-<h1 class="page-title">Tus documentos <span class="client-name">- {{ client.name }}</span></h1>
+<h1 class="page-title">Tus documentos</h1>
+<form method="get" class="filters-bar">
+  <input
+    type="text"
+    name="q"
+    placeholder="Buscar por nombre o proveedor"
+    value="{{ request.GET.q }}"
+  >
+  <select name="document_type">
+    <option value="">Tipo de documento</option>
+    {% for key, value in document_types %}
+      <option value="{{ key }}" {% if request.GET.document_type == key %}selected{% endif %}>{{ value }}</option>
+    {% endfor %}
+  </select>
+
+  <div class="date-filter">
+    <label for="date_from">Desde</label>
+    <input 
+      type="date"
+      name="date_from"
+      value=
+      "{{ request.GET.date_from }}"
+    >
+  </div>
+  <div class="date-filter">
+    <label for="date_to">Hasta</label>
+    <input 
+      type="date"
+      name="date_to"
+      value="{{ request.GET.date_to }}"
+    >
+  </div>
+
+  <select name="status">
+    <option value="">Estado</option>
+    <option value="pending" {% if request.GET.status == "pending" %}selected{% endif %}>Pendiente</option>
+    <option value="approved" {% if request.GET.status == "approved" %}selected{% endif %}>Aprobado</option>
+    <option value="rejected" {% if request.GET.status == "rejected" %}selected{% endif %}>Rechazado</option>
+  </select>
+
+  <select name="review">
+    <option value="">Revisión</option>
+    <option value="auto" {% if request.GET.review == "auto" %}selected{% endif %}>Auto</option>
+    <option value="recommended" {% if request.GET.review == "recommended" %}selected{% endif %}>Recomendada</option>
+    <option value="required" {% if request.GET.review == "required" %}selected{% endif %}>Obligatoria</option>
+  </select>
+
+  <button type="submit" class="btn-primary">Filtrar</button>
+
+  {% if request.GET %}
+    <a href="?" class="btn-clear">Limpiar filtros</a>
+  {% endif %}
+</form>
+
 <div class="table-wrapper">
   <table class="table">
     <thead>
@@ -60,22 +113,25 @@
 
         <!-- Nivel de revisión -->
         <td>
-          <span class="review_level {{ doc.review_level }}">
-            {% if doc.review_level == "auto" %}
-              Auto
-            {% elif doc.review_level == "recommended" %}
-              Revisión recomendada
-            {% elif doc.review_level == "required" %}
-              Revisión obligatoria
-            {% else %}
-              -
-            {% endif %}
-          </span>
-          {% if doc.confidence %}
-            ({{ doc.confidence.confianza_extraccion|floatformat:2 }})
+        <span class="review_level {{ doc.review_level }}">
+          {% if doc.review_level == "manual" %}
+            Manual
+          {% elif doc.review_level == "auto"%}
+            Auto
+          {% elif doc.review_level == "recommended" %}
+            Revisión recomendada
+          {% elif doc.review_level == "required" %}
+            Revisión obligatoria
+          {% else %}
+            -
           {% endif %}
-        </td>
-
+          {% if doc.confidence %}
+              <span class="confidence">
+                ({{ doc.confidence.confianza_extraccion|floatformat:2 }})
+              </span>
+          {% endif %}
+        </span>
+      </td>
         <!-- Acción -->
         <td>
           <a class="btn-action" href="{% url "documents:detail" doc.id %}">Ver</a>

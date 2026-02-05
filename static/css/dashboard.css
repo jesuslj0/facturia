@@ -26,9 +26,14 @@
   line-height: 1.2;
 }
 
+.dashboard-header h1 .client-name{
+  color: var(--enfasis-color);
+  font-weight: 700;
+}
+
 .dashboard-header p {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: var(--muted-color);
 }
 
