@@ -1,5 +1,6 @@
 from django.shortcuts import redirect, get_object_or_404
 from documents.models import Document
+from clients.models import ClientUser
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib import messages
@@ -154,7 +155,11 @@ class DashboardView(LoginRequiredMixin,TemplateView):
         pending_count = qs.count()
         required_count = qs.filter(review_level="required").count() or 0
         recommended_count = qs.filter(review_level="recommended").count() or 0
-        client = Document.objects.filter(client__clientuser__user=self.request.user).first().client or None
+        client = ClientUser.objects.filter(user=self.request.user).first().client 
+        if client:
+            client = client.client
+        else:
+            client = None
 
         context = {
             "pending_documents": qs.order_by("-created_at")[:5],
