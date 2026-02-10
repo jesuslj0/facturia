@@ -5,7 +5,7 @@ DEBUG = False
 
 SECRET_KEY = os.environ["SECRET_KEY"]
 
-ALLOWED_HOSTS = ["facturia.xyz", "178.128.163.154"]
+ALLOWED_HOSTS = ["178.128.163.154", "127.0.0.1", "localhost"]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost",
