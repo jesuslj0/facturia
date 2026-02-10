@@ -14,7 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Ejecutar collectstatic dentro del contenedor
 RUN python manage.py collectstatic --noinput
 
-# CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Gunicorn en 0.0.0.0:8000
 CMD ["gunicorn", "billing_ai.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "60"]

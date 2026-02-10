@@ -2,7 +2,6 @@ from .base import *
 import os
 
 DEBUG = False
-
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 ALLOWED_HOSTS = ["facturia.xyz", "www.facturia.xyz"]
@@ -12,6 +11,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://www.facturia.xyz",
 ]
 
+# Base de datos PostgreSQL
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -23,5 +23,11 @@ DATABASES = {
     }
 }
 
+# Archivos estáticos
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_URL = "/static/"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# Archivos media (opcional)
+MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"
