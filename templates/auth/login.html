@@ -3,11 +3,11 @@
 {% load static %}
     <link rel="stylesheet" href="{% static 'css/auth.css' %}">
 {% endblock %}
-{% block title %}Billing AI - Login{% endblock %}
+{% block title %}FacturIA - Login{% endblock %}
 {% block content %}
     <div class="text-container">
-        <h2>Archivo automático de facturas</h2>
-        <p>Recepción, clasificación y acceso a tus documentos de forma rápida y sencilla.</p>
+        <h2>Gestión automática de facturas</h2>
+        <p>Revisa, filtra y exporta tus documentos de forma rapida y sencilla.</p>
         <small>Procesos automatizados · Uso interno</small>    
     </div>
     <div class="form-container">
@@ -32,7 +32,11 @@
 <script>
     const usernameInput = document.getElementById('id_username');
     const passwordInput = document.getElementById('id_password');
-    
+    const usernameLabel = document.querySelector('label[for="id_username"]');
+    const passwordLabel = document.querySelector('label[for="id_password"]');
+
+    usernameLabel.textContent = "Nombre de usuario";
+    passwordLabel.textContent = "Contraseña";
     usernameInput.placeholder = "ej. John";
     passwordInput.placeholder = "ej. hardpass123";
 </script>

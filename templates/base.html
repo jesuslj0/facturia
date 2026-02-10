@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
   {% load static %}
   <link rel="icon" type="image/x-icon" href="{% static "icons/icons8-invoice-pulsar-color-16.png" %}">
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
@@ -14,7 +16,7 @@
 
   <title>
     {% load static %}
-    {% block title %}Billing AI{% endblock %}
+    {% block title %}FacturIA{% endblock %}
   </title>
 </head>
 <body>
@@ -24,9 +26,12 @@
     <div class="container">
       <div class="logo">
         <img src="{% static "icons/icons8-invoice-pulsar-color-32.png" %}" /> 
-        Billing AI
+        FacturIA
       </div>
 
+      <div id="nav-toggle">
+        <i class="fa-solid fa-bars"></i>
+      </div>
       <nav class="nav">
         <a href="{% url 'dashboard' %}">Dashboard</a>
         <a href="{% url 'documents:list' %}">Documentos</a>
@@ -56,7 +61,16 @@
 
   </main>
 
-  {% block scripts %}{% endblock %}
+  {% block scripts %}
+    <script>
+      const nav = document.getElementById('nav');
+      const toggleNavBtn = document.getElementById('nav-toggle');
+
+      toggleNavBtn.addEventListener('click', () => {
+        nav.classList.toggle('open');
+      });
+    </script>
+  {% endblock %}
 
 </body>
 </html>
