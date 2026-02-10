@@ -4,6 +4,9 @@ django-debug-toolbar==6.2.0
 djangorestframework==3.16.1
 dotenv==0.9.9
 et_xmlfile==2.0.0
+gunicorn==25.0.3
 openpyxl==3.1.5
+packaging==26.0
+psycopg2-binary==2.9.11
 python-dotenv==1.2.1
 sqlparse==0.5.5
