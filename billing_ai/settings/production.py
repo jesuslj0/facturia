@@ -1,6 +1,9 @@
 from .base import *
 import os
 
+BASE_DIR = Path("/app").resolve()
+
+
 DEBUG = False
 SECRET_KEY = os.environ["SECRET_KEY"]
 
