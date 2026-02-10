@@ -15,8 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Variables de entorno
-ARG SECRET_KEY
-ENV SECRET_KEY=${SECRET_KEY}
+# ARG SECRET_KEY
+# ENV SECRET_KEY=${SECRET_KEY}
 
 # Ejecutar collectstatic dentro del contenedor
 RUN mkdir -p /app/staticfiles
