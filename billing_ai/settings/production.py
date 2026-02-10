@@ -24,7 +24,7 @@ DATABASES = {
 }
 
 # Archivos estáticos
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = "/app/staticfiles"
 STATIC_URL = "/static/"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
