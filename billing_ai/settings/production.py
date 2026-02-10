@@ -5,10 +5,11 @@ DEBUG = False
 
 SECRET_KEY = os.environ["SECRET_KEY"]
 
-ALLOWED_HOSTS = ["facturia-django-web-app.ieqxoj.easypanel.host"]
+ALLOWED_HOSTS = ["facturia.xyz", "www.facturia.xyz"]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://facturia-django-web-app.ieqxoj.easypanel.host"
+    "https://facturia.xyz",
+    "https://www.facturia.xyz",
 ]
 
 DATABASES = {
