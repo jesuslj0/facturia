@@ -18,5 +18,8 @@ COPY . .
 RUN mkdir -p /app/staticfiles
 RUN python manage.py collectstatic --noinput
 
+# Check de settings
+RUN python manage.py check --settings=billing_ai.settings.production 
+
 # Gunicorn en 0.0.0.0:8000
-CMD ["gunicorn", "billing_ai.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "60"]
+CMD ["gunicorn", "billing_ai.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "60", "--log-level", "debug"]
