@@ -22,7 +22,6 @@ static_root
 # Python stuff:
 *.egg
 *.egg-info
-*.py
 *.py[co]
 *.pyc
 *.pyo
