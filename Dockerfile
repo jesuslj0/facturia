@@ -15,7 +15,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Ejecutar collectstatic dentro del contenedor
-RUN mkdir -p /app/staticfiles
 RUN python manage.py collectstatic --noinput
 
 # Gunicorn en 0.0.0.0:8000
