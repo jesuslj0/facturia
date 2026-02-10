@@ -16,4 +16,5 @@ COPY . .
 
 RUN python manage.py collectstatic --noinput
 
-CMD ["gunicorn", "billing_ai.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# CMD ["gunicorn", "billing_ai.wsgi:application", "--bind", "0.0.0.0:8000"]
