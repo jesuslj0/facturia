@@ -5,12 +5,11 @@ DEBUG = False
 
 SECRET_KEY = os.environ["SECRET_KEY"]
 
-ALLOWED_HOSTS = ["178.128.163.154", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost",
     "http://127.0.0.1",
-    "https://facturia-web-app",
 ]
 
 DATABASES = {
