@@ -1,11 +1,12 @@
 from .serializers import DocumentIngestSerializer, DocumentSerializer, DocumentListSerializer
-from documents.models import Document
+from documents.models import Document, Company
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
 from .permissions import HasApiKey
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status as rst_status
+from documents.utils import normalize_tax
 
 def get_review_level(confidence: dict, document_type):
     extraction_confidence = confidence.get("confianza_extraccion", 0)
@@ -45,25 +46,48 @@ class DocumentIngestAPIView(APIView):
             document_type=data["document_type"]
         )
 
+        normalized_amounts = normalize_tax(data["base_amount"], data["tax_amount"], data["tax_percentage"], data["total_amount"])
+
         status = get_status(review_level)
+
+        if Document.objects.filter(external_id=data["external_id"]).exists():
+            return Response(
+                {"detail": "Document already ingested"},
+                status=rst_status.HTTP_400_BAD_REQUEST,
+            )
+        
+        company = Company.objects.filter(
+            client=request.client,
+            tax_id=extracted.get("cif_nif"),
+        ).first()
+        
+        if not company:
+            company = Company.objects.create(
+                client=request.client,
+                name=extracted.get("proveedor"),
+                tax_id=extracted.get("cif_nif"),
+                type="provider",
+            )
 
         document = Document.objects.create(
             client=request.client,
+            company=company,
             external_id=data["external_id"],
             file=data["file"],
             original_name=data["original_name"],
             document_type=data["document_type"],
+            invoice_number=data["invoice_number"],
             confidence=confidence,
             status=status,
             review_level=review_level,
             extracted_data=extracted,
-            provider_name=extracted.get("proveedor"),
-            provider_tax_id=extracted.get("cif_nif"),
+            provider_name=company.name,
+            provider_tax_id=company.tax_id,
             issue_date=extracted.get("fecha"),
-            base_amount = float(data.get("base_amount") or 0),
-            tax_amount = float(data.get("tax_amount") or 0),
-            tax_percentage = float(data.get("tax_percentage") or 0),
-            total_amount=float(data.get("total_amount") or extracted.get("total") or 0),
+            base_amount = float(normalized_amounts.get("base") or 0),
+            tax_amount = float(normalized_amounts.get("tax_amount") or 0),
+            tax_percentage = float(normalized_amounts.get("tax_percentage") or 0),
+            total_amount=float(normalized_amounts.get("total") or 0),
         )
 
         return Response(

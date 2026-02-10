@@ -7,49 +7,53 @@ from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime
 
+
 # Create your views here.
+def get_filtered_documents(request):
+    qs = Document.objects.filter(
+            client__clientuser__user=request.user
+        )
+    q = request.GET.get("q")
+    status = request.GET.get("status")
+    review = request.GET.get("review")
+    date_from = request.GET.get("date_from")
+    date_to = request.GET.get("date_to")
+    document_type = request.GET.get("document_type")
+
+    if q:
+        qs = qs.filter(
+            Q(original_name__icontains=q) | Q(provider_name__icontains=q)
+        )
+
+    if status:
+        qs = qs.filter(status=status)
+
+    if review:
+        qs = qs.filter(review_level=review)
+    
+    if date_from:
+        qs = qs.filter(created_at__gte=date_from)
+
+    if date_to:
+        qs = qs.filter(
+            issue_date__lte=datetime.combine(
+                datetime.fromisoformat(date_to).date(), 
+                datetime.max.time()
+            )
+        )
+
+    if document_type: 
+        qs = qs.filter(document_type=document_type)
+        
+    return qs.order_by("-issue_date", "-created_at")
+
 class DocumentListView(LoginRequiredMixin, ListView): 
     model = Document
     template_name = "documents/document_list.html"
     context_object_name = "documents"
     
     def get_queryset(self):
-        qs = Document.objects.filter(
-            client__clientuser__user=self.request.user
-        )
-        q = self.request.GET.get("q")
-        status = self.request.GET.get("status")
-        review = self.request.GET.get("review")
-        date_from = self.request.GET.get("date_from")
-        date_to = self.request.GET.get("date_to")
-        document_type = self.request.GET.get("document_type")
-
-        if q:
-            qs = qs.filter(
-                Q(original_name__icontains=q) | Q(provider_name__icontains=q)
-            )
-
-        if status:
-            qs = qs.filter(status=status)
-
-        if review:
-            qs = qs.filter(review_level=review)
-        
-        if date_from:
-            qs = qs.filter(created_at__gte=date_from)
-
-        if date_to:
-            qs = qs.filter(
-                issue_date__lte=datetime.combine(
-                    datetime.fromisoformat(date_to).date(), 
-                    datetime.max.time()
-                )
-            )
-
-        if document_type: 
-            qs = qs.filter(document_type=document_type)
-            
-        return qs.order_by("-created_at")
+        return get_filtered_documents(self.request)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -57,8 +61,6 @@ class DocumentListView(LoginRequiredMixin, ListView):
         context["client"] = first_doc.client if first_doc else None
         context["document_types"] = Document.TYPE_CHOICES
         return context
-    
-        
     
 
 class DocumentDetailView(LoginRequiredMixin, DetailView):
@@ -85,12 +87,15 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         tax_percentage = request.POST.get("tax_percentage")
         tax_amount = request.POST.get("tax_amount")
         total_amount = request.POST.get("total_amount")
+        invoice_number = request.POST.get("invoice_number")
 
         # Validaciones simples (puedes mejorar)
         if provider_name:
             self.object.provider_name = provider_name.strip()
         if provider_tax_id:
             self.object.provider_tax_id = provider_tax_id.strip()
+        if invoice_number: 
+            self.object.invoice_number = invoice_number
         if issue_date:
             self.object.issue_date = issue_date
         if base_amount:
@@ -147,9 +152,9 @@ class DashboardView(LoginRequiredMixin,TemplateView):
         qs = Document.objects.filter(status="pending")
 
         pending_count = qs.count()
-        required_count = qs.filter(review_level="required").count()
-        recommended_count = qs.filter(review_level="recommended").count()
-        client = Document.objects.filter(client__clientuser__user=self.request.user).first().client
+        required_count = qs.filter(review_level="required").count() or 0
+        recommended_count = qs.filter(review_level="recommended").count() or 0
+        client = Document.objects.filter(client__clientuser__user=self.request.user).first().client or None
 
         context = {
             "pending_documents": qs.order_by("-created_at")[:5],
@@ -161,6 +166,30 @@ class DashboardView(LoginRequiredMixin,TemplateView):
 
         return context
     
+from .utils import export_to_csv, export_to_excel
+class DocumentExportView(LoginRequiredMixin, ListView):
+    def get(self, request):
+        qs = get_filtered_documents(request)
+        return export_to_csv(qs)
+    
+    def post(self,request):
+        ids = request.POST.getlist("ids")
+        fmt = request.POST.get("format", "csv")
 
-class ExportView(LoginRequiredMixin, ListView):
-    pass
+        qs = Document.objects.filter(
+            id__in=ids, 
+            client__clientuser__user=request.user
+        )
+
+        if fmt == "xlsx":
+            return export_to_excel(qs)
+        return export_to_csv(qs)
+    
+class DocumentExportPreviewView(LoginRequiredMixin, ListView):
+    template_name = "documents/document_export_preview.html"
+    model = Document
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["documents"] = get_filtered_documents(self.request)
+        return context

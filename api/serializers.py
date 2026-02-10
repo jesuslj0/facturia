@@ -21,7 +21,9 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
     class Meta: 
         model = Document
         fields = ['file', 'external_id', 'original_name', 'document_type', 'confidence', 
-                  'extracted_data', 'base_amount', 'tax_amount', 'tax_percentage', 'total_amount']
+                  'extracted_data', 'base_amount', 'tax_amount', 'tax_percentage', 'total_amount',
+                  'invoice_number'
+                ]
 
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,6 +49,7 @@ class DocumentListSerializer(serializers.ModelSerializer):
             "total_amount",
             "created_at",
             "file_url",
+            "invoice_number",
         ]
 
     def get_file_url(self, obj):

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Vista previa de Exportación - Billing AI{% endblock %}
+{% block styles %}
+{% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/documents/document_list.css' %}">
+{% endblock %}
+{% block content %}
+<h1 class="page-title">Previsualización de exportación</h1>
+<form method="post" action="{% url 'documents:export' %}">
+    {% csrf_token %}
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>
+                <input type="checkbox" id="select-all">
+                <label for="select-all">todos</label>
+            </th>
+            <th>Fecha</th>
+            <th>Nombre</th>
+            <th>Proveedor</th>
+            <th>Total (€)</th>
+            <th>Estado</th>
+            <th>Revisión</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+    
+        <tbody>
+          {% for doc in documents %}
+          <tr>
+            <td>
+                <input 
+                type="checkbox"
+                name="ids"
+                value="{{ doc.id }}"
+                class="row-checkbox"
+                checked
+                >
+            </td>
+            <td>{{ doc.issue_date|date:"d/m/Y" }}</td>
+            <!-- Nombre / enlace al archivo -->
+            <td>
+              <a href="{{ doc.file.url }}">
+                {{ doc.original_name }}
+              </a>
+            </td>
+    
+            <!-- Proveedor -->
+            <td>{{ doc.provider_name|default:"-" }}</td>
+    
+            <!-- Total con formato decimal -->
+            <td class="amount">
+              {% if doc.total_amount %}
+                {{ doc.total_amount|floatformat:2 }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+    
+            {% comment %} <!-- Fecha formateada -->
+            <td class="issue_date">
+              {% if doc.issue_date %}
+                {{ doc.issue_date|date:"d/m/Y" }}
+              {% else %}
+                -
+              {% endif %}
+            </td> {% endcomment %}
+    
+            <!-- Estado (status) -->
+            <td>
+              <span class="status {{ doc.status }}">
+                {{ doc.get_status_display }}
+              </span>
+            </td>
+    
+            <!-- Nivel de revisión -->
+            <td>
+            <span class="review_level {{ doc.review_level }}">
+              {% if doc.review_level == "manual" %}
+                Manual
+              {% elif doc.review_level == "auto"%}
+                Auto
+              {% elif doc.review_level == "recommended" %}
+                Revisión recomendada
+              {% elif doc.review_level == "required" %}
+                Revisión obligatoria
+              {% else %}
+                -
+              {% endif %}
+              {% if doc.confidence %}
+                  <span class="confidence">
+                    ({{ doc.confidence.confianza_extraccion|floatformat:2 }})
+                  </span>
+              {% endif %}
+            </span>
+          </td>
+            <!-- Acción -->
+            <td>
+              <a class="btn-action" href="{% url "documents:detail" doc.id %}">Ver</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7">No hay documentos</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="export-bar">
+        <select name="format">
+            <option value="csv">CSV</option>
+            <option value="xlsx">Excel</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Exportar seleccionados</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        const selectAll = document.getElementById("select-all");
+        const checkboxes = document.querySelectorAll(".row-checkbox");
+
+        selectAll.checked = [...checkboxes].every(c => c.checked);
+
+        selectAll.addEventListener("change", () => {
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        });
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener("change", () => {
+            selectAll.checked = [...checkboxes].every(c => c.checked);
+            });
+        });
+    </script>
+{% endblock %}

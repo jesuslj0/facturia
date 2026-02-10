@@ -68,6 +68,16 @@
                         <span class="value">{{ document.provider_tax_id }}</span>
                     {% endif %}
                 </div>
+
+                <!-- Numero factura-->
+                <div class="field">
+                    <span class="label">N° Documento</span>
+                    {% if document.review_level in "required recommended" %}
+                        <input type="text" name="invoice_number" value="{{ document.invoice_number }}" class="editable-field">
+                    {% else %}
+                        <span class="value">{{ document.invoice_number }}</span>
+                    {% endif %}
+                </div>
     
                 <!-- Fecha -->
                 <div class="field">
@@ -150,11 +160,11 @@
 
             {% if document.approved_at %}
                 <span class="content">
-                Documento aprobado el {{ document.approved_at|date:"d/m/Y" }}.
+                Documento aprobado el {{ document.approved_at|date:"d-m-Y" }}.
                 </span>
             {% elif document.edited_at %}
                 <span class="content">
-                Documento editado manualmente el {{ document.edited_at|date:"d/m/Y" }}.
+                Documento editado manualmente el {{ document.edited_at|date:"d-m-Y" }}.
                 </span>
             {% elif document.status == "rejected" %}
                 <span class="content">

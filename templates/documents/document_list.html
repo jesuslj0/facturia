@@ -3,61 +3,67 @@
 {% load static %}
   <link rel="stylesheet" href="{% static 'css/documents/document_list.css' %}">
 {% endblock%}
+{% block title %}Documentos - Billing AI{% endblock %}
 
 {% block content %}
 <h1 class="page-title">Tus documentos</h1>
 <form method="get" class="filters-bar">
   <input
-    type="text"
-    name="q"
-    placeholder="Buscar por nombre o proveedor"
-    value="{{ request.GET.q }}"
+  type="text"
+  name="q"
+  placeholder="Buscar por nombre o proveedor"
+  value="{{ request.GET.q }}"
   >
   <select name="document_type">
     <option value="">Tipo de documento</option>
     {% for key, value in document_types %}
-      <option value="{{ key }}" {% if request.GET.document_type == key %}selected{% endif %}>{{ value }}</option>
+    <option value="{{ key }}" {% if request.GET.document_type == key %}selected{% endif %}>{{ value }}</option>
     {% endfor %}
   </select>
-
+  
   <div class="date-filter">
     <label for="date_from">Desde</label>
     <input 
-      type="date"
-      name="date_from"
-      value=
-      "{{ request.GET.date_from }}"
+    type="date"
+    name="date_from"
+    value=
+    "{{ request.GET.date_from }}"
     >
   </div>
   <div class="date-filter">
     <label for="date_to">Hasta</label>
     <input 
-      type="date"
-      name="date_to"
-      value="{{ request.GET.date_to }}"
+    type="date"
+    name="date_to"
+    value="{{ request.GET.date_to }}"
     >
   </div>
-
+  
   <select name="status">
     <option value="">Estado</option>
     <option value="pending" {% if request.GET.status == "pending" %}selected{% endif %}>Pendiente</option>
     <option value="approved" {% if request.GET.status == "approved" %}selected{% endif %}>Aprobado</option>
     <option value="rejected" {% if request.GET.status == "rejected" %}selected{% endif %}>Rechazado</option>
   </select>
-
+  
   <select name="review">
     <option value="">Revisión</option>
     <option value="auto" {% if request.GET.review == "auto" %}selected{% endif %}>Auto</option>
+    <option value="manual" {% if request.GET.review == "manual" %}selected{% endif %}>Manual</option>
     <option value="recommended" {% if request.GET.review == "recommended" %}selected{% endif %}>Recomendada</option>
     <option value="required" {% if request.GET.review == "required" %}selected{% endif %}>Obligatoria</option>
   </select>
-
+  
   <button type="submit" class="btn-primary">Filtrar</button>
-
+  
   {% if request.GET %}
-    <a href="?" class="btn-clear">Limpiar filtros</a>
+  <a href="?" class="btn-clear">Limpiar filtros</a>
   {% endif %}
 </form>
+<div class="export-bar">
+  <a href="{% url 'documents:export' %}?{{ request.GET.urlencode }}" class="btn-primary">Exportar</a>
+  <a href="{% url 'documents:export_preview' %}?{{ request.GET.urlencode }}" class="btn-secondary">Vista previa</a>
+</div>
 
 <div class="table-wrapper">
   <table class="table">

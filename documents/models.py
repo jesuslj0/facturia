@@ -2,6 +2,22 @@ from django.db import models
 from clients.models import Client
 import os
 
+class Company(models.Model):
+    TYPE_CHOICES = [
+        ("provider", "Proveedor"),
+        ("customer", "Cliente"),
+    ]
+
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="companies")
+    name = models.CharField(max_length=255)
+    tax_id = models.CharField(max_length=50, null=True, blank=True, unique=True)
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    edited_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.get_type_display()})"
+
 class Document(models.Model):
     TYPE_CHOICES = [
         ("invoice", "Factura"),
@@ -29,6 +45,17 @@ class Document(models.Model):
         ('required', 'Revisión requerida'),
     ]
 
+    FLOW_CHOICES = [
+        ("in", "Compra"),
+        ("out", "Venta"),
+        ("unknown", "Por revisar"),
+    ]
+
+    FLOW_SOURCE_CHOICES = [
+        ("auto", "Automático"),
+        ("manual", "Manual"),
+    ]
+
     @property
     def extension(self):
         if not self.file:
@@ -49,10 +76,12 @@ class Document(models.Model):
 
 
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="documents")
+    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True)
     external_id = models.CharField(max_length=255, unique=True)
     file = models.FileField(upload_to="documents/")
     original_name = models.CharField(max_length=255)
     document_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    invoice_number = models.CharField(max_length=255, null=True, blank=True)
     confidence = models.JSONField(default=dict)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     review_level = models.CharField(max_length=20, choices=REVIEW_LEVEL_CHOICES, default='required')
@@ -68,3 +97,11 @@ class Document(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     edited_at = models.DateTimeField(blank=True, null=True)
     approved_at = models.DateTimeField(blank=True, null=True)
+    flow = models.CharField(max_length=20, choices=FLOW_CHOICES, default="unknown")
+    flow_source = models.CharField(max_length=20, choices=FLOW_SOURCE_CHOICES, default="auto")
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.invoice_number or self.original_name} ({self.flow})"
