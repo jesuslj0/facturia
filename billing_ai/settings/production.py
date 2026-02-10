@@ -1,8 +1,7 @@
 from .base import *
 import os
 
-BASE_DIR = Path("/app").resolve()
-
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 DEBUG = False
 SECRET_KEY = os.environ["SECRET_KEY"]
