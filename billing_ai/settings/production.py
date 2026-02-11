@@ -1,10 +1,10 @@
 from .base import *
 import os
 
-DEBUG = False
+DEBUG = True
 SECRET_KEY = os.environ["SECRET_KEY"]
 
-ALLOWED_HOSTS = ["facturia.xyz", "www.facturia.xyz"]
+ALLOWED_HOSTS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://facturia.xyz",
