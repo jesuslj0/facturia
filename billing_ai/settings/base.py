@@ -43,6 +43,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'billing_ai.middleware.MediaSecurityMiddleware',
 ]
 
 ROOT_URLCONF = 'billing_ai.urls'

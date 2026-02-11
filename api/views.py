@@ -38,36 +38,31 @@ class DocumentIngestAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        extracted = data["extracted_data"] or {}
-        confidence = data["confidence"] or {}
 
+        # Revisión y status
         review_level = get_review_level(
-            confidence=confidence,
+            confidence=data.get("confidence", {}),
             document_type=data["document_type"]
         )
-
-        normalized_amounts = normalize_tax(data["base_amount"], data["tax_amount"], data["tax_percentage"], data["total_amount"])
-
         status = get_status(review_level)
 
-        if Document.objects.filter(external_id=data["external_id"]).exists():
-            return Response(
-                {"detail": "Document already ingested"},
-                status=rst_status.HTTP_400_BAD_REQUEST,
-            )
-        
-        company = Company.objects.filter(
+        # Normalización de cantidades
+        normalized_amounts = normalize_tax(
+            data["base_amount"], 
+            data["tax_amount"], 
+            data["tax_percentage"], 
+            data["total_amount"]
+        )
+
+        # Obtener o crear Company
+        company, _created = Company.objects.get_or_create(
             client=request.client,
-            tax_id=extracted.get("cif_nif"),
-        ).first()
-        
-        if not company:
-            company = Company.objects.create(
-                client=request.client,
-                name=extracted.get("proveedor"),
-                tax_id=extracted.get("cif_nif"),
-                type="provider",
-            )
+            tax_id=data["provider_tax_id"],
+            defaults={
+                "name": data["provider_name"],
+                "type": data.get("provider_type", "provider"),
+            }
+        )
 
         document = Document.objects.create(
             client=request.client,
@@ -76,18 +71,17 @@ class DocumentIngestAPIView(APIView):
             file=data["file"],
             original_name=data["original_name"],
             document_type=data["document_type"],
-            invoice_number=data["invoice_number"],
-            confidence=confidence,
-            status=status,
-            review_level=review_level,
-            extracted_data=extracted,
-            provider_name=company.name,
-            provider_tax_id=company.tax_id,
-            issue_date=extracted.get("fecha"),
+            invoice_number=data.get("invoice_number"),
+            issue_date=data.get("issue_date"),
             base_amount = float(normalized_amounts.get("base") or 0),
             tax_amount = float(normalized_amounts.get("tax_amount") or 0),
             tax_percentage = float(normalized_amounts.get("tax_percentage") or 0),
             total_amount=float(normalized_amounts.get("total") or 0),
+            confidence=data.get("confidence", {}),
+            status=status,
+            review_level=review_level,
+            provider_name=company.name,
+            provider_tax_id=company.tax_id,
         )
 
         return Response(

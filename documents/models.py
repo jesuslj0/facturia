@@ -8,7 +8,10 @@ class Company(models.Model):
         ("customer", "Cliente"),
     ]
 
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="companies")
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, 
+        related_name="companies"
+    )
     name = models.CharField(max_length=255)
     tax_id = models.CharField(max_length=50, null=True, blank=True, unique=True)
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)
@@ -75,19 +78,26 @@ class Document(models.Model):
         return self.extension in [".jpg", ".jpeg", ".png", ".webp"]
 
 
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="documents")
-    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True)
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, 
+        related_name="documents"
+    )
+    company = models.ForeignKey(
+        Company, on_delete=models.SET_NULL, 
+        related_name="documents",
+        null=True
+    )
+
     external_id = models.CharField(max_length=255, unique=True)
-    file = models.FileField(upload_to="documents/")
     original_name = models.CharField(max_length=255)
+    file = models.FileField(upload_to="documents/")
     document_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     invoice_number = models.CharField(max_length=255, null=True, blank=True)
     confidence = models.JSONField(default=dict)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     review_level = models.CharField(max_length=20, choices=REVIEW_LEVEL_CHOICES, default='required')
-    extracted_data = models.JSONField()
-    provider_name = models.CharField(max_length=255, null=True, blank=True)
-    provider_tax_id = models.CharField(max_length=50, null=True, blank=True)
+    provider_name = models.CharField(max_length=255, null=False, blank=False, default="Proveedor desconocido")
+    provider_tax_id = models.CharField(max_length=50, null=False, blank=False, default="N/A")
     issue_date = models.DateField(null=True, blank=True)
     base_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
