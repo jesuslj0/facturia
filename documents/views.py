@@ -150,7 +150,7 @@ class DashboardView(LoginRequiredMixin,TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        qs = Document.objects.filter(status="pending")
+        qs = Document.objects.filter(status="pending", client__clientuser__user=self.request.user)
 
         pending_count = qs.count()
         required_count = qs.filter(review_level="required").count() or 0
