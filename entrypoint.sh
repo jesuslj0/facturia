@@ -4,9 +4,6 @@ set -e
 echo "=== Ejecutando collectstatic ==="
 python manage.py collectstatic --noinput
 
-echo "=== Lanzar nginx ==="
-exec nginx -g "daemon off;" &
-
 echo "=== Arrancando Gunicorn ==="
 exec gunicorn billing_ai.wsgi:application \
     --bind 0.0.0.0:8000 \

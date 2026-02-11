@@ -28,6 +28,6 @@ STATIC_ROOT = "/app/staticfiles"
 STATIC_URL = "/static/"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Archivos media (opcional)
-MEDIA_ROOT = "/app/media"
+# Archivos media
+MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
