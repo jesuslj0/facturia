@@ -13,17 +13,17 @@
   <div class="dashboard-cards">
     <div class="card">
       <h3>Pendientes</h3>
-      <span class="kpi">{{ pending_count }}</span>
+      <span class="kpi">{{ pending_count|default_if_empty:"0" }}</span>
     </div>
 
     <div class="card">
       <h3>Revisión obligatoria</h3>
-      <span class="kpi text-danger">{{ required_review_count }}</span>
+      <span class="kpi text-danger">{{ required_review_count|default_if_empty:"0" }}</span>
     </div>
 
     <div class="card">
       <h3>Recomendados</h3>
-      <span class="kpi text-warning">{{ recommended_review_count }}</span>
+      <span class="kpi text-warning">{{ recommended_review_count|default_if_empty:"0" }}</span>
     </div>
   </div>
 
@@ -33,44 +33,42 @@
 
     {% if pending_documents %}
       <div class="table-wrapper">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Proveedor</th>
-            <th>Fecha</th>
-            <th>Tipo</th>
-            <th>Revisión</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% if pending_documents|length == 0 %}
-            <tr><td colspan="5">No hay documentos pendientes.</td></tr>
-          {% elif %}
-            {% for doc in pending_documents %}
-              <tr>
-                <td>{{ doc.provider_name|default:"—" }}</td>
-                <td>{{ doc.issue_date|date:"d/m/Y" }}</td>
-                <td>{{ doc.get_document_type_display|capfirst }}</td>
-                <td>
-                  <span class="review_level {{ doc.review_level }}">
-                    {{ doc.get_review_level_display|capfirst }}
-                  </span>
-                </td>
-                <td class="text-end">
-                  <a href="{% url 'documents:detail' doc.id %}" class="btn btn-sm btn-primary">
-                    Ver
-                  </a>
-                </td>
-              </tr>
-            {% endfor %}
-          {% endif %}
-        </tbody>
-      </table>
-      <div/>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Proveedor</th>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Revisión</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if pending_documents|length == 0 %}
+              <tr><td colspan="5">No hay documentos pendientes.</td></tr>
+            {% else %}
+              {% for doc in pending_documents %}
+                <tr>
+                  <td>{{ doc.provider_name|default:"—" }}</td>
+                  <td>{{ doc.issue_date|date:"d/m/Y"|default:"—" }}</td>
+                  <td>{{ doc.get_document_type_display|capfirst|default:"—" }}</td>
+                  <td>
+                    <span class="review_level {{ doc.review_level|default:"" }}">
+                      {{ doc.get_review_level_display|capfirst|default:"—" }}
+                    </span>
+                  </td>
+                  <td class="text-end">
+                    <a href="{% url 'documents:detail' doc.id %}" class="btn btn-sm btn-primary">
+                      Ver
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
     {% else %}
       <p class="text-muted">No hay documentos pendientes.</p>
     {% endif %}
   </div>
-</div>
-{% endblock %}
