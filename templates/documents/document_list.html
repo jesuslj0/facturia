@@ -3,10 +3,10 @@
 {% load static %}
   <link rel="stylesheet" href="{% static 'css/documents/document_list.css' %}">
 {% endblock%}
-{% block title %}Documentos - Billing AI{% endblock %}
+{% block title %}Documentos - FacturIA{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Tus documentos</h1>
+<h1 class="page-title"><i class="fa-regular fa-file-lines"></i> Tus documentos</h1>
 <form method="get" class="filters-bar">
   <input
   type="text"
@@ -54,14 +54,14 @@
     <option value="required" {% if request.GET.review == "required" %}selected{% endif %}>Obligatoria</option>
   </select>
   
-  <button type="submit" class="btn-primary">Filtrar</button>
+  <button type="submit" class="btn-primary">Filtrar <i class="fa-solid fa-filter"></i></button>
   
   {% if request.GET %}
   <a href="?" class="btn-clear">Limpiar filtros</a>
   {% endif %}
 </form>
 <div class="export-bar">
-  <a href="{% url 'documents:export' %}?{{ request.GET.urlencode }}" class="btn-primary">Exportar</a>
+  <a href="{% url 'documents:export' %}?{{ request.GET.urlencode }}" class="btn-primary">Exportar filtrados <i class="fa-solid fa-download"></i></a>
   <a href="{% url 'documents:export_preview' %}?{{ request.GET.urlencode }}" class="btn-secondary">Vista previa</a>
 </div>
 

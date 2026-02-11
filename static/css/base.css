@@ -60,9 +60,53 @@ h1, h2, h3, h4, h5, p {
 
 /* Navegación */
 .app-header .nav {
+  display: none;
+}
+
+.app-header .nav.open {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .app-header .nav {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+/* Botón de navegación */
+.nav-toggle-container {
+  display: flex;
+  justify-content: end;
+  background-color: var(--card-bg-color);
+  cursor: pointer;
+}
+
+#nav-toggle.open {
+  display: flex;
+  background-color: var(--card-bg-color);
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#nav-toggle {
+  background: transparent;
+  border: none;
+  color: #f8fafc;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .nav-toggle-container {
+    display: none;
+  }
+
+  #nav-toggle {
+    display: none;
+  }
+
 }
 
 /* Links */
@@ -95,6 +139,18 @@ h1, h2, h3, h4, h5, p {
 .app-header .nav button:hover {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.4);
+}
+
+@media (max-width: 768px) {
+  .app-header .nav form {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+  }
+
+  .nav a {
+    align-self: end;
+  }
 }
 
 .app-main {

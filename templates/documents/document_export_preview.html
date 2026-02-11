@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Vista previa de Exportación - Billing AI{% endblock %}
+{% block title %}Vista previa de Exportación - FacturIA{% endblock %}
 {% block styles %}
 {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'css/documents/document_list.css' %}">
@@ -111,14 +111,15 @@
     <div class="export-bar">
         <select name="format">
             <option value="csv">CSV</option>
-            <option value="xlsx">Excel</option>
+            <option value="xlsx">Excel (XLSX)</option>
         </select>
-        <button type="submit" class="btn btn-primary">Exportar seleccionados</button>
+        <button type="submit" class="btn btn-primary">Exportar <i class="fa-solid fa-download"></i></button>
     </div>
 </form>
 {% endblock %}
 
 {% block scripts %}
+  {{ block.super }}
     <script>
         const selectAll = document.getElementById("select-all");
         const checkboxes = document.querySelectorAll(".row-checkbox");

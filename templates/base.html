@@ -28,18 +28,20 @@
         <img src="{% static "icons/icons8-invoice-pulsar-color-32.png" %}" /> 
         FacturIA
       </div>
-
-      <div id="nav-toggle">
-        <i class="fa-solid fa-bars"></i>
-      </div>
-      <nav class="nav">
-        <a href="{% url 'dashboard' %}">Dashboard</a>
-        <a href="{% url 'documents:list' %}">Documentos</a>
+      
+      <div>
+        <div class="nav-toggle-container">
+        <button id="nav-toggle"><i class="fa-solid fa-bars-staggered"></i></button>
+        </div>
+        <nav class="nav open">
+        <a href="{% url 'dashboard' %}"><i class="fa-regular fa-chart-bar"></i> Dashboard</a>
+        <a href="{% url 'documents:list' %}"><i class="fa-regular fa-file-lines"></i> Documentos</a>
         <form action="{% url 'logout' %}" method="post">
           {% csrf_token %}
           <button type="submit">Salir</button>
         </form>
-      </nav>
+        </nav>
+      </div>
     </div>
   </header>
 
@@ -63,12 +65,20 @@
 
   {% block scripts %}
     <script>
-      const nav = document.getElementById('nav');
+      const nav = document.querySelector('.nav');
       const toggleNavBtn = document.getElementById('nav-toggle');
 
       toggleNavBtn.addEventListener('click', () => {
         nav.classList.toggle('open');
-      });
+
+        nav.classList.contains('open') ? (
+          toggleNavBtn.innerHTML = '<i class="fa-solid fa-bars-staggered"></i>',
+          toggleNavBtn.setAttribute('aria-label', 'Cerrar menú')
+        ) : (
+          toggleNavBtn.innerHTML = '<i class="fa-solid fa-bars"></i>',
+          toggleNavBtn.setAttribute('aria-label', 'Abrir menú')
+        );
+      });  
     </script>
   {% endblock %}
 
