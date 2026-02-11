@@ -156,10 +156,7 @@ class DashboardView(LoginRequiredMixin,TemplateView):
         required_count = qs.filter(review_level="required").count() or 0
         recommended_count = qs.filter(review_level="recommended").count() or 0
         client = ClientUser.objects.filter(user=self.request.user).first().client 
-        if client:
-            client = client.client
-        else:
-            client = None
+        client = client if client else None
 
         context = {
             "pending_documents": qs.order_by("-created_at")[:5],

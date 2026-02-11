@@ -2,10 +2,10 @@
 {% block title %}Dashboard - FacturIA{% endblock %}
 {% load static %}
 {% block styles %}<link rel="stylesheet" href="{% static "css/dashboard.css" %}" />{% endblock %}
-{% block content%}
+{% block content %}
 <div class="container dashboard">
   <div class="dashboard-header">
-    <h1>Dashboard - <span class="client-name">{{ client.name }}</span></h1>
+    <h1>Dashboard - <span class="client-name">{{ client_name }}</span></h1>
     <p>Tu resumen de documentos recientes</p>
   </div>
 
@@ -13,17 +13,17 @@
   <div class="dashboard-cards">
     <div class="card">
       <h3>Pendientes</h3>
-      <span class="kpi">{{ pending_count|default_if_empty:"0" }}</span>
+      <span class="kpi">{% if pending_count %}{{ pending_count }}{% else %}0{% endif %}</span>
     </div>
 
     <div class="card">
       <h3>Revisión obligatoria</h3>
-      <span class="kpi text-danger">{{ required_review_count|default_if_empty:"0" }}</span>
+      <span class="kpi text-danger">{% if required_review_count %}{{ required_review_count }}{% else %}0{% endif %}</span>
     </div>
 
     <div class="card">
       <h3>Recomendados</h3>
-      <span class="kpi text-warning">{{ recommended_review_count|default_if_empty:"0" }}</span>
+      <span class="kpi text-warning">{% if recommended_review_count %}{{ recommended_review_count }}{% else %}0{% endif %}</span>
     </div>
   </div>
 
@@ -72,3 +72,4 @@
       <p class="text-muted">No hay documentos pendientes.</p>
     {% endif %}
   </div>
+{% endblock %}
