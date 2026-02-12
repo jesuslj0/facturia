@@ -52,7 +52,7 @@
                 <!-- Proveedor -->
                 <div class="field">
                     <span class="label">Proveedor</span>
-                    {% if document.review_level in ["required", "recommended"] %}
+                    {% if document.review_level == "required" or document.review_level == "recommended" %}
                         <input type="text" name="provider_name" value="{{ document.company.name }}" class="editable-field">
                     {% else %}
                         <span class="value">{{ document.company.name }}</span>
@@ -62,7 +62,7 @@
                 <!-- CIF/NIF -->
                 <div class="field">
                     <span class="label">CIF/NIF</span>
-                    {% if document.review_level in ["required", "recommended"] %}
+                    {% if document.review_level == "required" or document.review_level == "recommended" %}
                         <input type="text" name="provider_tax_id" value="{{ document.company.tax_id }}" class="editable-field">
                     {% else %}
                         <span class="value">{{ document.company.tax_id }}</span>
@@ -72,7 +72,7 @@
                 <!-- Compra o Venta-->
                 <div class="field">
                     <span class="label">Compra / Venta</span>
-                    {% if document.review_level in ["required", "recommended"] %}
+                    {% if document.review_level == "required" or document.review_level == "recommended" %}
                         <select name="flow" class="editable-field">
                             <option value="in" {% if document.flow == "in" %}selected{% endif %}>Compra</option>
                             <option value="out" {% if document.flow == "out" %}selected{% endif %}>Venta</option>
@@ -85,7 +85,7 @@
                 <!-- Numero factura-->
                 <div class="field">
                     <span class="label">N° Documento</span>
-                    {% if document.review_level in ["required", "recommended"] %}
+                    {% if document.review_level == "required" or document.review_level == "recommended" %}
                         <input type="text" name="invoice_number" value="{{ document.invoice_number }}" class="editable-field">
                     {% else %}
                         <span class="value">{{ document.invoice_number }}</span>
@@ -95,7 +95,7 @@
                 <!-- Fecha -->
                 <div class="field">
                     <span class="label">Fecha</span>
-                    {% if document.review_level in ["required", "recommended"] %}
+                    {% if document.review_level == "required" or document.review_level == "recommended" %}
                         <input type="date" name="issue_date" value="{{ document.issue_date|date:'Y-m-d' }}" class="editable-field">
                     {% else %}
                         <span class="value">{{ document.issue_date|date:"d/m/Y" }}</span>
@@ -105,7 +105,7 @@
                 <!-- Base -->
                 <div class="field">
                     <span class="label">Base</span>
-                    {% if document.review_level in ["required", "recommended"] %}
+                    {% if document.review_level == "required" or document.review_level == "recommended" %}
                         <input type="number" step="0.01" name="base_amount" value="{{ document.base_amount }}" class="editable-field">
                     {% else %}
                         <span class="value">{% if document.base_amount %}{{ document.base_amount }} €{% else %}-{% endif %}</span>
@@ -114,7 +114,7 @@
     
                 <!-- Cálculo IVA -->
                 <div class="field">
-                    {% if document.review_level in ["required", "recommended"] %}
+                    {% if document.review_level == "required" or document.review_level == "recommended" %}
                     <span class="label">% / Total IVA</span>
                     <div class="iva-fields">
                         <input type="number" step="0.01" name="tax_percentage" value="{{ document.tax_percentage }}" class="editable-field" placeholder="IVA %"><span>%</span>
@@ -135,7 +135,7 @@
                 <!-- Total -->
                 <div class="field">
                     <span class="label">Total</span>
-                    {% if document.review_level in ["required", "recommended"] %}
+                    {% if document.review_level == "required" or document.review_level == "recommended" %}
                         <input type="number" step="0.01" name="total_amount" value="{{ document.total_amount }}" class="editable-field">
                     {% else %}
                         <span class="value">{% if document.total_amount %}{{ document.total_amount }} €{% else %}-{% endif %}</span>
@@ -146,7 +146,7 @@
         <!-- Acciones -->
         <div class="actions">
             <!-- Revision aprobado o rechazar -->
-            {% if document.review_level in ["required", "recommended"] %}
+            {% if document.review_level == "required" or document.review_level == "recommended" %}
                 <button type="submit" class="btn-save">Guardar cambios</button>
             {% endif %}
             {% if document.status == 'pending' %}
