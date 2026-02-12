@@ -6,11 +6,11 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
     file = serializers.FileField(required=True)
     external_id = serializers.CharField(max_length=255)
     original_name = serializers.CharField(max_length=255)
-    document_type = serializers.ChoiceField(choices=["invoice", "delivery", "other"])
+    document_type = serializers.ChoiceField(choices=["invoice", "delivery"])
 
     # Datos del proveedor / Company
     provider_name = serializers.CharField(max_length=255, required=True)
-    provider_tax_id = serializers.CharField(max_length=50, required=True)  # cif_nif
+    provider_tax_id = serializers.CharField(max_length=50, required=True)
     provider_type = serializers.ChoiceField(choices=[("provider", "Provider")], default="provider")
 
     # Datos de la factura
