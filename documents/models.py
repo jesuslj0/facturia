@@ -114,7 +114,7 @@ class Document(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     edited_at = models.DateTimeField(blank=True, null=True)
     approved_at = models.DateTimeField(blank=True, null=True)
-    flow = models.CharField(max_length=20, choices=FLOW_CHOICES, default="unknown")
+    flow = models.CharField(max_length=20, choices=FLOW_CHOICES, default="in")
     flow_source = models.CharField(max_length=20, choices=FLOW_SOURCE_CHOICES, default="auto")
 
     class Meta:
