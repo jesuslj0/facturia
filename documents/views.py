@@ -111,6 +111,7 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
             tax_amount = request.POST.get("tax_amount")
             total_amount = request.POST.get("total_amount")
             invoice_number = request.POST.get("invoice_number")
+            flow = request.POST.get("flow")
 
             # Guardar cambios si vienen valores
             if invoice_number: 
@@ -125,6 +126,9 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
                 self.object.tax_amount = float(tax_amount)
             if total_amount:
                 self.object.total_amount = float(total_amount)
+            if flow:
+                self.object.flow = flow
+            self.object.save()
 
             # Marcar como revisado manualmente
             self.object.review_level = "manual"
