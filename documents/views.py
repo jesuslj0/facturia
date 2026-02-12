@@ -76,48 +76,66 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
 
-        # Solo editar si requiere revisión
-        if self.object.review_level not in ["required", "recommended"]:
+        # Obtener acción pulsada
+        action = request.POST.get("action")
+
+        # --- Aprobar ---
+        if action == "approve" and self.object.status == "pending":
+            self.object.status = "approved"
+            self.object.review_level = "manual"
+            self.object.approved_at = timezone.now()
+            self.object.save()
+            messages.success(request, "El documento ha sido aprobado.")
             return redirect("documents:detail", pk=self.object.pk)
 
-        # Obtener datos del formulario
-        # provider_name = request.POST.get("provider_name")
-        # provider_tax_id = request.POST.get("provider_tax_id")
-        issue_date = request.POST.get("issue_date")
-        base_amount = request.POST.get("base_amount")
-        tax_percentage = request.POST.get("tax_percentage")
-        tax_amount = request.POST.get("tax_amount")
-        total_amount = request.POST.get("total_amount")
-        invoice_number = request.POST.get("invoice_number")
+        # --- Rechazar ---
+        if action == "reject" and self.object.status == "pending":
+            self.object.status = "rejected"
+            self.object.review_level = "manual"
+            self.object.edited_at = timezone.now()
+            self.object.save()
+            messages.error(request, "El documento ha sido rechazado.")
+            return redirect("documents:detail", pk=self.object.pk)
 
-        # Validaciones simples (puedes mejorar)
-        # if provider_name:
-        #     self.object.provider_name = provider_name.strip()
-        # if provider_tax_id:
-        #     self.object.provider_tax_id = provider_tax_id.strip()
-        if invoice_number: 
-            self.object.invoice_number = invoice_number
-        if issue_date:
-            self.object.issue_date = issue_date
-        if base_amount:
-            self.object.base_amount = float(base_amount)
-        if tax_percentage:
-            self.object.tax_percentage = float(tax_percentage)
-        if tax_amount:
-            self.object.tax_amount = float(tax_amount)
-        if total_amount:
-            self.object.total_amount = float(total_amount)
+        # --- Guardar cambios ---
+        if action == "save":
+            # Solo permitir edición si requiere revisión
+            if self.object.review_level not in ["required", "recommended"]:
+                messages.warning(request, "No se puede editar este documento.")
+                return redirect("documents:detail", pk=self.object.pk)
 
-        # Marcar como revisado
-        self.object.review_level = "manual"
+            # Obtener datos del formulario
+            issue_date = request.POST.get("issue_date")
+            base_amount = request.POST.get("base_amount")
+            tax_percentage = request.POST.get("tax_percentage")
+            tax_amount = request.POST.get("tax_amount")
+            total_amount = request.POST.get("total_amount")
+            invoice_number = request.POST.get("invoice_number")
 
-        # Marcar fecha de revisión
-        self.object.edited_at = timezone.now()
+            # Guardar cambios si vienen valores
+            if invoice_number: 
+                self.object.invoice_number = invoice_number
+            if issue_date:
+                self.object.issue_date = issue_date
+            if base_amount:
+                self.object.base_amount = float(base_amount)
+            if tax_percentage:
+                self.object.tax_percentage = float(tax_percentage)
+            if tax_amount:
+                self.object.tax_amount = float(tax_amount)
+            if total_amount:
+                self.object.total_amount = float(total_amount)
 
-        # Guardar cambios
-        self.object.save()
+            # Marcar como revisado manualmente
+            self.object.review_level = "manual"
+            self.object.edited_at = timezone.now()
+            self.object.save()
 
-        # Redirigir de nuevo a la misma página
+            messages.success(request, "Cambios guardados correctamente.")
+            return redirect("documents:detail", pk=self.object.pk)
+
+        # Si no hay acción reconocida, redirigir
+        messages.warning(request, "Acción no reconocida.")
         return redirect("documents:detail", pk=self.object.pk)
     
 

@@ -49,7 +49,7 @@
             {% else %}
               {% for doc in pending_documents %}
                 <tr>
-                  <td>{{ doc.provider_name|default:"—" }}</td>
+                  <td>{{ doc.company.name|default:"—" }}</td>
                   <td>{{ doc.issue_date|date:"d/m/Y"|default:"—" }}</td>
                   <td>{{ doc.get_document_type_display|capfirst|default:"—" }}</td>
                   <td>
