@@ -135,8 +135,6 @@ class DocumentIngestAPIView(APIView):
             confidence=data.get("confidence", {}),
             status=status,
             review_level=review_level,
-            provider_name=company.name,
-            provider_tax_id=company.tax_id,
         )
 
         return Response(

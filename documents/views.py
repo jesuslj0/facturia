@@ -81,8 +81,8 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
             return redirect("documents:detail", pk=self.object.pk)
 
         # Obtener datos del formulario
-        provider_name = request.POST.get("provider_name")
-        provider_tax_id = request.POST.get("provider_tax_id")
+        # provider_name = request.POST.get("provider_name")
+        # provider_tax_id = request.POST.get("provider_tax_id")
         issue_date = request.POST.get("issue_date")
         base_amount = request.POST.get("base_amount")
         tax_percentage = request.POST.get("tax_percentage")
@@ -91,10 +91,10 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         invoice_number = request.POST.get("invoice_number")
 
         # Validaciones simples (puedes mejorar)
-        if provider_name:
-            self.object.provider_name = provider_name.strip()
-        if provider_tax_id:
-            self.object.provider_tax_id = provider_tax_id.strip()
+        # if provider_name:
+        #     self.object.provider_name = provider_name.strip()
+        # if provider_tax_id:
+        #     self.object.provider_tax_id = provider_tax_id.strip()
         if invoice_number: 
             self.object.invoice_number = invoice_number
         if issue_date:
