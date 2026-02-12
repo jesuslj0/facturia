@@ -119,27 +119,14 @@
 
         <!-- Nivel de revisión -->
         <td>
-        <span class="review_level {{ doc.review_level }}">
-          {% if doc.status == "rejected" %}
-            Rechazado
-          {% endif %}
-          {% if doc.review_level == "manual" %}
-            Manual
-          {% elif doc.review_level == "auto"%}
-            Auto
-          {% elif doc.review_level == "recommended" %}
-            Revisión recomendada
-          {% elif doc.review_level == "required" %}
-            Revisión obligatoria
-          {% else %}
-            -
-          {% endif %}
-          {% if doc.confidence %}
+          <span class="review_level {{ doc.review_level }}">
+            {{ doc.display_review_level }}
+            {% if doc.confidence %}
               <span class="confidence">
                 ({{ doc.confidence.confianza_extraccion|floatformat:2 }})
               </span>
-          {% endif %}
-        </span>
+            {% endif %}
+          </span>
       </td>
         <!-- Acción -->
         <td>

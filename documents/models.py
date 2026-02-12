@@ -85,6 +85,22 @@ class Document(models.Model):
         if not self.file:
             return False
         return self.extension in [".jpg", ".jpeg", ".png", ".webp"]
+    
+    @property
+    def display_review_level(self):
+        if self.status == "rejected" or (self.status == "approved" and self.approved_at):
+            return "Manual"
+        if self.status == "approved" and not self.approved_at:
+            return "Auto"
+        if self.review_level == "manual":
+            return "Manual"
+        if self.review_level == "auto":
+            return "Auto"
+        if self.review_level == "recommended":
+            return "Revisión recomendada"
+        if self.review_level == "required":
+            return "Revisión obligatoria"
+        return "-"
 
 
     client = models.ForeignKey(
