@@ -19,7 +19,7 @@ def export_to_csv(qs):
         writer.writerow([
             doc.issue_date,
             doc.invoice_number,  
-            doc.provider_name,
+            doc.company.name,
             doc.base_amount,
             doc.tax_percentage,
             doc.tax_amount,
@@ -50,7 +50,7 @@ def export_to_excel(qs):
         ws.append([
             doc.issue_date.strftime("%d/%m/%Y"),
             doc.invoice_number,  
-            doc.provider_name,
+            doc.company.name,
             doc.base_amount,
             doc.tax_percentage,
             doc.tax_amount,

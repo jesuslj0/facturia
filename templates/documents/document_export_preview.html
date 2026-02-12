@@ -21,7 +21,6 @@
             <th>Proveedor</th>
             <th>Total (€)</th>
             <th>Estado</th>
-            <th>Revisión</th>
             <th>Acción</th>
           </tr>
         </thead>
@@ -47,7 +46,7 @@
             </td>
     
             <!-- Proveedor -->
-            <td>{{ doc.provider_name|default:"-" }}</td>
+            <td>{{ doc.company.name|default:"-" }}</td>
     
             <!-- Total con formato decimal -->
             <td class="amount">
@@ -58,43 +57,13 @@
               {% endif %}
             </td>
     
-            {% comment %} <!-- Fecha formateada -->
-            <td class="issue_date">
-              {% if doc.issue_date %}
-                {{ doc.issue_date|date:"d/m/Y" }}
-              {% else %}
-                -
-              {% endif %}
-            </td> {% endcomment %}
-    
             <!-- Estado (status) -->
             <td>
               <span class="status {{ doc.status }}">
                 {{ doc.get_status_display }}
               </span>
             </td>
-    
-            <!-- Nivel de revisión -->
-            <td>
-            <span class="review_level {{ doc.review_level }}">
-              {% if doc.review_level == "manual" %}
-                Manual
-              {% elif doc.review_level == "auto"%}
-                Auto
-              {% elif doc.review_level == "recommended" %}
-                Revisión recomendada
-              {% elif doc.review_level == "required" %}
-                Revisión obligatoria
-              {% else %}
-                -
-              {% endif %}
-              {% if doc.confidence %}
-                  <span class="confidence">
-                    ({{ doc.confidence.confianza_extraccion|floatformat:2 }})
-                  </span>
-              {% endif %}
-            </span>
-          </td>
+  
             <!-- Acción -->
             <td>
               <a class="btn-action" href="{% url "documents:detail" doc.id %}">Ver</a>
@@ -110,8 +79,8 @@
     </div>
     <div class="export-bar">
         <select name="format">
+          <option value="xlsx">Excel (XLSX)</option>
             <option value="csv">CSV</option>
-            <option value="xlsx">Excel (XLSX)</option>
         </select>
         <button type="submit" class="btn btn-primary">Exportar <i class="fa-solid fa-download"></i></button>
     </div>
