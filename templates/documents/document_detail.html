@@ -200,6 +200,7 @@
 </div>
 {% endblock %}
 {% block scripts %}
+{{ block.super }}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
     <script>
         const url = "{{ document.file.url }}";

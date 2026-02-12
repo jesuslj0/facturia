@@ -9,8 +9,8 @@ from rest_framework import status as rst_status
 from documents.utils import normalize_tax
 
 def get_review_level(confidence: dict, document_type):
-    extraction_confidence = confidence.get("confianza_extraccion", 0)
-    fecha_conf = confidence.get("fecha", 0)
+    extraction_confidence = confidence.get("confianza_extraccion", 0.0)
+    fecha_conf = confidence.get("fecha", 0.0)
     total_conf = confidence.get("total", 0)
 
     if extraction_confidence >= 0.9:
@@ -30,6 +30,63 @@ def get_review_level(confidence: dict, document_type):
 
 def get_status(review_level):
     return "approved" if review_level == "auto" else "pending"
+
+def normalize_tax_id(tax_id):
+    if not tax_id:
+        return None
+    return tax_id.replace(" ", "").replace("-", "").upper()
+
+def normalize_name(name: str | None) -> str:
+    if not name:
+        return ""
+    return name.strip()
+
+from django.db import transaction
+@transaction.atomic
+def get_or_create_company(*, client, name: str, tax_id: str | None, company_type="provider"):
+    """
+    Devuelve una Company existente o la crea si no existe.
+    Prioridad:
+        1. tax_id
+        2. nombre exacto (case insensitive)
+    """
+
+    tax_id = normalize_tax_id(tax_id)
+    name = normalize_name(name)
+
+    company = None
+
+    # 1️⃣ Buscar por CIF (regla principal)
+    if tax_id:
+        company = (
+            Company.objects
+            .select_for_update()
+            .filter(client=client, tax_id=tax_id)
+            .first()
+        )
+
+    # 2️⃣ Buscar por nombre exacto si no hay CIF o no se encontró
+    if not company and name:
+        company = (
+            Company.objects
+            .select_for_update()
+            .filter(client=client, name__iexact=name)
+            .first()
+        )
+
+    # 3️⃣ Crear si no existe
+    if not company:
+        company = Company.objects.create(
+            client=client,
+            name=name,
+            tax_id=tax_id,
+            type=company_type,
+        )
+
+    return company
+
+
+
 class DocumentIngestAPIView(APIView):
     permission_classes = [HasApiKey]
 
@@ -55,13 +112,11 @@ class DocumentIngestAPIView(APIView):
         )
 
         # Obtener o crear Company
-        company, _created = Company.objects.get_or_create(
+        company = get_or_create_company(
             client=request.client,
+            name=data["provider_name"],
             tax_id=data["provider_tax_id"],
-            defaults={
-                "name": data["provider_name"],
-                "type": data.get("provider_type", "provider"),
-            }
+            company_type=data.get("provider_type", "provider"),
         )
 
         document = Document.objects.create(

@@ -18,6 +18,14 @@ class Company(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     edited_at = models.DateTimeField(blank=True, null=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["client", "tax_id"],
+                name="unique_company_per_client_tax_id",
+            ),
+        ]
+
     def __str__(self):
         return f"{self.name} ({self.get_type_display()})"
 

@@ -72,7 +72,7 @@
         <th>Nombre</th>
         <th>Proveedor</th>
         <th>Total (€)</th>
-        {% comment %} <th>Fecha</th> {% endcomment %}
+        <th>Fecha</th>
         <th>Estado</th>
         <th>Revisión</th>
         <th>Acción</th>
@@ -101,14 +101,14 @@
           {% endif %}
         </td>
 
-        {% comment %} <!-- Fecha formateada -->
+        <!-- Fecha formateada -->
         <td class="issue_date">
           {% if doc.issue_date %}
             {{ doc.issue_date|date:"d/m/Y" }}
           {% else %}
             -
           {% endif %}
-        </td> {% endcomment %}
+        </td>
 
         <!-- Estado (status) -->
         <td>
@@ -120,6 +120,9 @@
         <!-- Nivel de revisión -->
         <td>
         <span class="review_level {{ doc.review_level }}">
+          {% if doc.status == "rejected" %}
+            Rechazado
+          {% endif %}
           {% if doc.review_level == "manual" %}
             Manual
           {% elif doc.review_level == "auto"%}

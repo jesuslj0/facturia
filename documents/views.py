@@ -138,6 +138,8 @@ def reject_document(request, pk):
     if request.method == "POST":
         document = get_object_or_404(Document, pk=pk)
         document.status = "rejected"
+        document.review_level = "manual"
+        document.edited_at = timezone.now()
         document.save()
         messages.success(request, "El documento ha sido rechazado.")
         return redirect("documents:detail", pk=document.pk)
