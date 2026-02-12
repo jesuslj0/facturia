@@ -142,59 +142,58 @@
                     {% endif %}
                 </div>
             </div>
-        </form>
-        <!-- Acciones -->
-        <div class="actions">
+            <!-- Acciones -->
+            <div class="actions">
             <!-- Revision aprobado o rechazar -->
             {% if document.review_level == "required" or document.review_level == "recommended" %}
-                <button type="submit" class="btn-save">Guardar cambios</button>
+            <button type="submit" class="btn-save">Guardar cambios</button>
             {% endif %}
             {% if document.status == 'pending' %}
                 <button type="submit" class="btn-approve">Aprobar</button>
                 <button type="submit" class="btn-reject">Rechazar</button>
-            {% endif %}
-        </div>
-
-        <div class="review_info">
-            <span class="label">Estado del documento</span>
-
-            {% if document.approved_at %}
+                {% endif %}
+            </div>
+            
+            <div class="review_info">
+                <span class="label">Estado del documento</span>
+                
+                {% if document.approved_at %}
                 <span class="content">
-                Documento aprobado el {{ document.approved_at|date:"d-m-Y" }}.
+                    Documento aprobado el {{ document.approved_at|date:"d-m-Y" }}.
                 </span>
-            {% elif document.edited_at %}
+                {% elif document.edited_at %}
                 <span class="content">
-                Documento editado manualmente el {{ document.edited_at|date:"d-m-Y" }}.
+                    Documento editado manualmente el {{ document.edited_at|date:"d-m-Y" }}.
                 </span>
-            {% elif document.status == "rejected" %}
+                {% elif document.status == "rejected" %}
                 <span class="content">
-                El documento ha sido rechazado.
+                    El documento ha sido rechazado.
                 </span>
-            {% elif document.status == "approved" and not document.approved_at %}
+                {% elif document.status == "approved" and not document.approved_at %}
                 <span class="content">
-                Documento aprovado automaticamente.
+                    Documento aprovado automaticamente.
                 </span>
-            {% else %}
+                {% else %}
                 <span class="content">
                 Documento pendiente de revisión.
-                </span>
+            </span>
             {% endif %}
-
+            
             <span class="label">Nivel de confianza</span>
-
             {% if document.review_level == "required" %}
-                <span class="content">
+            <span class="content">
                 Revisión obligatoria. Los datos extraídos pueden ser incorrectos.
-                </span>
+            </span>
             {% elif document.review_level == "recommended" %}
-                <span class="content">
+            <span class="content">
                 Revisión recomendada. Algunos campos podrían no ser exactos.
-                </span>
+            </span>
             {% else %}
-                <span class="content">
+            <span class="content">
                 Alta confianza. Los datos extraídos son consistentes.
-                </span>
+            </span>
             {% endif %}
+        </form>
         </div>
     </div>
 </div>
