@@ -105,8 +105,6 @@ class Document(models.Model):
     confidence = models.JSONField(default=dict)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     review_level = models.CharField(max_length=20, choices=REVIEW_LEVEL_CHOICES, default='required')
-    provider_name = models.CharField(max_length=255, null=False, blank=False, default="Proveedor desconocido")
-    provider_tax_id = models.CharField(max_length=50, null=False, blank=False, default="N/A")
     issue_date = models.DateField(null=True, blank=True)
     base_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
