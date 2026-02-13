@@ -14,5 +14,6 @@ class DocumentAdmin(admin.ModelAdmin):
 
 @register(Company)
 class CompanyAdmin(admin.ModelAdmin):
-    list_display = ['name', 'type', 'tax_id']
-    search_fields = ['name', 'tax_id']
+    list_display = ['name', 'client', 'type', 'tax_id']
+    list_filter = ['client', 'type']
+    search_fields = ['name', 'tax_id', 'client__name']
