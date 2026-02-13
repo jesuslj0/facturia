@@ -13,7 +13,7 @@ class Company(models.Model):
         related_name="companies"
     )
     name = models.CharField(max_length=255)
-    tax_id = models.CharField(max_length=50, null=True, blank=True, unique=True)
+    tax_id = models.CharField(max_length=50, null=True, blank=True)
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
     edited_at = models.DateTimeField(blank=True, null=True)
