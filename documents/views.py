@@ -108,9 +108,8 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
 
         # --- Guardar cambios ---
         if action == "save":
-            # Solo permitir edición si requiere revisión
-            if self.object.review_level not in ["required", "recommended"]:
-                messages.warning(request, "No se puede editar este documento.")
+            if self.object.status == "rejected":
+                messages.warning(request, "El documento ha sido rechazado. No se pueden realizar cambios.")
                 return redirect("documents:detail", pk=self.object.pk)
 
             # Obtener datos del formulario
@@ -137,7 +136,6 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
                 self.object.total_amount = float(total_amount)
             if flow:
                 self.object.flow = flow
-            self.object.save()
 
             # Marcar como revisado manualmente
             self.object.review_level = "manual"

@@ -118,6 +118,9 @@ class Document(models.Model):
             return "Revisión obligatoria"
         return "-"
 
+    @property 
+    def is_editable(self):
+        return self.status in ["pending"]
 
     client = models.ForeignKey(
         Client, on_delete=models.CASCADE, 
