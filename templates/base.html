@@ -33,7 +33,7 @@
         <div class="nav-toggle-container">
         <button id="nav-toggle"><i class="fa-solid fa-bars-staggered"></i></button>
         </div>
-        <nav class="nav open">
+        <nav class="nav">
         <a href="{% url 'dashboard' %}"><i class="fa-regular fa-chart-bar"></i> Dashboard</a>
         <a href="{% url 'documents:list' %}"><i class="fa-regular fa-file-lines"></i> Documentos</a>
         <form action="{% url 'logout' %}" method="post">
@@ -68,17 +68,41 @@
       const nav = document.querySelector('.nav');
       const toggleNavBtn = document.getElementById('nav-toggle');
 
+      const getNavStatus = () => {
+        const data = JSON.parse(localStorage.getItem('navStatus') || '{}');
+        return data.open || false;
+      };
+
+      const setNavStatus = (status) => {
+        localStorage.setItem('navStatus', JSON.stringify({ open: status }));
+      };
+
+      const updateToggleBtn = () => {
+        if (nav.classList.contains('open')) {
+          toggleNavBtn.innerHTML = '<i class="fa-solid fa-bars-staggered"></i>';
+          toggleNavBtn.setAttribute('aria-label', 'Cerrar menú');
+        } else {
+          toggleNavBtn.innerHTML = '<i class="fa-solid fa-bars"></i>';
+          toggleNavBtn.setAttribute('aria-label', 'Abrir menú');
+        }
+      };
+
+      // Toggle nav
       toggleNavBtn.addEventListener('click', () => {
         nav.classList.toggle('open');
+        setNavStatus(nav.classList.contains('open'));
+        updateToggleBtn();
+      });
 
-        nav.classList.contains('open') ? (
-          toggleNavBtn.innerHTML = '<i class="fa-solid fa-bars-staggered"></i>',
-          toggleNavBtn.setAttribute('aria-label', 'Cerrar menú')
-        ) : (
-          toggleNavBtn.innerHTML = '<i class="fa-solid fa-bars"></i>',
-          toggleNavBtn.setAttribute('aria-label', 'Abrir menú')
-        );
-      });  
+      // Inicialización al cargar
+      window.addEventListener('load', () => {
+        if (getNavStatus()) {
+          nav.classList.add('open');
+        } else {
+          nav.classList.remove('open');
+        }
+        updateToggleBtn();
+      });
     </script>
   {% endblock %}
 

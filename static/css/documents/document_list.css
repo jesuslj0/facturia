@@ -159,42 +159,97 @@
 /* Filtros y busqueda */
 .filters-bar {
   display: flex;
+  justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 1rem;
+  align-items: start;
+}
+
+.filters-bar .left-filters {
+  display: grid;
   align-items: center;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+label[for="q"] {
+  color: var(--body-fg-color);
+  font-weight: 500;
+}
+
+label[for="q"] button {
+  color: var(--body-fg-color);
+  font-weight: 500;
+  margin-right: 5px;
+  background-color: var(--enfasis-color-dark);
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  border: 2px solid var(--border-color-btn);
+  cursor: pointer;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+label[for="q"] button:hover {
+  filter: brightness(1.2);
+}
+
+.filters-bar .right-filters {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.right-filters .buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-self: end;
+  grid-column: 2;
+  justify-self: end;
 }
 
 @media (max-width: 480px) {
+  /* Contenedor principal de filtros */
   .filters-bar {
     display: flex;
     flex-direction: column;
-    align-items: start;
-    gap: 0.5rem;
+    align-items: stretch; /* ocupa todo el ancho disponible */
+    gap: 0.75rem; /* un poquito más de espacio entre filas */
+    padding: 0.5rem; /* opcional: separa del borde de pantalla */
   }
-}
 
-@media (min-width: 480px) {
-  .filters-bar {
+  /* Filtros izquierdos */
+  .filters-bar .left-filters {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr; /* dos columnas iguales */
+    grid-auto-rows: auto; /* altura automática por contenido */
     gap: 0.5rem;
   }
-}
 
-@media (min-width: 768px) {
-  .filters-bar {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 0.5rem;
+  /* El buscador ocupa toda la fila */
+  .left-filters .search {
+    grid-column: 1 / -1;
   }
-}
 
-@media (min-width: 1024px) {
-  .filters-bar {
+  /* Filtros derechos */
+  .filters-bar .right-filters {
     display: flex;
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
     gap: 0.5rem;
+    margin-top: 0.5rem; /* separación respecto a left-filters */
+  }
+
+  /* Opcional: selects y botones ocupen todo el ancho */
+  .filters-bar select,
+  .filters-bar input,
+  .filters-bar button {
+    width: 100%;
+    box-sizing: border-box;
   }
 }
 
@@ -217,6 +272,7 @@
   border-radius: 6px;
   background-color: var(--enfasis-color-dark);
   color: var(--body-fg-color);
+  border: 2px solid var(--border-color-btn);
   cursor: pointer;
   transition: filter 0.2s;
 }
@@ -233,7 +289,7 @@
   background-color: var(--card-bg-color);
   padding: 0.45rem 0.6rem;
   border-radius: 6px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-warning);
   cursor: pointer;
 }
 
@@ -266,7 +322,7 @@
   padding: 0.45rem 0.8rem;
   border-radius: 6px;
   background-color: var(--enfasis-color-dark);
-  border: 2px solid var(--border-color);
+  border: 2px solid var(--border-color-btn);
   color: var(--body-fg-color);
   cursor: pointer; 
   transition: filter 0.2s;

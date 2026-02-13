@@ -21,6 +21,7 @@ def get_filtered_documents(request):
     date_from = request.GET.get("date_from")
     date_to = request.GET.get("date_to")
     document_type = request.GET.get("document_type")
+    flow = request.GET.get("flow")
 
     if q:
         qs = qs.filter(
@@ -48,6 +49,9 @@ def get_filtered_documents(request):
 
     if document_type: 
         qs = qs.filter(document_type=document_type)
+
+    if flow:
+        qs = qs.filter(flow=flow)
         
     return qs.order_by("-issue_date", "-created_at")
 

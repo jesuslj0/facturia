@@ -6,6 +6,7 @@
   --enfasis-color-dark: #0a7bb0;
   --muted-color: #7c8b9d;
   --border-color: rgba(255, 255, 255, 0.08);
+  --border-color-btn: #1370cd;
 
   --color-success: #22c55e;
   --color-warning: #facc15;
@@ -58,21 +59,24 @@ h1, h2, h3, h4, h5, p {
   margin-right: 5px;
 }
 
-/* Navegación */
 .app-header .nav {
-  display: none;
-}
-
-.app-header .nav.open {
-  display: flex;
+  display: flex; /* siempre visible en desktop */
+  flex-direction: row; /* horizontal por defecto */
+  gap: 20px;
 }
 
 @media (max-width: 768px) {
   .app-header .nav {
+    display: none; /* cerrado por defecto */
     flex-direction: column;
     gap: 10px;
   }
+
+  .app-header .nav.open {
+    display: flex; /* abierto al hacer toggle */
+  }
 }
+
 
 /* Botón de navegación */
 .nav-toggle-container {
