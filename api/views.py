@@ -41,8 +41,8 @@ def normalize_name(name: str | None) -> str:
         return ""
     return name.strip()
 
-from django.db import transaction
-from django.db.utils import IntegrityError
+from django.db import transaction, IntegrityError
+
 @transaction.atomic
 def get_or_create_company(*, client, name: str, tax_id: str | None, company_type="provider"):
     tax_id = normalize_tax_id(tax_id)
@@ -50,7 +50,7 @@ def get_or_create_company(*, client, name: str, tax_id: str | None, company_type
 
     company = None
 
-    # 1️⃣ Buscar por CIF (regla principal)
+    # 1️⃣ Buscar por CIF
     if tax_id:
         company = (
             Company.objects
@@ -59,7 +59,7 @@ def get_or_create_company(*, client, name: str, tax_id: str | None, company_type
             .first()
         )
 
-    # 2️⃣ Buscar por nombre exacto si no hay CIF o no se encontró
+    # 2️⃣ Buscar por nombre
     if not company and name:
         company = (
             Company.objects
@@ -71,16 +71,7 @@ def get_or_create_company(*, client, name: str, tax_id: str | None, company_type
     if company:
         return company
 
-    # 3️⃣ Crear si no existe
-    if not company:
-        company = Company.objects.create(
-            client=client,
-            name=name,
-            tax_id=tax_id,
-            type=company_type,
-        )
-
-    # 3️⃣ Crear con protección real
+    # 3️⃣ Crear con protección contra race condition
     try:
         company = Company.objects.create(
             client=client,
@@ -96,7 +87,6 @@ def get_or_create_company(*, client, name: str, tax_id: str | None, company_type
             company = Company.objects.filter(client=client, name__iexact=name).first()
 
     return company
-
 
 
 class DocumentIngestAPIView(APIView):
