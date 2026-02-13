@@ -42,15 +42,9 @@ def normalize_name(name: str | None) -> str:
     return name.strip()
 
 from django.db import transaction
+from django.db.utils import IntegrityError
 @transaction.atomic
 def get_or_create_company(*, client, name: str, tax_id: str | None, company_type="provider"):
-    """
-    Devuelve una Company existente o la crea si no existe.
-    Prioridad:
-        1. tax_id
-        2. nombre exacto (case insensitive)
-    """
-
     tax_id = normalize_tax_id(tax_id)
     name = normalize_name(name)
 
@@ -74,6 +68,9 @@ def get_or_create_company(*, client, name: str, tax_id: str | None, company_type
             .first()
         )
 
+    if company:
+        return company
+
     # 3️⃣ Crear si no existe
     if not company:
         company = Company.objects.create(
@@ -82,6 +79,21 @@ def get_or_create_company(*, client, name: str, tax_id: str | None, company_type
             tax_id=tax_id,
             type=company_type,
         )
+
+    # 3️⃣ Crear con protección real
+    try:
+        company = Company.objects.create(
+            client=client,
+            name=name,
+            tax_id=tax_id,
+            type=company_type,
+        )
+    except IntegrityError:
+        # Otro proceso la creó justo antes
+        if tax_id:
+            company = Company.objects.filter(client=client, tax_id=tax_id).first()
+        if not company and name:
+            company = Company.objects.filter(client=client, name__iexact=name).first()
 
     return company
 

@@ -15,6 +15,7 @@ def get_filtered_documents(request):
             client__clientuser__user=request.user
         )
     q = request.GET.get("q")
+    company = request.GET.get("company")
     status = request.GET.get("status")
     review = request.GET.get("review")
     date_from = request.GET.get("date_from")
@@ -23,9 +24,11 @@ def get_filtered_documents(request):
 
     if q:
         qs = qs.filter(
-            Q(original_name__icontains=q) | Q(provider_name__icontains=q)
+            Q(original_name__icontains=q) | Q(company__name__icontains=q)
         )
 
+    if company:
+        qs = qs.filter(company__name=company)
     if status:
         qs = qs.filter(status=status)
 
@@ -48,6 +51,7 @@ def get_filtered_documents(request):
         
     return qs.order_by("-issue_date", "-created_at")
 
+from documents.models import Company
 class DocumentListView(LoginRequiredMixin, ListView): 
     model = Document
     template_name = "documents/document_list.html"
@@ -61,6 +65,7 @@ class DocumentListView(LoginRequiredMixin, ListView):
         first_doc = self.get_queryset().first()
         context["client"] = first_doc.client if first_doc else None
         context["document_types"] = Document.TYPE_CHOICES
+        context["companies"] = Company.objects.filter(client__clientuser__user=self.request.user) 
         return context
     
 

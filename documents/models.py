@@ -23,8 +23,25 @@ class Company(models.Model):
             models.UniqueConstraint(
                 fields=["client", "tax_id"],
                 name="unique_company_per_client_tax_id",
+                condition=models.Q(tax_id__isnull=False),
             ),
         ]
+
+        indexes = [
+            models.Index(fields=["client", "tax_id"]),
+            models.Index(fields=["client", "name"]),
+        ]
+    
+    def save(self, *args, **kwargs):
+        if self.tax_id:
+            self.tax_id = (
+                self.tax_id.replace(" ", "").replace("-", "").upper(
+                    
+                )
+            )
+        if self.name: 
+            self.name = self.name.strip()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.get_type_display()})"
@@ -50,7 +67,7 @@ class Document(models.Model):
     ]
 
     REVIEW_LEVEL_CHOICES = [
-        ('auto', 'Aprovado automáticamente'),
+        ('auto', 'Aprobado automáticamente'),
         ('manual', 'Manual'),
         ('recommended', 'Revisión recomendada'),
         ('required', 'Revisión requerida'),

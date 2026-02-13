@@ -14,6 +14,13 @@
   placeholder="Buscar por nombre o proveedor"
   value="{{ request.GET.q }}"
   >
+  <select name="company">
+    <option value="">Proveedor</option>
+    {% for company in companies %}
+    <option value="{{ company.name }}" {% if request.GET.company == company.name %}selected{% endif %}>{{ company.name }}</option>
+    {% endfor %}
+  </select>
+
   <select name="document_type">
     <option value="">Tipo de documento</option>
     {% for key, value in document_types %}
