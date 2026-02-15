@@ -6,7 +6,7 @@
 <div class="container dashboard">
   <div class="dashboard-header">
     <h1><i class="fa-regular fa-chart-bar"></i> Dashboard - <span class="client-name">{{ client.name }}</span></h1>
-    <p>Tu resumen de documentos recientes</p>
+    <p>Tienes {{ pending_count }} documentos por revisar</p>
   </div>
 
   <!-- KPIs -->
@@ -38,7 +38,6 @@
             <tr>
               <th>Proveedor</th>
               <th>Fecha</th>
-              <th>Tipo</th>
               <th>Total</th>
               <th></th>
             </tr>
@@ -51,7 +50,6 @@
                 <tr>
                   <td>{{ doc.company.name|default:"—" }}</td>
                   <td>{{ doc.issue_date|date:"d/m/Y"|default:"—" }}</td>
-                  <td>{{ doc.get_document_type_display|capfirst|default:"—" }}</td>
                   <td class="amount">{% if doc.total_amount %}{{ doc.total_amount|floatformat:2 }}{% else %}—{% endif %} €</td>
                   <td class="text-end">
                     <a href="{% url 'documents:detail' doc.id %}" class="btn btn-sm btn-primary">
