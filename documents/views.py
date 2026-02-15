@@ -70,6 +70,7 @@ class DocumentListView(LoginRequiredMixin, ListView):
         context["client"] = first_doc.client if first_doc else None
         context["document_types"] = Document.TYPE_CHOICES
         context["companies"] = Company.objects.filter(client__clientuser__user=self.request.user) 
+        context["total_count"] = self.get_queryset().count()
         return context
     
 
@@ -92,6 +93,8 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         if action == "approve" and self.object.status == "pending":
             self.object.status = "approved"
             self.object.review_level = "manual"
+            self.objects.approved_by = request.user
+            self.objects.is_auto_approved = False
             self.object.approved_at = timezone.now()
             self.object.save()
             messages.success(request, "El documento ha sido aprobado.")
@@ -101,7 +104,8 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         if action == "reject" and self.object.status == "pending":
             self.object.status = "rejected"
             self.object.review_level = "manual"
-            self.object.edited_at = timezone.now()
+            self.object.rejected_at = timezone.now()
+            self.object.rejected_by = request.user
             self.object.save()
             messages.error(request, "El documento ha sido rechazado.")
             return redirect("documents:detail", pk=self.object.pk)
@@ -109,7 +113,7 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         # --- Guardar cambios ---
         if action == "save":
             if self.object.status == "rejected":
-                messages.warning(request, "El documento ha sido rechazado. No se pueden realizar cambios.")
+                messages.warning(request, f"El documento ha sido rechazado por {self.object.rejected_by}. No se pueden realizar cambios.")
                 return redirect("documents:detail", pk=self.object.pk)
 
             # Obtener datos del formulario
@@ -139,6 +143,8 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
 
             # Marcar como revisado manualmente
             self.object.review_level = "manual"
+            self.object.is_auto_approved = False
+            self.reviewed_by = request.user
             self.object.edited_at = timezone.now()
             self.object.save()
 

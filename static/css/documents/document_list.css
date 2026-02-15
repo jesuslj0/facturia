@@ -2,8 +2,14 @@
 .page-title {
   margin: 1.5rem 0 1rem;
   font-size: 1.2rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--body-fg-color);
+}
+
+.page-title > .document-count {
+  font-size: 0.85rem;
+  color: var(--muted-color);
+  font-weight: 600;
 }
 
 .client-name {
@@ -157,12 +163,43 @@
 
 
 /* Filtros y busqueda */
-.filters-bar {
+
+.filters-container {
   display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#filters-toggle {
+  display: inline-block;
+  cursor: pointer;
+  border: none;
+  background-color: var(--card-bg-color);
+  border-bottom: 2px solid var(--border-color-btn);
+  padding: 0.5rem 1rem;
+  border-radius: 6px 6px 0 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+  color: var(--body-fg-color);
+  font-size: 12px;
+}
+
+#filters-toggle.open {
+  background-color: transparent;
+  color: var(--muted-color);
+}
+
+.filters-bar {
+  display: none;
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 1rem;
   align-items: start;
+}
+
+.filters-bar.open {
+  display: flex;
 }
 
 .filters-bar .left-filters {
@@ -215,7 +252,7 @@ label[for="q"] button:hover {
 
 @media (max-width: 480px) {
   /* Contenedor principal de filtros */
-  .filters-bar {
+  .filters-bar.open {
     display: flex;
     flex-direction: column;
     align-items: stretch; /* ocupa todo el ancho disponible */
@@ -309,12 +346,27 @@ label[for="q"] button:hover {
 }
 
 /* Exportación */
-
 .export-bar {
   display: flex;
   justify-content: start;
   gap: 10px;
   margin: 1rem 0;
+  align-items: center;
+}
+
+.export-bar .export-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.export-count {
+  font-size: 1rem;
+  color: var(--body-fg-color);
+  font-weight: 600;
+}
+.export-label {
+  font-size: 0.85rem;
+  color: var(--muted-color);
 }
 
 .export-bar a, .export-bar button {
@@ -347,3 +399,4 @@ label[for="q"] button:hover {
   background-color: var(--card-bg-color);
   color: var(--body-fg-color);
 }
+

@@ -29,7 +29,7 @@
 
   <!-- Lista de documentos -->
   <div class="card mt-4">
-    <h2>Documentos pendientes</h2>
+    <h2 style="margin: 0px">Documentos pendientes</h2>
 
     {% if pending_documents %}
       <div class="table-wrapper">
@@ -39,7 +39,7 @@
               <th>Proveedor</th>
               <th>Fecha</th>
               <th>Tipo</th>
-              <th>Revisión</th>
+              <th>Total</th>
               <th></th>
             </tr>
           </thead>
@@ -52,11 +52,7 @@
                   <td>{{ doc.company.name|default:"—" }}</td>
                   <td>{{ doc.issue_date|date:"d/m/Y"|default:"—" }}</td>
                   <td>{{ doc.get_document_type_display|capfirst|default:"—" }}</td>
-                  <td>
-                    <span class="review_level {{ doc.review_level|default:"" }}">
-                      {{ doc.get_review_level_display|capfirst|default:"—" }}
-                    </span>
-                  </td>
+                  <td class="amount">{% if doc.total_amount %}{{ doc.total_amount|floatformat:2 }}{% else %}—{% endif %} €</td>
                   <td class="text-end">
                     <a href="{% url 'documents:detail' doc.id %}" class="btn btn-sm btn-primary">
                       Ver

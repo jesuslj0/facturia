@@ -5,7 +5,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/documents/document_list.css' %}">
 {% endblock %}
 {% block content %}
-<h1 class="page-title">Previsualización de exportación</h1>
+<h1 class="page-title">Previsualización de exportación <span class="document-count">({{ documents|length }} documentos)</span></h1>
 <form method="post" action="{% url 'documents:export' %}">
     {% csrf_token %}
     <div class="table-wrapper">

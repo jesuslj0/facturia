@@ -152,7 +152,8 @@
 }
 
 .dashboard .table td {
-    color: var(--muted-color)
+    color: var(--muted-color);
+    text-align: center;
 }
 
 /* Cabecera ligeramente más marcada */

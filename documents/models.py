@@ -2,6 +2,9 @@ from django.db import models
 from clients.models import Client
 import os
 
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
 class Company(models.Model):
     TYPE_CHOICES = [
         ("provider", "Proveedor"),
@@ -149,8 +152,32 @@ class Document(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     edited_at = models.DateTimeField(blank=True, null=True)
     approved_at = models.DateTimeField(blank=True, null=True)
+    rejected_at = models.DateTimeField(blank=True, null=True)
     flow = models.CharField(max_length=20, choices=FLOW_CHOICES, default="in")
     flow_source = models.CharField(max_length=20, choices=FLOW_SOURCE_CHOICES, default="auto")
+    is_auto_approved = models.BooleanField(default=False, db_index=True)
+    review_started_at = models.DateTimeField(blank=True, null=True, db_index=True)
+    reviewed_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, 
+        related_name="reviewed_documents",
+        null=True
+    )
+    rejection_reason = models.CharField(max_length=255, null=True, blank=True)
+    rejected_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, 
+        related_name="rejected_documents",
+        null=True, 
+        blank=True
+    )
+    confidence_global = models.DecimalField(max_digits=5, decimal_places=4, null=True, blank=True, db_index=True)
+
+
+    indexes = [
+        models.Index(fields=["client", "status"]),
+        models.Index(fields=["client", "review_level"]),
+        models.Index(fields=["client", "created_at"]),
+        models.Index(fields=["client", "company"]),
+    ]
 
     class Meta:
         ordering = ["-created_at"]

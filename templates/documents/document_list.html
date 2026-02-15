@@ -7,25 +7,27 @@
 
 {% block content %}
 <h1 class="page-title"><i class="fa-regular fa-file-lines"></i> Tus documentos</h1>
-<form method="get" class="filters-bar">
-  <div class="left-filters">
-    <div class="search">
-      <input
-      type="text"
-      name="q"
-      placeholder="Buscar por nombre o empresa"
-      value="{{ request.GET.q }}"
-      >
-      <label for="q"><button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button></label>
-    </div>
-    <select name="company">
-      <option value="">Empresa</option>
-      {% for company in companies %}
-      <option value="{{ company.name }}" {% if request.GET.company == company.name %}selected{% endif %}>{{ company.name }}</option>
-      {% endfor %}
-    </select>
-  
-    <select name="document_type">
+<div class="filters-container">
+  <button id="filters-toggle">ocultar filtros</button>
+  <form method="get" class="filters-bar">
+    <div class="left-filters">
+      <div class="search">
+        <input
+        type="text"
+        name="q"
+        placeholder="Buscar por nombre o empresa"
+        value="{{ request.GET.q }}"
+        >
+        <label for="q"><button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button></label>
+      </div>
+      <select name="company">
+        <option value="">Empresa</option>
+        {% for company in companies %}
+        <option value="{{ company.name }}" {% if request.GET.company == company.name %}selected{% endif %}>{{ company.name }}</option>
+        {% endfor %}
+      </select>
+      
+      <select name="document_type">
       <option value="">Tipo de documento</option>
       {% for key, value in document_types %}
       <option value="{{ key }}" {% if request.GET.document_type == key %}selected{% endif %}>{{ value }}</option>
@@ -81,9 +83,14 @@
     </div>
   </div>
 </form>
+</div>
 <div class="export-bar">
-  <a href="{% url 'documents:export' %}?{{ request.GET.urlencode }}" class="btn-primary">Exportar filtrados <i class="fa-solid fa-download"></i></a>
+  <a href="{% url 'documents:export' %}?{{ request.GET.urlencode }}" class="btn-primary">Exportar <i class="fa-solid fa-download"></i></a>
   <a href="{% url 'documents:export_preview' %}?{{ request.GET.urlencode }}" class="btn-secondary">Vista previa <i class="fa-regular fa-eye"></i></a>
+  <div class="export-summary">
+    <span class="export-count">{{ total_count }}</span>
+    <span class="export-label">documentos</span>
+  </div>
 </div>
 
 <div class="table-wrapper">
@@ -162,4 +169,38 @@
     </tbody>
   </table>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+  <script>
+      const toggleFiltersBtn = document.getElementById("filters-toggle");
+      const filtersBar = document.querySelector(".filters-bar");
+
+      const filtersStatus = localStorage.getItem("filtersStatus");
+      if (filtersStatus === "open") {
+        filtersBar.classList.add("open");
+        toggleFiltersBtn.classList.add("open");
+        toggleFiltersBtn.innerHTML = "ocultar filtros</i>";
+      } else {
+        filtersBar.classList.remove("open");
+        toggleFiltersBtn.classList.remove("open");
+        toggleFiltersBtn.innerHTML = "mostrar filtros";
+      }
+
+      toggleFiltersBtn.addEventListener("click", () => {
+        if (filtersBar.classList.contains("open")) {
+          localStorage.setItem("filtersStatus", "closed");
+        } else {
+          localStorage.setItem("filtersStatus", "open");
+        }
+        toggleFiltersBtn.classList.toggle("open");
+        filtersBar.classList.toggle("open");
+        if (filtersBar.classList.contains("open")) {
+          toggleFiltersBtn.innerHTML = "ocultar filtros";
+        } else {
+          toggleFiltersBtn.innerHTML = "mostrar filtros";
+        }
+      });
+  </script>
 {% endblock %}
