@@ -85,90 +85,101 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
     
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-
-        # Obtener acción pulsada
         action = request.POST.get("action")
 
         # --- Aprobar ---
         if action == "approve" and self.object.status == "pending":
-            approve_document(request)
+            return approve_document(request, self.object)
 
         # --- Rechazar ---
         if action == "reject" and self.object.status == "pending":
-            reject_document(request)
+            return reject_document(request, self.object)
 
         # --- Guardar cambios ---
         if action == "save":
-            if self.object.status == "rejected":
-                messages.warning(request, f"El documento ha sido rechazado por {self.object.rejected_by}. No se pueden realizar cambios.")
-                return redirect("documents:detail", pk=self.object.pk)
-
-            # Obtener datos del formulario
-            issue_date = request.POST.get("issue_date")
-            base_amount = request.POST.get("base_amount")
-            tax_percentage = request.POST.get("tax_percentage")
-            tax_amount = request.POST.get("tax_amount")
-            total_amount = request.POST.get("total_amount")
-            invoice_number = request.POST.get("invoice_number")
-            flow = request.POST.get("flow")
-
-            # Guardar cambios si vienen valores
-            if invoice_number: 
-                self.object.invoice_number = invoice_number
-            if issue_date:
-                self.object.issue_date = issue_date
-            if base_amount:
-                self.object.base_amount = float(base_amount)
-            if tax_percentage:
-                self.object.tax_percentage = float(tax_percentage)
-            if tax_amount:
-                self.object.tax_amount = float(tax_amount)
-            if total_amount:
-                self.object.total_amount = float(total_amount)
-            if flow:
-                self.object.flow = flow
-
-            # Marcar como revisado manualmente
-            self.object.review_level = "manual"
-            self.object.is_auto_approved = False
-            self.reviewed_by = request.user
-            self.object.edited_at = timezone.now()
-            self.object.save()
-
-            messages.success(request, "Cambios guardados correctamente.")
-            return redirect("documents:detail", pk=self.object.pk)
+            return save_document(request, self.object)
 
         # Si no hay acción reconocida, redirigir
         messages.warning(request, "Acción no reconocida.")
         return redirect("documents:detail", pk=self.object.pk)
     
 
-def approve_document(request, pk):
-    if request.method == "POST":
-        document = get_object_or_404(Document, pk=pk)
-        document.status = "approved"
-        document.review_level = "manual"
-        document.reviewed_by = request.user
-        document.approved_at = timezone.now()
-        document.save()
-        messages.success(request, "El documento ha sido aprobado.")
+def approve_document(request, document):
+    document.status = "approved"
+    document.is_auto_approved = False
+    document.review_level = "manual"
+    document.reviewed_by = request.user
+    document.approved_at = timezone.now()
+    document.save()
+    messages.success(request, "El documento ha sido aprobado.")
+    return redirect("documents:detail", pk=document.pk)
+
+
+def reject_document(request, document):
+    document.is_auto_approved = False   
+    document.status = "rejected"
+    document.review_level = "manual"
+    document.reviewed_by = request.user
+    document.rejected_by = request.user
+    document.save()
+    messages.success(request, "El documento ha sido rechazado.")
+    return redirect("documents:detail", pk=document.pk)
+
+from decimal import Decimal, InvalidOperation
+def save_document(request, document):
+    if document.status == "rejected":
+        messages.error(request, "El documento ha sido rechazado.")
         return redirect("documents:detail", pk=document.pk)
-    else:
-        return redirect("documents:detail", pk=pk)
 
+    # Obtener datos del formulario
+    issue_date = request.POST.get("issue_date")
+    base_amount = request.POST.get("base_amount")
+    tax_percentage = request.POST.get("tax_percentage")
+    tax_amount = request.POST.get("tax_amount")
+    total_amount = request.POST.get("total_amount")
+    invoice_number = request.POST.get("invoice_number")
+    flow = request.POST.get("flow")
 
-def reject_document(request, pk):
-    if request.method == "POST":
-        document = get_object_or_404(Document, pk=pk)
-        document.status = "rejected"
-        document.review_level = "manual"
-        document.edited_at = timezone.now()
-        document.save()
-        messages.success(request, "El documento ha sido rechazado.")
+    # Validar importes
+    try:
+        new_base = Decimal(base_amount) if base_amount else None
+        new_tax_percentage = Decimal(tax_percentage) if tax_percentage else None
+        new_tax_amount = Decimal(tax_amount) if tax_amount else None
+        new_total = Decimal(total_amount) if total_amount else None
+    except InvalidOperation:
+        messages.error(request, "Importe inválido en uno de los campos.")
         return redirect("documents:detail", pk=document.pk)
-    else:
-        return redirect("documents:detail", pk=pk)
 
+    # Asignar solo si pasó validación
+    if invoice_number:
+        document.invoice_number = invoice_number
+
+    if issue_date:
+        document.issue_date = issue_date
+
+    if new_base is not None:
+        document.base_amount = new_base
+
+    if new_tax_percentage is not None:
+        document.tax_percentage = new_tax_percentage
+
+    if new_tax_amount is not None:
+        document.tax_amount = new_tax_amount
+
+    if new_total is not None:
+        document.total_amount = new_total
+
+    if flow:
+        document.flow = flow
+
+    # Marcar como revisado manualmente
+    document.review_level = "manual"
+    document.is_auto_approved = False
+    document.reviewed_by = request.user
+    document.edited_at = timezone.now()
+    document.save()
+    messages.success(request, "Cambios guardados correctamente.")
+    return redirect("documents:detail", pk=document.pk)
 
 class DashboardView(LoginRequiredMixin,TemplateView):
     template_name="dashboard.html"
