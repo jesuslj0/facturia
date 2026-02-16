@@ -93,8 +93,8 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         if action == "approve" and self.object.status == "pending":
             self.object.status = "approved"
             self.object.review_level = "manual"
-            self.objects.approved_by = request.user
-            self.objects.is_auto_approved = False
+            self.object.approved_by = request.user
+            self.object.is_auto_approved = False
             self.object.approved_at = timezone.now()
             self.object.save()
             messages.success(request, "El documento ha sido aprobado.")
