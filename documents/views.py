@@ -91,24 +91,11 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
 
         # --- Aprobar ---
         if action == "approve" and self.object.status == "pending":
-            self.object.status = "approved"
-            self.object.review_level = "manual"
-            self.object.approved_by = request.user
-            self.object.is_auto_approved = False
-            self.object.approved_at = timezone.now()
-            self.object.save()
-            messages.success(request, "El documento ha sido aprobado.")
-            return redirect("documents:detail", pk=self.object.pk)
+            approve_document(request)
 
         # --- Rechazar ---
         if action == "reject" and self.object.status == "pending":
-            self.object.status = "rejected"
-            self.object.review_level = "manual"
-            self.object.rejected_at = timezone.now()
-            self.object.rejected_by = request.user
-            self.object.save()
-            messages.error(request, "El documento ha sido rechazado.")
-            return redirect("documents:detail", pk=self.object.pk)
+            reject_document(request)
 
         # --- Guardar cambios ---
         if action == "save":
@@ -161,6 +148,7 @@ def approve_document(request, pk):
         document = get_object_or_404(Document, pk=pk)
         document.status = "approved"
         document.review_level = "manual"
+        document.reviewed_by = request.user
         document.approved_at = timezone.now()
         document.save()
         messages.success(request, "El documento ha sido aprobado.")
