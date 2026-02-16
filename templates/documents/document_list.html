@@ -8,7 +8,7 @@
 {% block content %}
 <h1 class="page-title"><i class="fa-regular fa-file-lines"></i> Tus documentos</h1>
 <div class="filters-container">
-  <button id="filters-toggle">ocultar filtros</button>
+  <button id="filters-toggle">Ocultar filtros <i class="fa-solid fa-caret-up"></i></button>
   <form method="get" class="filters-bar">
     <div class="left-filters">
       <div class="search">
@@ -181,11 +181,11 @@
       if (filtersStatus === "open") {
         filtersBar.classList.add("open");
         toggleFiltersBtn.classList.add("open");
-        toggleFiltersBtn.innerHTML = "ocultar filtros</i>";
+        toggleFiltersBtn.innerHTML = "Ocultar filtros <i class='fa-solid fa-caret-up'></i>";
       } else {
         filtersBar.classList.remove("open");
         toggleFiltersBtn.classList.remove("open");
-        toggleFiltersBtn.innerHTML = "mostrar filtros";
+        toggleFiltersBtn.innerHTML = "Mostrar filtros <i class='fa-solid fa-caret-down'></i>";
       }
 
       toggleFiltersBtn.addEventListener("click", () => {
@@ -197,9 +197,9 @@
         toggleFiltersBtn.classList.toggle("open");
         filtersBar.classList.toggle("open");
         if (filtersBar.classList.contains("open")) {
-          toggleFiltersBtn.innerHTML = "ocultar filtros";
+          toggleFiltersBtn.innerHTML = "Ocultar filtros <i class='fa-solid fa-caret-up'></i>";
         } else {
-          toggleFiltersBtn.innerHTML = "mostrar filtros";
+          toggleFiltersBtn.innerHTML = "Mostrar filtros <i class='fa-solid fa-caret-down'></i>";
         }
       });
   </script>

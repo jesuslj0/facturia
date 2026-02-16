@@ -56,8 +56,18 @@ h1, h2, h3, h4, h5, p {
 }
 
 .app-header .logo > img {
-  margin-right: 5px;
+  width: 64px;
+  height: auto;
+  margin-right: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  transition: transform 0.2s ease;
 }
+
+.app-header .logo > img:hover {
+  transform: scale(1.05);
+}
+
 
 .app-header .nav {
   display: flex; /* siempre visible en desktop */
@@ -150,6 +160,11 @@ h1, h2, h3, h4, h5, p {
     display: flex;
     align-items: center;
     justify-content: end;
+  }
+
+  .app-header .logo > img {
+    width: 44px;
+    border-radius: 8px;
   }
 
   .nav a {

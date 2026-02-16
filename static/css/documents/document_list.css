@@ -171,26 +171,30 @@
 }
 
 #filters-toggle {
-  display: inline-block;
+  align-self: flex-start;
   cursor: pointer;
-  border: none;
-  background-color: var(--card-bg-color);
-  border-bottom: 2px solid var(--border-color-btn);
-  padding: 0.5rem 1rem;
-  border-radius: 6px 6px 0 0;
-  font-size: 1.1rem;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg-color);
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
   font-weight: 500;
-  transition: background-color 0.2s, color 0.2s;
   color: var(--body-fg-color);
-  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+#filters-toggle:hover {
+  border-color: var(--enfasis-color);
+  color: var(--enfasis-color);
 }
 
 #filters-toggle.open {
-  background-color: transparent;
+  background: transparent;
   color: var(--muted-color);
+  border-color: var(--border-color);
 }
 
-.filters-bar {
+/* .filters-bar {
   display: none;
   justify-content: space-between;
   gap: 0.75rem;
@@ -200,6 +204,32 @@
 
 .filters-bar.open {
   display: flex;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+} */
+
+.filters-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  align-items: start;
+
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+
+  transition: max-height 0.3s ease, 
+              opacity 0.2s ease, 
+              transform 0.2s ease;
+}
+
+.filters-bar.open {
+  max-height: 500px; /* suficiente para contener el form */
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .filters-bar .left-filters {
