@@ -6,7 +6,7 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
     file = serializers.FileField(required=True)
     external_id = serializers.CharField(max_length=255)
     original_name = serializers.CharField(max_length=255)
-    document_type = serializers.ChoiceField(choices=["invoice", "delivery"])
+    document_type = serializers.ChoiceField(choices=["invoice", "delivery", "corrected_invoice"])
 
     # Datos del proveedor / Company
     provider_name = serializers.CharField(max_length=255, required=True)
