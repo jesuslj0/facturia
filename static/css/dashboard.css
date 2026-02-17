@@ -66,6 +66,12 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 1rem 1.25rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.dashboard-cards .card:hover {
+  box-shadow: 0 4px 18px rgba(56, 189, 248, 0.25);
+  cursor: pointer;
 }
 
 .dashboard-cards .card h3 {
