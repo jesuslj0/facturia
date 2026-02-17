@@ -85,11 +85,36 @@
 </form>
 </div>
 <div class="export-bar">
-  <a href="{% url 'documents:export' %}?{{ request.GET.urlencode }}" class="btn-primary">Exportar <i class="fa-solid fa-download"></i></a>
-  <a href="{% url 'documents:export_preview' %}?{{ request.GET.urlencode }}" class="btn-secondary">Vista previa <i class="fa-regular fa-eye"></i></a>
+  <div class="export-buttons">
+    <a href="{% url 'documents:export' %}?{{ request.GET.urlencode }}" class="btn-primary">Exportar <i class="fa-solid fa-download"></i></a>
+    <a href="{% url 'documents:export_preview' %}?{{ request.GET.urlencode }}" class="btn-secondary">Vista previa <i class="fa-regular fa-eye"></i></a>
+  </div>
+  {% if is_paginated %}
+    <div class="pagination-inline">
+
+      {% if page_obj.has_previous %}
+        <a href="?{{ querystring }}&page=1">&laquo;</a>
+        <a href="?{{ querystring }}&page={{ page_obj.previous_page_number }}">‹</a>
+      {% endif %}
+
+      <span>
+        {{ page_obj.start_index }}–{{ page_obj.end_index }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a href="?{{ querystring }}&page={{ page_obj.next_page_number }}">›</a>
+        <a href="?{{ querystring }}&page={{ page_obj.paginator.num_pages }}">&raquo;</a>
+      {% endif %}
+
+    </div>
+  {% endif %}
   <div class="export-summary">
-    <span class="export-count">{{ total_count }}</span>
-    <span class="export-label">documentos</span>
+    <span class="export-count">
+      {{ page_obj.start_index }}–{{ page_obj.end_index }}
+    </span>
+    <span class="export-label">
+      de {{ page_obj.paginator.count }} documentos
+    </span>
   </div>
 </div>
 

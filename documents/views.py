@@ -60,18 +60,30 @@ class DocumentListView(LoginRequiredMixin, ListView):
     model = Document
     template_name = "public/documents/document_list.html"
     context_object_name = "documents"
+    paginate_by = 20
     
     def get_queryset(self):
         return get_filtered_documents(self.request)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        first_doc = self.get_queryset().first()
+
+        page_obj = context.get("page_obj")
+        first_doc = page_obj.object_list.first() if page_obj else None
+
         context["client"] = first_doc.client if first_doc else None
         context["document_types"] = Document.TYPE_CHOICES
-        context["companies"] = Company.objects.filter(client__clientuser__user=self.request.user).order_by("name")
-        context["total_count"] = self.get_queryset().count()
+        context["companies"] = Company.objects.filter(
+            client__clientuser__user=self.request.user
+        ).order_by("name")
+
+        # 🔹 Querystring sin page
+        querydict = self.request.GET.copy()
+        querydict.pop("page", None)
+        context["querystring"] = querydict.urlencode()
+
         return context
+
     
 
 class DocumentDetailView(LoginRequiredMixin, DetailView):

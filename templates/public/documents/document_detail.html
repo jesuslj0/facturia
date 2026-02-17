@@ -168,9 +168,9 @@
                 <span class="content">
                     El documento ha sido rechazado.
                 </span>
-                {% elif document.status == "approved" and not document.approved_at %}
+                {% elif document.is_auto_approved %}
                 <span class="content">
-                    Documento aprovado automaticamente.
+                    Documento aprobado automaticamente.
                 </span>
                 {% else %}
                 <span class="content">
