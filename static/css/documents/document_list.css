@@ -381,6 +381,7 @@ label[for="q"] button:hover {
   justify-content: space-between;
   gap: 1rem;
   align-items: center;
+  margin-bottom: 1rem;
 }
 
 .export-bar .export-summary {
