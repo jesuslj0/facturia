@@ -37,7 +37,7 @@ def get_filtered_documents(request):
         qs = qs.filter(review_level=review)
     
     if date_from:
-        qs = qs.filter(created_at__gte=date_from)
+        qs = qs.filter(issue_date__gte=date_from)
 
     if date_to:
         qs = qs.filter(
