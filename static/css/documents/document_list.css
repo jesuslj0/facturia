@@ -440,7 +440,7 @@ label[for="q"] button:hover {
 .pagination-inline a {
   padding: 4px 8px;
   border-radius: 6px;
-  background: var(--gray-100);
+  background: var(--body-bg-color);
   text-decoration: none;
   font-size: 0.85rem;
   transition: background 0.2s ease;
@@ -454,4 +454,5 @@ label[for="q"] button:hover {
   font-size: 0.85rem;
   font-weight: 600;
   opacity: 0.8;
+  color: var(--body-fg-color)
 }
