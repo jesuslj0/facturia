@@ -224,23 +224,14 @@ class DocumentExportView(LoginRequiredMixin, ListView):
         return export_to_csv(qs)
     
 class DocumentExportPreviewView(LoginRequiredMixin, ListView):
-    template_name = "documents/document_export_preview.html"
+    template_name = "public/documents/document_export_preview.html"
     model = Document
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["documents"] = get_filtered_documents(self.request)
         return context
-    
 
-class DocumentMetricsView(LoginRequiredMixin, TemplateView):
-    template_name = "private/metrics/dashboard.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["total_documents"] = Document.objects.filter(client__clientuser__user=self.request.user).count()
-        return context
-    
 from .services import MetricsService
 
 class MetricsDashboardView(LoginRequiredMixin, TemplateView):

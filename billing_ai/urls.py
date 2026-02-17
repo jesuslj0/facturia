@@ -12,7 +12,7 @@ from django.views.static import serve
 urlpatterns = [
     path("", RedirectView.as_view(pattern_name="dashboard"), name="home"),
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
-    path('login/', LoginView.as_view(template_name='auth/login.html', redirect_authenticated_user=True), name='login'),
+    path('login/', LoginView.as_view(template_name='public/auth/login.html', redirect_authenticated_user=True), name='login'),
     path('logout/', LogoutView.as_view(next_page='home'), name='logout'),
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
