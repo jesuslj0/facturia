@@ -101,6 +101,7 @@
         <th>Proveedor</th>
         <th>Total (€)</th>
         <th>Fecha</th>
+        <th>Tipo</th>
         <th>Estado</th>
         <th>Revisión</th>
         <th>Acción</th>
@@ -136,6 +137,12 @@
           {% else %}
             -
           {% endif %}
+        </td>
+
+
+        <!-- tipo de documento -->
+        <td class="document_type">
+          {{ doc.get_document_type_display }}
         </td>
 
         <!-- Estado (status) -->

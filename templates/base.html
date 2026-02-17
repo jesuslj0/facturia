@@ -35,8 +35,9 @@
         <button id="nav-toggle"><i class="fa-solid fa-bars-staggered"></i></button>
         </div>
         <nav class="nav">
-        <a href="{% url 'dashboard' %}"><i class="fa-regular fa-chart-bar"></i> Dashboard</a>
+        <a href="{% url 'dashboard' %}"><i class="fa-solid fa-house"></i> Inicio</a>
         <a href="{% url 'documents:list' %}"><i class="fa-regular fa-file-lines"></i> Documentos</a>
+        <a href="{% url 'metrics' %}"><i class="fa-solid fa-chart-line"></i> Métricas</a>
         <form action="{% url 'logout' %}" method="post">
           {% csrf_token %}
           <button type="submit">Salir</button>

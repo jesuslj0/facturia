@@ -58,7 +58,7 @@ def get_filtered_documents(request):
 from documents.models import Company
 class DocumentListView(LoginRequiredMixin, ListView): 
     model = Document
-    template_name = "documents/document_list.html"
+    template_name = "public/documents/document_list.html"
     context_object_name = "documents"
     
     def get_queryset(self):
@@ -69,14 +69,14 @@ class DocumentListView(LoginRequiredMixin, ListView):
         first_doc = self.get_queryset().first()
         context["client"] = first_doc.client if first_doc else None
         context["document_types"] = Document.TYPE_CHOICES
-        context["companies"] = Company.objects.filter(client__clientuser__user=self.request.user) 
+        context["companies"] = Company.objects.filter(client__clientuser__user=self.request.user).order_by("name")
         context["total_count"] = self.get_queryset().count()
         return context
     
 
 class DocumentDetailView(LoginRequiredMixin, DetailView):
     model = Document
-    template_name = "documents/document_detail.html"
+    template_name = "public/documents/document_detail.html"
 
     def get_queryset(self):
         return Document.objects.filter(
@@ -182,7 +182,7 @@ def save_document(request, document):
     return redirect("documents:detail", pk=document.pk)
 
 class DashboardView(LoginRequiredMixin,TemplateView):
-    template_name="dashboard.html"
+    template_name="public/dashboard.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -230,4 +230,27 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["documents"] = get_filtered_documents(self.request)
+        return context
+    
+
+class DocumentMetricsView(LoginRequiredMixin, TemplateView):
+    template_name = "private/metrics/dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["total_documents"] = Document.objects.filter(client__clientuser__user=self.request.user).count()
+        return context
+    
+from .services import MetricsService
+
+class MetricsDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = "private/metrics/dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        metrics = MetricsService.get_user_metrics(self.request.user)
+
+        context.update(metrics)
+        context["client"] = ClientUser.objects.filter(user=self.request.user).first().client
         return context

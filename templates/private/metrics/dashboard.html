@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Métricas - FacturIA{% endblock %}
+{% load static %}
+{% block styles %}
+<link rel="stylesheet" href="{% static "css/dashboard.css" %}" />
+{% endblock %}
+
+{% block content %}
+<div class="container dashboard">
+
+  <div class="dashboard-header">
+    <h1>
+      <i class="fa-solid fa-chart-line"></i>
+      Métricas - <span class="client-name">{{ client.name }}</span>
+    </h1>
+    <p>Resumen general de actividad y rendimiento</p>
+  </div>
+
+  <!-- KPIs principales -->
+  <div class="dashboard-cards">
+
+    <div class="card">
+      <h3>Total documentos</h3>
+      <span class="kpi">{{ total_documents|default:0 }}</span>
+    </div>
+
+    <div class="card">
+      <h3>Aprobados</h3>
+      <span class="kpi text-success">{{ approved_documents|default:0 }}</span>
+    </div>
+
+    <div class="card">
+      <h3>Rechazados</h3>
+      <span class="kpi text-danger">{{ rejected_documents|default:0 }}</span>
+    </div>
+
+    <div class="card">
+      <h3>Pendientes</h3>
+      <span class="kpi text-warning">{{ pending_documents|default:0 }}</span>
+    </div>
+
+  </div>
+
+  <!-- Métricas financieras -->
+  <div class="dashboard-cards mt-4">
+
+    <div class="card">
+      <h3>Total facturado</h3>
+      <span class="kpi">
+        {{ total_amount|floatformat:2|default:"0.00" }} €
+      </span>
+    </div>
+
+    <div class="card">
+      <h3>Tasa de aprobación</h3>
+      <span class="kpi">
+        {% if total_documents %}
+          {{ approval_rate|floatformat:1 }} %
+        {% else %}
+          0 %
+        {% endif %}
+      </span>
+    </div>
+
+    <div class="card">
+      <h3>Revisión manual</h3>
+      <span class="kpi">
+        {{ manual_review_count|default:0 }}
+      </span>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
