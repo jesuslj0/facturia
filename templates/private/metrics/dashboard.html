@@ -16,46 +16,53 @@
     <p>Resumen general de actividad y rendimiento</p>
   </div>
 
-  <!-- KPIs principales -->
+  <!-- ===================== -->
+  <!-- 📊 ACTIVIDAD DOCUMENTOS -->
+  <!-- ===================== -->
+  <h2 class="section-title mt-4">Actividad de documentos</h2>
+
   <div class="dashboard-cards">
 
     <div class="card">
       <h3>Total documentos</h3>
-      <span class="kpi">{{ total_documents|default:0 }}</span>
+      <span class="kpi">{{ documents.total_documents|default:0 }}</span>
     </div>
 
     <div class="card">
       <h3>Aprobados</h3>
-      <span class="kpi text-success">{{ approved_documents|default:0 }}</span>
-    </div>
-
-    <div class="card">
-      <h3>Rechazados</h3>
-      <span class="kpi text-danger">{{ rejected_documents|default:0 }}</span>
-    </div>
-
-    <div class="card">
-      <h3>Pendientes</h3>
-      <span class="kpi text-warning">{{ pending_documents|default:0 }}</span>
-    </div>
-
-  </div>
-
-  <!-- Métricas financieras -->
-  <div class="dashboard-cards mt-4">
-
-    <div class="card">
-      <h3>Total facturado</h3>
-      <span class="kpi">
-        {{ total_amount|floatformat:2|default:"0.00" }} €
+      <span class="kpi text-success">
+        {{ documents.approved_documents|default:0 }}
       </span>
     </div>
 
     <div class="card">
+      <h3>Rechazados</h3>
+      <span class="kpi text-danger">
+        {{ documents.rejected_documents|default:0 }}
+      </span>
+    </div>
+
+    <div class="card">
+      <h3>Pendientes</h3>
+      <span class="kpi text-warning">
+        {{ documents.pending_documents|default:0 }}
+      </span>
+    </div>
+
+  </div>
+
+  <!-- ===================== -->
+  <!-- 🤖 AUTOMATIZACIÓN -->
+  <!-- ===================== -->
+  <h2 class="section-title mt-5">Automatización</h2>
+
+  <div class="dashboard-cards">
+
+    <div class="card">
       <h3>Tasa de aprobación</h3>
       <span class="kpi">
-        {% if total_documents %}
-          {{ approval_rate|floatformat:1 }} %
+        {% if documents.total_documents %}
+          {{ documents.approval_rate|floatformat:1 }} %
         {% else %}
           0 %
         {% endif %}
@@ -65,11 +72,74 @@
     <div class="card">
       <h3>Revisión manual</h3>
       <span class="kpi">
-        {{ manual_review_count|default:0 }}
+        {{ documents.manual_review_count|default:0 }}
       </span>
     </div>
 
   </div>
 
+  <!-- ===================== -->
+  <!-- 💰 FACTURACIÓN -->
+  <!-- ===================== -->
+  <h2 class="section-title mt-5">Facturación</h2>
+
+  <div class="dashboard-cards">
+
+    <div class="card">
+      <h3>Total facturado</h3>
+      <span class="kpi">
+        {{ financials.total_amount|floatformat:2|default:"0.00" }} €
+      </span>
+    </div>
+
+    <div class="card">
+      <h3>Total Base</h3>
+      <span class="kpi">
+        {{ financials.total_base|floatformat:2|default:"0.00" }} €
+      </span>
+    </div>
+
+    <div class="card">
+      <h3>Total Impuestos</h3>
+      <span class="kpi">
+        {{ financials.total_tax|floatformat:2|default:"0.00" }} €
+      </span>
+    </div>
+
+  </div>
+
+  <h2 class="section-title mt-5">Este Mes</h2>
+
+  <div class="dashboard-cards">
+    <div class="card">
+      <h3>Total facturado</h3>
+      <span class="kpi">
+        {{ current_month.total_amount|floatformat:2|default:"0.00" }} €
+      </span>
+    </div>
+
+    <div class="card">
+      <h3>Total impuestos</h3>
+      <span class="kpi">
+        {{ current_month.total_tax|floatformat:2|default:"0.00" }} €
+      </span>
+    </div>
+
+    <div class="card">
+      <h3>Total documentos</h3>
+      <span class="kpi">
+        {{ current_month.documents|default:0 }}
+      </span>
+    </div>
+
+    <div class="card">
+      <h3>Aprobados</h3>
+      <span class="kpi">
+        {{ current_month.approved|default:0 }}
+      </span>
+    </div>
+  </div>
+
 </div>
 {% endblock %}
+
