@@ -14,7 +14,7 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
     provider_type = serializers.ChoiceField(choices=[("provider", "Provider")], default="provider")
 
     # Datos de la factura
-    invoice_number = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    document_number = serializers.CharField(max_length=255, required=False, allow_blank=True)
     issue_date = serializers.DateField(required=False)
     base_amount = serializers.FloatField()
     tax_amount = serializers.FloatField()
