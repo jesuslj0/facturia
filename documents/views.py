@@ -149,7 +149,7 @@ def save_document(request, document):
     tax_percentage = request.POST.get("tax_percentage")
     tax_amount = request.POST.get("tax_amount")
     total_amount = request.POST.get("total_amount")
-    invoice_number = request.POST.get("invoice_number")
+    document_number = request.POST.get("document_number")
     flow = request.POST.get("flow")
 
     # Validar importes
@@ -163,8 +163,8 @@ def save_document(request, document):
         return redirect("documents:detail", pk=document.pk)
 
     # Asignar solo si pasó validación
-    if invoice_number:
-        document.invoice_number = invoice_number
+    if document_number:
+        document.invoice_number = document_number
 
     if issue_date:
         document.issue_date = issue_date

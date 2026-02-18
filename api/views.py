@@ -128,7 +128,7 @@ class DocumentIngestAPIView(APIView):
             file=data["file"],
             original_name=data["original_name"],
             document_type=data["document_type"],
-            invoice_number=data.get("invoice_number"),
+            invoice_number=data.get("document_number"),
             issue_date=data.get("issue_date"),
             base_amount = float(normalized_amounts.get("base") or 0),
             tax_amount = float(normalized_amounts.get("tax_amount") or 0),

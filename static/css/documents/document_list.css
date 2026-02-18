@@ -318,10 +318,6 @@ label[for="q"] button:hover {
     width: 100%;
     box-sizing: border-box;
   }
-
-  .filters-container {
-    margin-bottom: 1.5rem;
-  }
 }
 
 @media(max-width: 992px) {

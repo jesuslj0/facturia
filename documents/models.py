@@ -135,11 +135,24 @@ class Document(models.Model):
         null=True
     )
 
+    @property
+    def status_message(self):
+        if self.status == "rejected":
+            return f"El documento ha sido rechazado por {self.rejected_by}"
+        if self.approved_at:
+            return f"Documento aprobado el {self.approved_at.strftime('%d-%m-%Y')}"
+        if self.is_auto_approved:
+            return "Documento aprobado automáticamente"
+        if self.edited_at:
+            return f"Documento editado manualmente el {self.edited_at.strftime('%d-%m-%Y')}"
+        return "Documento pendiente de revisión"
+
+
     external_id = models.CharField(max_length=255, unique=True)
     original_name = models.CharField(max_length=255)
     file = models.FileField(upload_to="documents/")
     document_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    invoice_number = models.CharField(max_length=255, null=True, blank=True)
+    document_number = models.CharField(max_length=255, null=True, blank=True)
     confidence = models.JSONField(default=dict)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     review_level = models.CharField(max_length=20, choices=REVIEW_LEVEL_CHOICES, default='required')

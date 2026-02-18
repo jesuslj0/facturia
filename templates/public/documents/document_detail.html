@@ -87,9 +87,9 @@
                 <div class="field">
                     <span class="label">N° Documento</span>
                     {% if document.is_editable %}
-                        <input type="text" name="invoice_number" value="{{ document.invoice_number }}" class="editable-field">
+                        <input type="text" name="document_number" value="{{ document.document_number }}" class="editable-field">
                     {% else %}
-                        <span class="value">{{ document.invoice_number }}</span>
+                        <span class="value">{{ document.document_number }}</span>
                     {% endif %}
                 </div>
     
@@ -145,55 +145,34 @@
             </div>
             <!-- Acciones -->
             <div class="actions">
-            <!-- Revision aprobado o rechazar -->
-            {% if document.status == "pending" %}
-                <button type="submit" name="action" value="save" class="btn-save">Guardar cambios</button>
-                <button type="submit" name="action" value="approve" class="btn-approve">Aprobar</button>
-                <button type="submit" name="action" value="reject" class="btn-reject">Rechazar</button>
-            {% endif %}
+                <!-- Revision aprobado o rechazar -->
+                {% if document.status == "pending" %}
+                    <button type="submit" name="action" value="save" class="btn-save">Guardar cambios</button>
+                    <button type="submit" name="action" value="approve" class="btn-approve">Aprobar</button>
+                    <button type="submit" name="action" value="reject" class="btn-reject">Rechazar</button>
+                {% endif %}
             </div>
             
             <div class="review_info">
                 <span class="label">Estado del documento</span>
-                
-                {% if document.approved_at %}
+                <span class="content">{{ document.status_message }}</span>
+            
+                <span class="label">Nivel de confianza</span>
+                {% if document.review_level == "required" %}
                 <span class="content">
-                    Documento aprobado el {{ document.approved_at|date:"d-m-Y" }}.
+                    Revisión obligatoria. Los datos extraídos pueden ser incorrectos.
                 </span>
-                {% elif document.edited_at %}
+                {% elif document.review_level == "recommended" %}
                 <span class="content">
-                    Documento editado manualmente el {{ document.edited_at|date:"d-m-Y" }}.
-                </span>
-                {% elif document.status == "rejected" %}
-                <span class="content">
-                    El documento ha sido rechazado.
-                </span>
-                {% elif document.is_auto_approved %}
-                <span class="content">
-                    Documento aprobado automaticamente.
+                    Revisión recomendada. Algunos campos podrían no ser exactos.
                 </span>
                 {% else %}
                 <span class="content">
-                Documento pendiente de revisión.
-            </span>
-            {% endif %}
-            
-            <span class="label">Nivel de confianza</span>
-            {% if document.review_level == "required" %}
-            <span class="content">
-                Revisión obligatoria. Los datos extraídos pueden ser incorrectos.
-            </span>
-            {% elif document.review_level == "recommended" %}
-            <span class="content">
-                Revisión recomendada. Algunos campos podrían no ser exactos.
-            </span>
-            {% else %}
-            <span class="content">
-                Alta confianza. Los datos extraídos son consistentes.
-            </span>
-            {% endif %}
+                    Alta confianza. Los datos extraídos son consistentes.
+                </span>
+                {% endif %}
+            </div>
         </form>
-        </div>
     </div>
 </div>
 {% endblock %}

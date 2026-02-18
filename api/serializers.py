@@ -39,7 +39,7 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
             "provider_name",
             "provider_tax_id",
             "provider_type",
-            "invoice_number",
+            "document_number",
             "issue_date",
             "base_amount",
             "tax_amount",
@@ -74,7 +74,7 @@ class DocumentListSerializer(serializers.ModelSerializer):
             "total_amount",
             "created_at",
             "file_url",
-            "invoice_number",
+            "document_number",
         ]
 
     def get_file_url(self, obj):
