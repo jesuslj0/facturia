@@ -196,4 +196,4 @@ class Document(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.invoice_number or self.original_name} ({self.flow})"
+        return f"{self.document_number or self.original_name} ({self.flow})"

@@ -5,8 +5,11 @@ from documents.models import Document, Company
 # Register your models here.
 @register(Document)
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ['file', 'original_name', 'document_type', 'status', 'total_amount', 'company_name', 'created_at']
-    search_fields = ['original_name', 'status', 'document_type', 'created_at', 'reviewed_at', 'total_amount']
+    list_display = ['original_name', 'document_type', 'status', 'total_amount', 'company_name', 'issue_date', 'created_at']
+    search_fields = ['original_name', 'document_type']
+
+    list_filter = ['status', 'document_type', 'issue_date']
+    date_hierarchy = 'issue_date'
     
     def company_name(self, obj):
         return obj.company.name if obj.company else '-'
