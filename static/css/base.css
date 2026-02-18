@@ -75,15 +75,42 @@ h1, h2, h3, h4, h5, p {
   gap: 20px;
 }
 
+/* Media querys Movil */
 @media (max-width: 768px) {
   .app-header .nav {
-    display: none; /* cerrado por defecto */
     flex-direction: column;
     gap: 10px;
+    max-height: 0;
+    overflow: hidden;
+    transition: 
+      max-height 0.3s ease, 
+      opacity 0.3s ease;
   }
 
   .app-header .nav.open {
-    display: flex; /* abierto al hacer toggle */
+    display: flex;
+    max-height: 500px;
+    opacity: 1;
+  }
+
+
+    .app-header .nav form {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+  }
+
+  .app-header .logo > img {
+    width: 44px;
+    border-radius: 8px;
+  }
+
+  .nav a {
+    align-self: end;
+  }
+
+  .nav-toggle-container {
+    margin-top: 0.7rem;
   }
 }
 
@@ -153,23 +180,6 @@ h1, h2, h3, h4, h5, p {
 .app-header .nav button:hover {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.4);
-}
-
-@media (max-width: 768px) {
-  .app-header .nav form {
-    display: flex;
-    align-items: center;
-    justify-content: end;
-  }
-
-  .app-header .logo > img {
-    width: 44px;
-    border-radius: 8px;
-  }
-
-  .nav a {
-    align-self: end;
-  }
 }
 
 .app-main {

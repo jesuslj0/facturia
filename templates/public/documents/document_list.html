@@ -86,35 +86,37 @@
 </div>
 <div class="export-bar">
   <div class="export-buttons">
-    <a href="{% url 'documents:export' %}?{{ request.GET.urlencode }}" class="btn-primary">Exportar <i class="fa-solid fa-download"></i></a>
+    <a href="{% url 'documents:export' %}?{{ request.GET.urlencode }}" class="btn-primary">Exportar CSV <i class="fa-solid fa-download"></i></a>
     <a href="{% url 'documents:export_preview' %}?{{ request.GET.urlencode }}" class="btn-secondary">Vista previa <i class="fa-regular fa-eye"></i></a>
   </div>
-  {% if is_paginated %}
-    <div class="pagination-inline">
 
-      {% if page_obj.has_previous %}
-        <a href="?{{ querystring }}&page=1">&laquo;</a>
-        <a href="?{{ querystring }}&page={{ page_obj.previous_page_number }}">‹</a>
-      {% endif %}
-
-      <span class="page-info">
-        {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+    {% if is_paginated %}
+      <div class="pagination-inline">
+  
+        {% if page_obj.has_previous %}
+          <a href="?{{ querystring }}&page=1">&laquo;</a>
+          <a href="?{{ querystring }}&page={{ page_obj.previous_page_number }}">‹</a>
+        {% endif %}
+  
+        <span class="page-info">
+          {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+  
+        {% if page_obj.has_next %}
+          <a href="?{{ querystring }}&page={{ page_obj.next_page_number }}">›</a>
+          <a href="?{{ querystring }}&page={{ page_obj.paginator.num_pages }}">&raquo;</a>
+        {% endif %}
+      </div>
+    {% endif %}
+    <div class="documents-summary">
+      <span class="documents-count">
+        {{ page_obj.start_index }}–{{ page_obj.end_index }}
       </span>
-
-      {% if page_obj.has_next %}
-        <a href="?{{ querystring }}&page={{ page_obj.next_page_number }}">›</a>
-        <a href="?{{ querystring }}&page={{ page_obj.paginator.num_pages }}">&raquo;</a>
-      {% endif %}
+      <span class="documents-label">
+        de {{ page_obj.paginator.count }} documentos
+      </span>
     </div>
-  {% endif %}
-  <div class="export-summary">
-    <span class="export-count">
-      {{ page_obj.start_index }}–{{ page_obj.end_index }}
-    </span>
-    <span class="export-label">
-      de {{ page_obj.paginator.count }} documentos
-    </span>
-  </div>
+
 </div>
 
 <div class="table-wrapper">
