@@ -105,6 +105,8 @@ class DocumentIngestAPIView(APIView):
         )
         status = get_status(review_level)
 
+        is_auto_approved = review_level == "auto"
+
         # Normalización de cantidades
         normalized_amounts = normalize_tax(
             data["base_amount"], 
@@ -137,6 +139,7 @@ class DocumentIngestAPIView(APIView):
             confidence=data.get("confidence", {}),
             status=status,
             review_level=review_level,
+            is_auto_approved=is_auto_approved,
         )
 
         return Response(
