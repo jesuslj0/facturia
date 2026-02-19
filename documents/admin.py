@@ -13,6 +13,9 @@ class DocumentAdmin(admin.ModelAdmin):
     
     def company_name(self, obj):
         return obj.company.name if obj.company else '-'
+    
+    def get_queryset(self, request):
+        return Document.all_objects.all()
 
 
 @register(Company)

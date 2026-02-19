@@ -110,6 +110,10 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         # --- Guardar cambios ---
         if action == "save":
             return save_document(request, self.object)
+        
+        # --- Archivar ---
+        if action == "archive" and self.object.status in ["approved", "rejected"]:
+            return archive_document(request, self.object)
 
         # Si no hay acción reconocida, redirigir
         messages.warning(request, "Acción no reconocida.")
@@ -138,6 +142,21 @@ def reject_document(request, document):
     return redirect("documents:detail", pk=document.pk)
 
 from decimal import Decimal, InvalidOperation
+import re
+
+def parse_decimal(value):
+    if not value:
+        return None
+
+    if isinstance(value, str):
+        value = value.strip()
+        value = value.replace(".", "") if value.count(",") == 1 else value
+        value = value.replace(",", ".")
+        value = re.sub(r"[^\d.]", "", value)
+
+    return Decimal(value)
+
+
 def save_document(request, document):
     if document.status == "rejected":
         messages.error(request, "El documento ha sido rechazado.")
@@ -154,11 +173,11 @@ def save_document(request, document):
 
     # Validar importes
     try:
-        new_base = Decimal(base_amount) if base_amount else None
-        new_tax_percentage = Decimal(tax_percentage) if tax_percentage else None
-        new_tax_amount = Decimal(tax_amount) if tax_amount else None
-        new_total = Decimal(total_amount) if total_amount else None
-    except InvalidOperation:
+        new_base = parse_decimal(base_amount)
+        new_tax_percentage = parse_decimal(tax_percentage)
+        new_tax_amount = parse_decimal(tax_amount)
+        new_total = parse_decimal(total_amount)
+    except (InvalidOperation, ValueError):
         messages.error(request, "Importe inválido en uno de los campos.")
         return redirect("documents:detail", pk=document.pk)
 
@@ -192,6 +211,19 @@ def save_document(request, document):
     document.save()
     messages.success(request, "Cambios guardados correctamente.")
     return redirect("documents:detail", pk=document.pk)
+
+def archive_document(request, document): 
+    if document.status not in ["approved", "rejected"]:
+        messages.error(request, "Solo puedes archivar documentos cerrados.")
+        return redirect("documents:detail", pk=document.pk)
+    
+    document.is_archived = True
+    document.archived_at = timezone.now()
+    document.archived_by = request.user
+    document.save(update_fields=["is_archived", "archived_at", "archived_by"])
+
+    messages.success(request, "Documento archivado correctamente.")
+    return redirect("documents:list")
 
 class DashboardView(LoginRequiredMixin,TemplateView):
     template_name="public/dashboard.html"

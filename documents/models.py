@@ -48,6 +48,11 @@ class Company(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.get_type_display()})"
+    
+
+class ActiveDocumentManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_archived=False)
 
 class Document(models.Model):
     TYPE_CHOICES = [
@@ -165,6 +170,11 @@ class Document(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     edited_at = models.DateTimeField(blank=True, null=True)
     approved_at = models.DateTimeField(blank=True, null=True)
+    approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, 
+        related_name="approved_documents",
+        null=True
+    )
     rejected_at = models.DateTimeField(blank=True, null=True)
     flow = models.CharField(max_length=20, choices=FLOW_CHOICES, default="in")
     flow_source = models.CharField(max_length=20, choices=FLOW_SOURCE_CHOICES, default="auto")
@@ -182,8 +192,17 @@ class Document(models.Model):
         null=True, 
         blank=True
     )
+    is_archived = models.BooleanField(default=False, db_index=True)
+    archived_at = models.DateTimeField(blank=True, null=True)
+    archived_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, 
+        related_name="archived_documents",
+        null=True
+    )
     confidence_global = models.DecimalField(max_digits=5, decimal_places=4, null=True, blank=True, db_index=True)
 
+    objects = ActiveDocumentManager()
+    all_objects = models.Manager()
 
     indexes = [
         models.Index(fields=["client", "status"]),
@@ -197,3 +216,5 @@ class Document(models.Model):
 
     def __str__(self):
         return f"{self.document_number or self.original_name} ({self.flow})"
+    
+

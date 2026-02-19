@@ -107,7 +107,7 @@
                 <div class="field">
                     <span class="label">Base</span>
                     {% if document.is_editable %}
-                        <input type="number" step="0.01" name="base_amount" value="{{ document.base_amount }}" class="editable-field">
+                        <input type="text" inputmode="decimal" step="0.01" name="base_amount" value="{{ document.base_amount }}" class="editable-field">
                     {% else %}
                         <span class="value">{% if document.base_amount %}{{ document.base_amount }} €{% else %}-{% endif %}</span>
                     {% endif %}
@@ -118,14 +118,14 @@
                     {% if document.is_editable %}
                     <span class="label">% / Total IVA</span>
                     <div class="iva-fields">
-                        <input type="number" step="0.01" name="tax_percentage" value="{{ document.tax_percentage }}" class="editable-field" placeholder="IVA %"><span>%</span>
-                        <input type="number" step="0.01" name="tax_amount" value="{{ document.tax_amount }}" class="editable-field" placeholder="IVA €"><span>€</span>
+                        <input type="text" inputmode="decimal" step="0.01" name="tax_percentage" value="{{ document.tax_percentage|floatformat:2 }}" class="editable-field decimal-field" placeholder="IVA %"><span>%</span>
+                        <input type="text" inputmode="decimal" step="0.01" name="tax_amount" value="{{ document.tax_amount|floatformat:2 }}" class="editable-field decimal-field" placeholder="IVA €"><span>€</span>
                     </div>
                     {% else %}
                     <span class="label">Cálculo IVA</span>
                     <span class="value">
                             {% if document.base_amount and document.tax_percentage and document.tax_amount %}
-                                {{ document.base_amount }} × {{ document.tax_percentage }}% = {{ document.tax_amount }} €
+                                {{ document.base_amount|floatformat:2 }} × {{ document.tax_percentage|floatformat:2 }}% = {{ document.tax_amount|floatformat:2 }} €
                             {% else %}
                                 -
                             {% endif %}
@@ -137,7 +137,7 @@
                 <div class="field">
                     <span class="label">Total</span>
                     {% if document.is_editable %}
-                        <input type="number" step="0.01" name="total_amount" value="{{ document.total_amount }}" class="editable-field">
+                        <input type="text" inputmode="decimal" step="0.01" name="total_amount" value="{{ document.total_amount }}" class="editable-field decimal-field">
                     {% else %}
                         <span class="value">{% if document.total_amount %}{{ document.total_amount }} €{% else %}-{% endif %}</span>
                     {% endif %}
@@ -150,6 +150,11 @@
                     <button type="submit" name="action" value="save" class="btn-save">Guardar cambios</button>
                     <button type="submit" name="action" value="approve" class="btn-approve">Aprobar</button>
                     <button type="submit" name="action" value="reject" class="btn-reject">Rechazar</button>
+                {% endif %}
+                {% if document.status in "approved rejected" and not document.is_archived %}
+                    <button type="submit" name="action" value="archive" class="btn btn-warning">
+                        Archivar <i class="fa-solid fa-archive"></i>
+                    </button>
                 {% endif %}
             </div>
             
@@ -292,5 +297,68 @@
 
     });
     </script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const baseInput = document.querySelector('input[name="base_amount"]');
+        const taxPercentageInput = document.querySelector('input[name="tax_percentage"]');
+        const taxAmountInput = document.querySelector('input[name="tax_amount"]');
+        const totalInput = document.querySelector('input[name="total_amount"]');
+
+        if (!baseInput || !taxPercentageInput || !taxAmountInput || !totalInput) return;
+
+        function parseNumber(value) {
+            if (!value) return 0;
+            value = value.replace(",", ".");
+            return parseFloat(value) || 0;
+        }
+
+        function formatNumber(value) {
+            return value.toFixed(2);
+        }
+
+        function calculateFromPercentage() {
+            const base = parseNumber(baseInput.value);
+            const percentage = parseNumber(taxPercentageInput.value);
+
+            const tax = base * (percentage / 100);
+            const total = base + tax;
+
+            taxAmountInput.value = formatNumber(tax);
+            totalInput.value = formatNumber(total);
+        }
+
+        function calculateFromTaxAmount() {
+            const base = parseNumber(baseInput.value);
+            const tax = parseNumber(taxAmountInput.value);
+
+            if (base === 0) return;
+
+            const percentage = (tax / base) * 100;
+            const total = base + tax;
+
+            taxPercentageInput.value = formatNumber(percentage);
+            totalInput.value = formatNumber(total);
+        }
+
+        function calculateFromBase() {
+            const base = parseNumber(baseInput.value);
+            const percentage = parseNumber(taxPercentageInput.value);
+
+            const tax = base * (percentage / 100);
+            const total = base + tax;
+
+            taxAmountInput.value = formatNumber(tax);
+            totalInput.value = formatNumber(total);
+        }
+
+        taxPercentageInput.addEventListener("input", calculateFromPercentage);
+        taxAmountInput.addEventListener("input", calculateFromTaxAmount);
+        baseInput.addEventListener("input", calculateFromBase);
+
+    });
+    </script>
+
 
 {% endblock %}
