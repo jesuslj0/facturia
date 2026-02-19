@@ -58,7 +58,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .dashboard-cards .card {
@@ -73,6 +73,13 @@
   box-shadow: 0 4px 18px rgba(56, 189, 248, 0.25);
   cursor: pointer;
 }
+
+.dashboard-cards .card:hover {
+  box-shadow: 0 6px 22px rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.35);
+  transform: translateY(-2px);
+}
+
 
 .dashboard-cards .card h3 {
   font-size: 0.75rem;
@@ -214,4 +221,44 @@
 .dashboard .card.mt-4 p.text-muted {
   margin: 0;
   padding: 0.75rem 1.5rem 1rem;
+}
+
+
+/* Estilos Dashboard Métricas */
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--body-fg-color);
+  margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted-color);
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+
+.section-icon {
+  color: var(--muted-color);
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+}
+
+.kpi.text-success {
+  color: var(--color-success);
+}
+
+.kpi.text-info {
+  color: var(--color-info);
+}
+
+.kpi.text-danger {
+  color: var(--color-danger);
+}
+
+.kpi.text-warning {
+  color: var(--color-warning);
 }

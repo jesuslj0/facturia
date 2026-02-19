@@ -1,6 +1,6 @@
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, Avg, Case, When, DecimalField, F
 from django.utils import timezone
-from datetime import datetime
+from django.utils.formats import date_format
 from documents.models import Document
 
 
@@ -23,7 +23,9 @@ class MetricsService:
             approved_documents=Count("id", filter=Q(status="approved")),
             rejected_documents=Count("id", filter=Q(status="rejected")),
             pending_documents=Count("id", filter=Q(status="pending")),
-            manual_review_count=Count("id", filter=Q(review_level="manual")),
+            manual_approved_count=Count("id", filter=Q(review_level="manual", status="approved")),
+            auto_approved_count=Count("id", filter=Q(review_level="auto", status="approved", is_auto_approved=True)),
+            confidence_average=Avg("confidence_global", filter=Q(status="approved"))*100,
         )
 
         total_documents = totals["total_documents"] or 0
@@ -31,6 +33,16 @@ class MetricsService:
 
         approval_rate = (
             (approved_documents / total_documents) * 100
+            if total_documents > 0 else 0
+        )
+
+        auto_approval_rate = (
+            (totals["auto_approved_count"] / total_documents) * 100
+            if total_documents > 0 else 0
+        )
+
+        manual_approval_rate = (
+            (totals["manual_approved_count"] / total_documents) * 100
             if total_documents > 0 else 0
         )
 
@@ -45,10 +57,29 @@ class MetricsService:
             document_type__in=["invoice", "corrected_invoice"],
         )
 
+        
         financial_totals = billing_queryset.aggregate(
-            total_amount=Sum("total_amount"),
-            total_tax=Sum("tax_amount"),
-            total_base=Sum("base_amount"),
+            total_amount=Sum(
+                Case(
+                    When(document_type="corrected_invoice", then=-F("total_amount")),
+                    default=F("total_amount"),
+                    output_field=DecimalField()
+                )
+            ),
+            total_tax=Sum(
+                Case(
+                    When(document_type="corrected_invoice", then=-F("tax_amount")),
+                    default=F("tax_amount"),
+                    output_field=DecimalField()
+                )
+            ),
+            total_base=Sum(
+                Case(
+                    When(document_type="corrected_invoice", then=-F("base_amount")),
+                    default=F("base_amount"),
+                    output_field=DecimalField()
+                )
+            ),
         )
 
         # =========================
@@ -59,16 +90,50 @@ class MetricsService:
         )
 
         month_totals = month_queryset.aggregate(
-            month_documents=Count("id"),
-            month_approved=Count("id", filter=Q(status="approved")),
-            month_total_amount=Sum("total_amount"),
-            month_total_tax=Sum("tax_amount"),
+            total_amount=Sum(
+                Case(
+                    When(document_type="corrected_invoice", then=-F("total_amount")),
+                    default=F("total_amount"),
+                    output_field=DecimalField()
+                )
+            ),
+            total_tax=Sum(
+                Case(
+                    When(document_type="corrected_invoice", then=-F("tax_amount")),
+                    default=F("tax_amount"),
+                    output_field=DecimalField()
+                )
+            ),
+            total_base=Sum(
+                Case(
+                    When(document_type="corrected_invoice", then=-F("base_amount")),
+                    default=F("base_amount"),
+                    output_field=DecimalField()
+                )
+            ),
+            documents_count=Sum(
+                Case(
+                    When(document_type="corrected_invoice", then=0),
+                    default=1,
+                    output_field=DecimalField()
+                )
+            ),
+            approved_count=Sum(
+                Case(
+                    When(document_type="corrected_invoice", then=0),  # no sumas al aprobado
+                    When(status="approved", then=1),
+                    default=0,
+                    output_field=DecimalField()
+                )
+            )
         )
 
         return {
             "documents": {
                 **totals,
                 "approval_rate": round(approval_rate, 2),
+                "auto_approval_rate": round(auto_approval_rate, 2),
+                "manual_approval_rate": round(manual_approval_rate, 2),
             },
             "financials": {
                 "total_amount": financial_totals["total_amount"] or 0,
@@ -76,9 +141,11 @@ class MetricsService:
                 "total_base": financial_totals["total_base"] or 0,
             },
             "current_month": {
-                "documents": month_totals["month_documents"] or 0,
-                "approved": month_totals["month_approved"] or 0,
-                "total_amount": month_totals["month_total_amount"] or 0,
-                "total_tax": month_totals["month_total_tax"] or 0,
+                "documents": month_totals["documents_count"] or 0,
+                "approved": month_totals["approved_count"] or 0,
+                "total_amount": month_totals["total_amount"] or 0,
+                "total_tax": month_totals["total_tax"] or 0,
+                "month": date_format(timezone.now(), "F"),
+                "year": date_format(timezone.now(), "Y"),
             }
         }

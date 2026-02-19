@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard - FacturIA{% endblock %}
+{% block title %}Inicio · FacturIA{% endblock %}
 {% load static %}
 {% block styles %}<link rel="stylesheet" href="{% static "css/dashboard.css" %}" />{% endblock %}
 {% block content %}
 <div class="container dashboard">
   <div class="dashboard-header">
-    <h1><i class="fa-solid fa-house"></i> Inicio - <span class="client-name">{{ client.name }}</span></h1>
+    <h1><i class="fa-solid fa-house"></i> Inicio · <span class="client-name">{{ client.name }}</span></h1>
     <p>Tienes {{ pending_count }} documentos por revisar</p>
   </div>
 
@@ -15,16 +15,17 @@
       <h3>Pendientes</h3>
       <span class="kpi">{% if pending_count %}{{ pending_count }}{% else %}0{% endif %}</span>
     </div>
+    
+    <div class="card">
+      <h3>Recomendados</h3>
+      <span class="kpi text-warning">{% if recommended_review_count %}{{ recommended_review_count }}{% else %}0{% endif %}</span>
+    </div>
 
     <div class="card">
       <h3>Revisión obligatoria</h3>
       <span class="kpi text-danger">{% if required_review_count %}{{ required_review_count }}{% else %}0{% endif %}</span>
     </div>
 
-    <div class="card">
-      <h3>Recomendados</h3>
-      <span class="kpi text-warning">{% if recommended_review_count %}{{ recommended_review_count }}{% else %}0{% endif %}</span>
-    </div>
   </div>
 
   <!-- Lista de documentos -->

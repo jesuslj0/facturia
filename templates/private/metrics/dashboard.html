@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Métricas - FacturIA{% endblock %}
+{% block title %}Métricas · FacturIA{% endblock %}
 {% load static %}
 {% block styles %}
 <link rel="stylesheet" href="{% static "css/dashboard.css" %}" />
@@ -11,80 +11,83 @@
   <div class="dashboard-header">
     <h1>
       <i class="fa-solid fa-chart-line"></i>
-      Métricas - <span class="client-name">{{ client.name }}</span>
+      Métricas · <span class="client-name">{{ client.name }}</span>
     </h1>
     <p>Resumen general de actividad y rendimiento</p>
   </div>
 
-  <!-- ===================== -->
-  <!-- 📊 ACTIVIDAD DOCUMENTOS -->
-  <!-- ===================== -->
-  <h2 class="section-title mt-4">Actividad de documentos</h2>
+  <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-calendar-check"></i> Este Mes</h2>
+  <small class="section-subtitle">{{ current_month.month|capfirst }} {{ current_month.year }} · Facturación validada</small>
+    <div class="dashboard-cards">
+      <div class="card">
+        <h3>Total facturado</h3>
+        <span class="kpi text-success">
+          {{ current_month.total_amount|floatformat:2|default:"0.00" }} €
+        </span>
+      </div>
 
+      <div class="card">
+        <h3>Total impuestos</h3>
+        <span class="kpi">
+          {{ current_month.total_tax|floatformat:2|default:"0.00" }} €
+        </span>
+      </div>
+
+      <div class="card">
+        <h3>Total documentos</h3>
+        <span class="kpi">
+          {{ current_month.documents|default:0 }}
+        </span>
+      </div>
+
+      <div class="card">
+        <h3>Aprobados</h3>
+        <span class="kpi">
+          {{ current_month.approved|default:0 }}
+        </span>
+      </div>
+    </div>
+
+  
+  <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-gears"></i> Automatización</h2>
+  <small class="section-subtitle">Rendimiento del sistema de revisión inteligente</small>
   <div class="dashboard-cards">
-
     <div class="card">
-      <h3>Total documentos</h3>
-      <span class="kpi">{{ documents.total_documents|default:0 }}</span>
-    </div>
-
-    <div class="card">
-      <h3>Aprobados</h3>
-      <span class="kpi text-success">
-        {{ documents.approved_documents|default:0 }}
-      </span>
-    </div>
-
-    <div class="card">
-      <h3>Rechazados</h3>
-      <span class="kpi text-danger">
-        {{ documents.rejected_documents|default:0 }}
-      </span>
-    </div>
-
-    <div class="card">
-      <h3>Pendientes</h3>
-      <span class="kpi text-warning">
-        {{ documents.pending_documents|default:0 }}
-      </span>
-    </div>
-
-  </div>
-
-  <!-- ===================== -->
-  <!-- 🤖 AUTOMATIZACIÓN -->
-  <!-- ===================== -->
-  <h2 class="section-title mt-5">Automatización</h2>
-
-  <div class="dashboard-cards">
-
-    <div class="card">
-      <h3>Tasa de aprobación</h3>
+      <h3>Tasa aprobación automática</h3>
       <span class="kpi">
         {% if documents.total_documents %}
-          {{ documents.approval_rate|floatformat:1 }} %
+          {{ documents.auto_approval_rate|floatformat:1 }} %
         {% else %}
-          0 %
+        0 %
         {% endif %}
       </span>
     </div>
+    <div class="card">
+      <h3>Documentos aprobados</h3>
+      <span class="kpi">
+        {{ documents.auto_approved_count|default:0 }}
+      </span>
+    </div>
 
     <div class="card">
-      <h3>Revisión manual</h3>
-      <span class="kpi">
-        {{ documents.manual_review_count|default:0 }}
+      <h3>Confianza de extracción IA</h3>
+      <span class="kpi text-success">
+        {{ documents.confidence_average|floatformat:1 }} %
+      </span>
+    </div>
+    
+    <div class="card">
+      <h3>Tasa revisión manual</h3>
+      <span class="kpi text-info">
+        {{ documents.manual_approval_rate|floatformat:1 }} %
       </span>
     </div>
 
   </div>
-
-  <!-- ===================== -->
-  <!-- 💰 FACTURACIÓN -->
-  <!-- ===================== -->
-  <h2 class="section-title mt-5">Facturación</h2>
-
+  
+  <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-file-invoice"></i> Facturación</h2>
+  <small class="section-subtitle">Solo facturas aprobadas · Abonos descontados</small>
   <div class="dashboard-cards">
-
     <div class="card">
       <h3>Total facturado</h3>
       <span class="kpi">
@@ -105,40 +108,40 @@
         {{ financials.total_tax|floatformat:2|default:"0.00" }} €
       </span>
     </div>
-
+    
   </div>
-
-  <h2 class="section-title mt-5">Este Mes</h2>
-
-  <div class="dashboard-cards">
-    <div class="card">
-      <h3>Total facturado</h3>
-      <span class="kpi">
-        {{ current_month.total_amount|floatformat:2|default:"0.00" }} €
-      </span>
+  
+    <h2 class="section-title mt-4"><i class="section-icon fa-solid fa-chart-column"></i> Actividad de documentos</h2>
+    <div class="dashboard-cards">
+  
+      <div class="card">
+        <h3>Total documentos</h3>
+        <span class="kpi">{{ documents.total_documents|default:0 }}</span>
+      </div>
+  
+      <div class="card">
+        <h3>Aprobados</h3>
+        <span class="kpi text-success">
+          {{ documents.approved_documents|default:0 }}
+        </span>
+      </div>
+  
+      <div class="card">
+        <h3>Pendientes</h3>
+        <span class="kpi text-warning">
+          {{ documents.pending_documents|default:0 }}
+        </span>
+      </div>
+      <div class="card">
+        <h3>Rechazados</h3>
+        <span class="kpi text-danger">
+          {{ documents.rejected_documents|default:0 }}
+        </span>
+      </div>
+  
     </div>
 
-    <div class="card">
-      <h3>Total impuestos</h3>
-      <span class="kpi">
-        {{ current_month.total_tax|floatformat:2|default:"0.00" }} €
-      </span>
-    </div>
-
-    <div class="card">
-      <h3>Total documentos</h3>
-      <span class="kpi">
-        {{ current_month.documents|default:0 }}
-      </span>
-    </div>
-
-    <div class="card">
-      <h3>Aprobados</h3>
-      <span class="kpi">
-        {{ current_month.approved|default:0 }}
-      </span>
-    </div>
-  </div>
+    
 
 </div>
 {% endblock %}
