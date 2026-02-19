@@ -48,72 +48,69 @@
       </div>
     </div>
 
-  
-  <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-gears"></i> Automatización</h2>
-  <small class="section-subtitle">Rendimiento del sistema de revisión inteligente</small>
-  <div class="dashboard-cards">
-    <div class="card">
-      <h3>Tasa aprobación automática</h3>
-      <span class="kpi">
-        {% if documents.total_documents %}
-          {{ documents.auto_approval_rate|floatformat:1 }} %
-        {% else %}
-        0 %
-        {% endif %}
-      </span>
-    </div>
-    <div class="card">
-      <h3>Documentos aprobados</h3>
-      <span class="kpi">
-        {{ documents.auto_approved_count|default:0 }}
-      </span>
-    </div>
-
-    <div class="card">
-      <h3>Confianza de extracción IA</h3>
-      <span class="kpi text-success">
-        {{ documents.confidence_average|floatformat:1 }} %
-      </span>
-    </div>
     
-    <div class="card">
-      <h3>Tasa revisión manual</h3>
-      <span class="kpi text-info">
-        {{ documents.manual_approval_rate|floatformat:1 }} %
-      </span>
-    </div>
-
-  </div>
-  
-  <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-file-invoice"></i> Facturación</h2>
-  <small class="section-subtitle">Solo facturas aprobadas · Abonos descontados</small>
-  <div class="dashboard-cards">
-    <div class="card">
-      <h3>Total facturado</h3>
+    <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-file-invoice"></i> Facturación</h2>
+    <small class="section-subtitle">Solo facturas aprobadas · Abonos descontados</small>
+    <div class="dashboard-cards">
+      <div class="card">
+        <h3>Total facturado</h3>
       <span class="kpi">
         {{ financials.total_amount|floatformat:2|default:"0.00" }} €
       </span>
     </div>
-
+    
     <div class="card">
       <h3>Total Base</h3>
       <span class="kpi">
         {{ financials.total_base|floatformat:2|default:"0.00" }} €
       </span>
     </div>
-
+    
     <div class="card">
       <h3>Total Impuestos</h3>
       <span class="kpi">
         {{ financials.total_tax|floatformat:2|default:"0.00" }} €
       </span>
     </div>
-    
   </div>
+    
+    <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-gears"></i> Automatización</h2>
+    <small class="section-subtitle">Rendimiento del sistema de revisión inteligente</small>
+    <div class="dashboard-cards">
+      <div class="card">
+        <h3>Tasa aprobación automática</h3>
+        <span class="kpi">
+          {% if documents.total_documents %}
+            {{ documents.auto_approval_rate|floatformat:1 }} %
+          {% else %}
+          0 %
+          {% endif %}
+        </span>
+      </div>
+      <div class="card">
+        <h3>Documentos aprobados</h3>
+        <span class="kpi">
+          {{ documents.auto_approved_count|default:0 }}
+        </span>
+      </div>
+  
+      <div class="card">
+        <h3>Confianza de extracción IA</h3>
+        <span class="kpi text-success">
+          {{ documents.confidence_average|floatformat:1 }} %
+        </span>
+      </div>
+      
+      <div class="card">
+        <h3>Tasa revisión manual</h3>
+        <span class="kpi text-info">
+          {{ documents.manual_approval_rate|floatformat:1 }} %
+        </span>
+      </div>
+    </div>
   
     <h2 class="section-title mt-4"><i class="section-icon fa-solid fa-chart-column"></i> Actividad de documentos</h2>
     <div class="dashboard-cards">
-  
       <div class="card">
         <h3>Total documentos</h3>
         <span class="kpi">{{ documents.total_documents|default:0 }}</span>
@@ -138,11 +135,7 @@
           {{ documents.rejected_documents|default:0 }}
         </span>
       </div>
-  
     </div>
-
-    
-
 </div>
 {% endblock %}
 
