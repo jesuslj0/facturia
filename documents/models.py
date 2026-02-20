@@ -142,6 +142,8 @@ class Document(models.Model):
 
     @property
     def status_message(self):
+        if self.is_archived:
+            return f"Documento archivado el {self.archived_at.strftime('%d-%m-%Y')}"
         if self.status == "rejected":
             return f"El documento ha sido rechazado por {self.rejected_by}"
         if self.approved_at:
@@ -201,8 +203,8 @@ class Document(models.Model):
     )
     confidence_global = models.DecimalField(max_digits=5, decimal_places=4, null=True, blank=True, db_index=True)
 
-    objects = ActiveDocumentManager()
-    all_objects = models.Manager()
+    objects = ActiveDocumentManager() #Queryset Documentos activos
+    all_objects = models.Manager() #Queryset Documentos archivados y activos
 
     indexes = [
         models.Index(fields=["client", "status"]),

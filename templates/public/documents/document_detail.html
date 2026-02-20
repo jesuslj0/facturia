@@ -156,6 +156,11 @@
                         Archivar <i class="fa-solid fa-archive"></i>
                     </button>
                 {% endif %}
+                {% if document.is_archived %}
+                    <button type="submit" name="action" value="unarchive" class="btn btn-warning">
+                        Desarchivar <i class="fa-solid fa-archive"></i>
+                    </button>    
+                {% endif %}
             </div>
             
             <div class="review_info">

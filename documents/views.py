@@ -22,6 +22,18 @@ def get_filtered_documents(request):
     date_to = request.GET.get("date_to")
     document_type = request.GET.get("document_type")
     flow = request.GET.get("flow")
+    doc_status = request.GET.get("doc_status")
+
+    if doc_status: 
+        if doc_status == "archived":
+            qs = Document.all_objects.filter(
+                client__clientuser__user=request.user,
+                is_archived=True
+            )
+        elif doc_status == "all":
+            qs = Document.all_objects.all().filter(
+                client__clientuser__user=request.user
+            )
 
     if q:
         qs = qs.filter(
@@ -81,7 +93,6 @@ class DocumentListView(LoginRequiredMixin, ListView):
         querydict = self.request.GET.copy()
         querydict.pop("page", None)
         context["querystring"] = querydict.urlencode()
-
         return context
 
     
@@ -91,7 +102,7 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
     template_name = "public/documents/document_detail.html"
 
     def get_queryset(self):
-        return Document.objects.filter(
+        return Document.all_objects.filter(
             client__clientuser__user=self.request.user
         )
     
@@ -114,6 +125,10 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         # --- Archivar ---
         if action == "archive" and self.object.status in ["approved", "rejected"]:
             return archive_document(request, self.object)
+        
+        # --- Desarchivar ---
+        if action == "unarchive" and self.object.is_archived:
+            return unarchive_document(request, self.object)
 
         # Si no hay acción reconocida, redirigir
         messages.warning(request, "Acción no reconocida.")
@@ -223,7 +238,16 @@ def archive_document(request, document):
     document.save(update_fields=["is_archived", "archived_at", "archived_by"])
 
     messages.success(request, "Documento archivado correctamente.")
-    return redirect("documents:list")
+    return redirect("documents:detail", pk=document.pk)
+
+def unarchive_document(request, document):
+    document.is_archived = False
+    document.archived_at = None
+    document.archived_by = None
+    document.save(update_fields=["is_archived", "archived_at", "archived_by"])
+
+    messages.success(request, "Documento desarchivado correctamente.")
+    return redirect("documents:detail", pk=document.pk)
 
 class DashboardView(LoginRequiredMixin,TemplateView):
     template_name="public/dashboard.html"
@@ -239,7 +263,7 @@ class DashboardView(LoginRequiredMixin,TemplateView):
         client = client if client else None
 
         context = {
-            "pending_documents": qs.order_by("-created_at")[:5],
+            "pending_documents": qs.order_by("-created_at")[:10],
             "pending_count": pending_count,
             "required_review_count": required_count,
             "recommended_review_count": recommended_count,

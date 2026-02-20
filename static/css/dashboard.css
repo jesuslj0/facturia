@@ -164,6 +164,23 @@
   overflow-x: auto;
 }
 
+.table-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.table-footer > a {
+  text-decoration: none;
+  color: var(--body-fg-color);
+  border: 1px solid var(--border-color);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: color 0.2s;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 .dashboard .table td {
     color: var(--muted-color);
     text-align: center;

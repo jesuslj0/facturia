@@ -26,19 +26,23 @@
         <option value="{{ company.name }}" {% if request.GET.company == company.name %}selected{% endif %}>{{ company.name }}</option>
         {% endfor %}
       </select>
-      
       <select name="document_type">
-      <option value="">Tipo de documento</option>
-      {% for key, value in document_types %}
-      <option value="{{ key }}" {% if request.GET.document_type == key %}selected{% endif %}>{{ value }}</option>
-      {% endfor %}
-    </select>
-    
-    <select name="flow">
-      <option value="">Flujo</option>
-      <option value="in" {% if request.GET.flow == "in" %}selected{% endif %}>Recibido (Compra)</option>
-      <option value="out" {% if request.GET.flow == "out" %}selected{% endif %}>Emitido (Venta)</option>
-    </select>
+        <option value="">Tipo de documento</option>
+        {% for key, value in document_types %}
+        <option value="{{ key }}" {% if request.GET.document_type == key %}selected{% endif %}>{{ value }}</option>
+        {% endfor %}
+      </select>
+      <select name="flow">
+        <option value="">Flujo</option>
+        <option value="in" {% if request.GET.flow == "in" %}selected{% endif %}>Recibido (Compra)</option>
+        <option value="out" {% if request.GET.flow == "out" %}selected{% endif %}>Emitido (Venta)</option>
+      </select>
+      <select name="doc_status">
+        <option value="active" {% if request.GET.doc_status == "active" %}selected{% endif %}>Activos</option>
+        <option value="archived" {% if request.GET.doc_status == "archived" %}selected{% endif %}>Archivados</option>
+        <option value="all" {% if request.GET.doc_status == "all" %}selected{% endif %}>Todos</option>
+      </select>
+
   </div>
   
   <div class="right-filters">
@@ -62,9 +66,9 @@
     </div>
     <select name="status">
       <option value="">Estado</option>
-      <option value="pending" {% if request.GET.status == "pending" %}selected{% endif %}>Pendiente</option>
-      <option value="approved" {% if request.GET.status == "approved" %}selected{% endif %}>Aprobado</option>
-      <option value="rejected" {% if request.GET.status == "rejected" %}selected{% endif %}>Rechazado</option>
+      <option value="pending" {% if request.GET.status == "pending" %}selected{% endif %}>Pendientes</option>
+      <option value="approved" {% if request.GET.status == "approved" %}selected{% endif %}>Aprobados</option>
+      <option value="rejected" {% if request.GET.status == "rejected" %}selected{% endif %}>Rechazados</option>
     </select>
     
     <select name="review">
@@ -176,6 +180,9 @@
           <span class="status {{ doc.status }}">
             {{ doc.get_status_display }}
           </span>
+          {% if doc.is_archived %}
+            <span class="archived-badge">[Archivado]</span>
+          {% endif%}
         </td>
 
         <!-- Nivel de revisión -->

@@ -120,6 +120,18 @@
   color: var(--color-danger);
 }
 
+/* Badge Archivado */
+.archived-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 999px;
+  background-color: rgba(245, 158, 11, 0.12); /* warning soft */
+  color: #b45309; /* warning oscuro elegante */
+  letter-spacing: 0.3px;
+}
 @media (min-width: 768px) {
   .table td {
     padding: 0.75rem 1.5rem;

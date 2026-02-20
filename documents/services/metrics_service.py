@@ -8,7 +8,7 @@ class MetricsService:
 
     @staticmethod
     def get_user_metrics(user):
-        queryset = Document.objects.filter(
+        queryset = Document.all_objects.filter(
             client__clientuser__user=user
         )
 
