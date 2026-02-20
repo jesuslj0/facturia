@@ -220,3 +220,35 @@ h1, h2, h3, h4, h5, p {
 .messages .info {
     background-color: var(--color-info); /* azul */
 }
+
+/* Página de error */
+.error-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+}
+
+.error-card {
+  text-align: center;
+  padding: 3rem;
+  background: var(--card-bg-color);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  max-width: 500px;
+}
+
+.error-code {
+  font-size: 5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--body-fg-color);
+}
+
+.error-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}

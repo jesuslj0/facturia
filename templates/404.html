@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="error-page">
+  <div class="error-card">
+    <h1 class="error-code">404</h1>
+    <h2>Página no encontrada</h2>
+    <p>El documento o recurso que buscas no existe o fue eliminado.</p>
+
+    <div class="error-actions">
+      <a href="{% url 'dashboard' %}" class="btn btn-primary">
+        Volver al panel
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
