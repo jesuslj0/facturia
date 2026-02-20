@@ -147,17 +147,17 @@
             <div class="actions">
                 <!-- Revision aprobado o rechazar -->
                 {% if document.status == "pending" %}
-                    <button type="submit" name="action" value="save" class="btn-save">Guardar cambios</button>
-                    <button type="submit" name="action" value="approve" class="btn-approve">Aprobar</button>
-                    <button type="submit" name="action" value="reject" class="btn-reject">Rechazar</button>
+                    <button type="submit" name="action" value="save" class="btn btn-save">Guardar cambios <i class="fa-solid fa-floppy-disk"></i></button>
+                    <button type="submit" name="action" value="approve" class="btn btn-approve">Aprobar <i class="fa-solid fa-check"></i></button>
+                    <button type="submit" name="action" value="reject" class="btn btn-reject">Rechazar <i class="fa-solid fa-xmark"></i></button>
                 {% endif %}
                 {% if document.status in "approved rejected" and not document.is_archived %}
-                    <button type="submit" name="action" value="archive" class="btn btn-warning">
+                    <button type="submit" name="action" value="archive" class="btn btn-archive">
                         Archivar <i class="fa-solid fa-archive"></i>
                     </button>
                 {% endif %}
                 {% if document.is_archived %}
-                    <button type="submit" name="action" value="unarchive" class="btn btn-warning">
+                    <button type="submit" name="action" value="unarchive" class="btn btn-unarchive">
                         Desarchivar <i class="fa-solid fa-archive"></i>
                     </button>    
                 {% endif %}

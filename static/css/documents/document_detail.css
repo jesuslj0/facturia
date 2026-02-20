@@ -140,19 +140,48 @@ select.editable-field {
   flex: 1;
   padding: 0.4rem;
   border-radius: 8px;
-  border: none;
-  color: #020617;
+  background-color: var(--card-bg-color);
+  border: 1px solid var(--border-color);
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s, transform 0.05s;
 }
 
+.data-form .actions button:active {
+  transform: scale(0.95);
+}
+
+.data-form .actions button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Botones de acción */
+.actions .btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #f8fafc;
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.actions .btn-save {
+  color: var(--body-fg-color);
+}
+
 .actions .btn-approve {
-  background: var(--color-success);
+  color: var(--color-success);
 }
 
 .actions .btn-reject {
-  background: var(--color-danger);
+  color: var(--color-danger);
 }
 
 .data button:hover {
