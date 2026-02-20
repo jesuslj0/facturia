@@ -198,7 +198,7 @@ def save_document(request, document):
 
     # Asignar solo si pasó validación
     if document_number:
-        document.invoice_number = document_number
+        document.document_number = document_number
 
     if issue_date:
         document.issue_date = issue_date
