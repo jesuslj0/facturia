@@ -188,6 +188,7 @@
 {% endblock %}
 {% block scripts %}
 {{ block.super }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
     <script>
     document.addEventListener("DOMContentLoaded", function () {
 
@@ -205,8 +206,8 @@
         let scale = 1.2;
 
         pdfjsLib.GlobalWorkerOptions.workerSrc =
-            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.worker.min.js';
-
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.worker.min.js";
+                    
         function renderPage(num) {
             if (!pdfDoc) return;
 
@@ -236,7 +237,7 @@
         }
 
         function loadPDF() {
-            pdfjsLib.getDocument(url).promise
+            pdfjsLib.getDocument({ url: url}).promise
                 .then(pdf => {
                     pdfDoc = pdf;
                     renderPage(pageNum);
