@@ -123,6 +123,9 @@ class DocumentIngestAPIView(APIView):
             company_type=data.get("provider_type", "provider"),
         )
 
+        confidence_dict = data.get("confidence") or {}
+        confidence_global = confidence_dict.get("confianza_extraccion", 0.0)
+
         document = Document.objects.create(
             client=request.client,
             company=company,
@@ -140,7 +143,7 @@ class DocumentIngestAPIView(APIView):
             status=status,
             review_level=review_level,
             is_auto_approved=is_auto_approved,
-            confidence_global=data.get("confidence.confianza_extraccion", 0.0),
+            confidence_global=confidence_global
         )
 
         return Response(
