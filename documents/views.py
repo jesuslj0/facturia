@@ -100,6 +100,7 @@ class DocumentListView(LoginRequiredMixin, ListView):
 class DocumentDetailView(LoginRequiredMixin, DetailView):
     model = Document
     template_name = "public/documents/document_detail.html"
+    context_object_name = "document"
 
     def get_queryset(self):
         return Document.all_objects.filter(
@@ -246,7 +247,7 @@ def unarchive_document(request, document):
     document.archived_by = None
     document.save(update_fields=["is_archived", "archived_at", "archived_by"])
 
-    messages.success(request, "Documento desarchivado correctamente.")
+    messages.warning(request, "Documento desarchivado correctamente.")
     return redirect("documents:detail", pk=document.pk)
 
 class DashboardView(LoginRequiredMixin,TemplateView):

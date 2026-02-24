@@ -48,6 +48,13 @@
         <form method="post" id="review-form">
             {% csrf_token %}
             <div class="data">
+                <!-- Datos para el modal -->
+                <div id="doc-data" hidden
+                    data-name="{{ document.original_name }}"
+                    data-type="{{ document.get_document_type_display }}"
+                    data-total-amount="{{ document.total_amount }}"
+                >
+                </div>
     
                 <!-- Proveedor -->
                 <div class="field">
@@ -147,17 +154,23 @@
             <div class="actions">
                 <!-- Revision aprobado o rechazar -->
                 {% if document.status == "pending" %}
-                    <button type="submit" name="action" value="save" class="btn btn-save">Guardar <i class="fa-solid fa-floppy-disk"></i></button>
-                    <button type="submit" name="action" value="approve" class="btn btn-approve">Aprobar <i class="fa-solid fa-check"></i></button>
-                    <button type="submit" name="action" value="reject" class="btn btn-reject">Rechazar <i class="fa-solid fa-xmark"></i></button>
+                    <button type="submit" name="action" value="save" class="btn btn-save">
+                        Guardar <i class="fa-solid fa-floppy-disk"></i>
+                    </button>
+                    <button type="button" class="btn btn-approve confirm-action" data-action="approve">
+                        Aprobar <i class="fa-solid fa-check"></i>
+                    </button>
+                    <button type="button" class="btn btn-reject confirm-action" data-action="reject">
+                        Rechazar <i class="fa-solid fa-xmark"></i>
+                    </button>
                 {% endif %}
                 {% if document.status in "approved rejected" and not document.is_archived %}
-                    <button type="submit" name="action" value="archive" class="btn btn-archive">
+                    <button type="button" class="btn btn-archive confirm-action" data-action="archive">
                         Archivar <i class="fa-solid fa-archive"></i>
                     </button>
                 {% endif %}
                 {% if document.is_archived %}
-                    <button type="submit" name="action" value="unarchive" class="btn btn-unarchive">
+                    <button type="button" class="btn btn-unarchive confirm-action" data-action="unarchive">
                         Desarchivar <i class="fa-solid fa-archive"></i>
                     </button>    
                 {% endif %}
@@ -183,6 +196,31 @@
                 {% endif %}
             </div>
         </form>
+
+        <div class="modal" id="confirm-modal">
+        <div class="modal-backdrop" data-close></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 id="modal-title">
+                    Confirmar acción
+                </h3>
+            </div>
+            <div class="modal-body">
+                <div id="modal-doc-info"></div>
+                <p id="modal-text">¿Seguro que quieres continuar?</p>
+            </div>
+
+            <button id="modal-confirm" class="btn btn-primary">
+            Confirmar
+            </button>
+            <button type="button" class="btn btn-light" data-close>
+            Cancelar
+            </button>
+        </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -365,6 +403,110 @@
 
     });
     </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const modal = document.getElementById("confirm-modal");
+        const confirmBtn = document.getElementById("modal-confirm");
+        const form = document.getElementById("review-form");
+        
+        let currentAction = null;
+        
+        document.querySelectorAll(".confirm-action").forEach(btn => {
+        btn.addEventListener("click", function () {
+            currentAction = this.dataset.action;
 
+            const docData = document.getElementById("doc-data");
+            const docName = docData.dataset.name;
+            const docType = docData.dataset.type;
+            const docTotalAmount = docData.dataset.totalAmount;
+
+
+            const docDataContent = `
+                <div class="modal-doc-summary">
+                    <strong>${docName}</strong>
+                    <div class="meta">
+                    ${docType} · ${docTotalAmount} €
+                    </div>
+                </div>
+            `;
+
+
+            const icon = document.querySelector(".modal-icon i");
+            const docInfo = document.getElementById("modal-doc-info");
+            const title = document.getElementById("modal-title");
+            const text = document.getElementById("modal-text");
+            const confirmBtn = document.getElementById("modal-confirm");
+
+            // 👉 Siempre mostrar info del documento
+            docInfo.innerHTML = docDataContent;
+
+            switch (currentAction) {
+                case "approve":
+                    icon.className = "fa-solid fa-circle-check";
+                    icon.style.color = "var(--color-success)";
+                    title.textContent = "Confirmar aprobación";
+                    text.textContent = "El documento se marcará como aprobado.";
+                    confirmBtn.textContent = "Aprobar";
+                    confirmBtn.style.color = "var(--color-success)";
+                    break;
+                case "reject":
+                    icon.className = "fa-solid fa-circle-xmark";
+                    icon.style.color = "var(--color-danger)";
+                    title.textContent = "Confirmar rechazo";
+                    text.textContent = "El documento se marcará como rechazado.";
+                    confirmBtn.textContent = "Rechazar";
+                    confirmBtn.style.color = "var(--color-danger)";    
+                    break;
+                case "archive":
+                    icon.className = "fa-solid fa-box-archive";
+                    icon.style.color = "var(--color-warning)";
+                    title.textContent = "Confirmar archivo";
+                    text.textContent = "El documento será archivado.";
+                    confirmBtn.textContent = "Archivar";
+                    confirmBtn.style.color = "var(--color-warning)";
+                    break;
+                case "unarchive":
+                    icon.className = "fa-solid fa-box-archive";
+                    icon.style.color = "var(--color-warning)";
+                    title.textContent = "Confirmar desarchivo";
+                    text.textContent = "El documento volverá a estar activo.";
+                    confirmBtn.textContent = "Desarchivar";
+                    confirmBtn.style.color = "var(--color-warning)";
+                    break;
+                default:
+                    break;
+            }
+
+            modal.classList.add("open");
+        });
+    });
+
+        confirmBtn.addEventListener("click", function () {
+            if (!currentAction) return;
+
+            // Crear input hidden dinámicamente
+            const hiddenInput = document.createElement("input");
+            hiddenInput.type = "hidden";
+            hiddenInput.name = "action";
+            hiddenInput.value = currentAction;
+
+            form.appendChild(hiddenInput);
+            form.submit();
+        });
+
+        document.querySelectorAll("[data-close]").forEach(btn => {
+            btn.addEventListener("click", function () {
+            modal.classList.remove("open");
+            });
+        });
+
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+            modal.classList.remove("open");
+            }
+        });
+
+    });
+    </script>
 
 {% endblock %}
