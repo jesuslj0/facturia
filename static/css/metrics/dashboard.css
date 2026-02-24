@@ -1,0 +1,14 @@
+/* Estilos de tablas */
+.chart-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.chart-title {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--body-fg-color);
+    margin-bottom: 0.5rem;
+}

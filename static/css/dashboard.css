@@ -67,6 +67,9 @@
   border-radius: 12px;
   padding: 1rem 1.25rem;
   transition: box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .dashboard-cards .card:hover {
@@ -278,4 +281,26 @@
 
 .kpi.text-warning {
   color: var(--color-warning);
+}
+
+.kpi-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted-color);
+}
+
+.kpi-info .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-success);
+}
+
+.kpi-info strong {
+  font-weight: 600;
+  color: var(--text-color);
 }

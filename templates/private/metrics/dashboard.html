@@ -3,6 +3,7 @@
 {% load static %}
 {% block styles %}
 <link rel="stylesheet" href="{% static "css/dashboard.css" %}" />
+<link rel="stylesheet" href="{% static "css/metrics/dashboard.css" %}" />
 {% endblock %}
 
 {% block content %}
@@ -18,62 +19,84 @@
 
   <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-calendar-check"></i> Este Mes</h2>
   <small class="section-subtitle">{{ current_month.month|capfirst }} {{ current_month.year }} · Facturación validada</small>
-    <div class="dashboard-cards">
-      <div class="card">
-        <h3>Total facturado</h3>
-        <span class="kpi text-success">
-          {{ current_month.total_amount|floatformat:2|default:"0.00" }} €
-        </span>
-      </div>
-
-      <div class="card">
-        <h3>Total impuestos</h3>
-        <span class="kpi">
-          {{ current_month.total_tax|floatformat:2|default:"0.00" }} €
-        </span>
-      </div>
-
-      <div class="card">
-        <h3>Total documentos</h3>
-        <span class="kpi">
-          {{ current_month.documents|default:0 }}
-        </span>
-      </div>
-
-      <div class="card">
-        <h3>Aprobados</h3>
-        <span class="kpi">
-          {{ current_month.approved|default:0 }}
-        </span>
-      </div>
+  <div class="dashboard-cards">
+    <div class="card">
+      <h3>Ingresos</h3>
+      <span class="kpi text-success">
+        {{ current_month.income|floatformat:2 }} €
+      </span>
     </div>
-    
+
+    <div class="card">
+      <h3>Gastos</h3>
+      <span class="kpi text-danger">
+        {{ current_month.expense|floatformat:2 }} €
+      </span>
+    </div>
+
+    <div class="card">
+      <h3>Beneficio</h3>
+      <span class="kpi {% if current_month.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+        {{ current_month.profit|floatformat:2 }} €
+      </span>
+    </div>
+
+    <div class="card">
+      <h3>Documentos</h3>
+      <span class="kpi">
+        {{ current_month.documents }}
+      </span>
+      <small class="kpi-info">
+        <span class="dot"></span>
+        <strong>{{ current_month.approved }}</strong> aprobados
+      </small>
+    </div>
+  </div>
     
     <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-file-invoice"></i> Facturación</h2>
     <small class="section-subtitle">Solo facturas aprobadas · Abonos descontados</small>
-    <canvas id="incomeExpenseChart"></canvas>
+    <div class="chart-container">
+      <h3 class="chart-title">Ingresos vs Gastos</h3>
+      <canvas id="incomeExpenseChart"></canvas>
+    </div>
+
     <div class="dashboard-cards">
+      <!-- INGRESOS -->
       <div class="card">
-        <h3>Total facturado</h3>
-      <span class="kpi">
-        {{ financials.total_amount|floatformat:2|default:"0.00" }} €
-      </span>
+        <h3>Ingresos totales</h3>
+        <span class="kpi text-success">
+          {{ financials.income.total_amount|floatformat:2 }} €
+        </span>
+        <small>Base: {{ financials.income.total_base|floatformat:2 }} € · 
+              IVA: {{ financials.income.total_tax|floatformat:2 }} €</small>
+      </div>
+
+      <!-- GASTOS -->
+      <div class="card">
+        <h3>Gastos totales</h3>
+        <span class="kpi text-danger">
+          {{ financials.expense.total_amount|floatformat:2 }} €
+        </span>
+        <small>Base: {{ financials.expense.total_base|floatformat:2 }} € · 
+              IVA: {{ financials.expense.total_tax|floatformat:2 }} €</small>
+      </div>
+
+      <!-- BENEFICIO -->
+      <div class="card">
+        <h3>Beneficio</h3>
+        <span class="kpi {% if financials.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+          {{ financials.profit|floatformat:2 }} €
+        </span>
+      </div>
+
+      <!-- MARGEN -->
+      <div class="card">
+        <h3>Margen</h3>
+        <span class="kpi {% if financials.profit_margin >= 0 %}text-success{% else %}text-danger{% endif %}">
+          {{ financials.profit_margin|floatformat:2 }} %
+        </span>
+      </div>
     </div>
-    
-    <div class="card">
-      <h3>Total Base</h3>
-      <span class="kpi">
-        {{ financials.total_base|floatformat:2|default:"0.00" }} €
-      </span>
-    </div>
-    
-    <div class="card">
-      <h3>Total Impuestos</h3>
-      <span class="kpi">
-        {{ financials.total_tax|floatformat:2|default:"0.00" }} €
-      </span>
-    </div>
-  </div>
     
     <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-gears"></i> Automatización</h2>
     <small class="section-subtitle">Rendimiento del sistema de revisión inteligente</small>

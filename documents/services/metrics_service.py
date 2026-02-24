@@ -56,48 +56,39 @@ class MetricsService:
         # Quitar Albaranes de Facturación Real
         billing_queryset = queryset.filter(
             status="approved",
-            flow="in",
             document_type__in=["invoice", "corrected_invoice"],
         )
 
-        # Expresión para extraer cantidad
-        amount_expression = Case(
-            When(document_type="corrected_invoice", then=-F("total_amount")),
-            default=F("total_amount"),
-            output_field=DecimalField()
-        )
-        
-        financial_totals = billing_queryset.aggregate(
-            total_amount=Sum(
-                Case(
-                    When(document_type="corrected_invoice", then=-F("total_amount")),
-                    default=F("total_amount"),
-                    output_field=DecimalField()
-                )
-            ),
-            total_tax=Sum(
-                Case(
-                    When(document_type="corrected_invoice", then=-F("tax_amount")),
-                    default=F("tax_amount"),
-                    output_field=DecimalField()
-                )
-            ),
-            total_base=Sum(
-                Case(
-                    When(document_type="corrected_invoice", then=-F("base_amount")),
-                    default=F("base_amount"),
-                    output_field=DecimalField()
-                )
-            ),
+        income_queryset = billing_queryset.filter(flow="in")
+        expense_queryset = billing_queryset.filter(flow="out")
+
+        # Expresión para extraer cantidad con signo
+        def signed(field):
+            return Case(
+                When(document_type="corrected_invoice", then=-F(field)),
+                default=F(field),
+                output_field=DecimalField()
+            )
+
+        # Totales facturacion 
+        income_totals = income_queryset.aggregate(
+            total_amount=Sum(signed("total_amount")),
+            total_tax=Sum(signed("tax_amount")),
+            total_base=Sum(signed("base_amount")),
         )
 
-        # =========================
-        # 📅 3. MÉTRICAS MES ACTUAL
-        # =========================
-        month_queryset = billing_queryset.filter(
-            issue_date__gte=start_month
+        expense_totals = expense_queryset.aggregate(
+            total_amount=Sum(signed("total_amount")),
+            total_tax=Sum(signed("tax_amount")),
+            total_base=Sum(signed("base_amount")),
         )
 
+        total_income = income_totals["total_amount"] or 0
+        total_expense = expense_totals["total_amount"] or 0
+        profit = total_income - total_expense
+        profit_margin = (profit / total_income * 100) if total_income > 0 else 0    
+
+        # Datos mensuales
         monthly_data = (
             queryset
             .filter(
@@ -106,7 +97,7 @@ class MetricsService:
             )
             .annotate(month=TruncMonth("issue_date"))
             .values("month", "flow")
-            .annotate(total=Sum(amount_expression))
+            .annotate(total=Sum(signed("total_amount")))
             .order_by("month")
         )
 
@@ -118,8 +109,8 @@ class MetricsService:
             result[month_label][row["flow"]] = float(row["total"] or 0)
 
         labels = list(result.keys())
-        income = [result[m]["out"] for m in labels]
-        expense = [result[m]["in"] for m in labels]
+        income = [result[m]["in"] for m in labels]
+        expense = [result[m]["out"] for m in labels]
 
         income_expense_chart = {
             "labels": labels,
@@ -127,44 +118,30 @@ class MetricsService:
             "expense": expense,
         }
 
-        month_totals = month_queryset.aggregate(
-            total_amount=Sum(
-                Case(
-                    When(document_type="corrected_invoice", then=-F("total_amount")),
-                    default=F("total_amount"),
-                    output_field=DecimalField()
-                )
-            ),
-            total_tax=Sum(
-                Case(
-                    When(document_type="corrected_invoice", then=-F("tax_amount")),
-                    default=F("tax_amount"),
-                    output_field=DecimalField()
-                )
-            ),
-            total_base=Sum(
-                Case(
-                    When(document_type="corrected_invoice", then=-F("base_amount")),
-                    default=F("base_amount"),
-                    output_field=DecimalField()
-                )
-            ),
-            documents_count=Sum(
-                Case(
-                    When(document_type="corrected_invoice", then=0),
-                    default=1,
-                    output_field=DecimalField()
-                )
-            ),
-            approved_count=Sum(
-                Case(
-                    When(document_type="corrected_invoice", then=0),  # no sumas al aprobado
-                    When(status="approved", then=1),
-                    default=0,
-                    output_field=DecimalField()
-                )
-            )
+        # Totales mensuales
+        month_queryset = queryset.filter(
+            issue_date__gte=start_month
         )
+
+        month_totals = month_queryset.aggregate(
+            documents_count=Count("id"),
+            approved_count = Count("id", filter=Q(status="approved")),
+        )
+
+        month_income_qs = month_queryset.filter(flow="in")
+        month_expense_qs = month_queryset.filter(flow="out")
+
+        month_income = month_income_qs.aggregate(
+            total_amount=Sum(signed("total_amount")),
+            total_tax=Sum(signed("tax_amount")),
+        )
+
+        month_expense = month_expense_qs.aggregate(
+            total_amount=Sum(signed("total_amount")),
+            total_tax=Sum(signed("tax_amount")),
+        )
+
+        month_profit = (month_income["total_amount"] or 0) - (month_expense["total_amount"] or 0)
 
         return {
             "documents": {
@@ -174,15 +151,25 @@ class MetricsService:
                 "manual_approval_rate": round(manual_approval_rate, 2),
             },
             "financials": {
-                "total_amount": financial_totals["total_amount"] or 0,
-                "total_tax": financial_totals["total_tax"] or 0,
-                "total_base": financial_totals["total_base"] or 0,
+                "income": {
+                    "total_amount": total_income,
+                    "total_tax": income_totals["total_tax"] or 0,
+                    "total_base": income_totals["total_base"] or 0,
+                },
+                "expense": {
+                    "total_amount": total_expense,
+                    "total_tax": expense_totals["total_tax"] or 0,
+                    "total_base": expense_totals["total_base"] or 0,
+                },
+                "profit": profit,
+                "profit_margin": profit_margin,
             },
             "current_month": {
+                "income": month_income["total_amount"] or 0,
+                "expense": month_expense["total_amount"] or 0,
+                "profit": month_profit,
                 "documents": month_totals["documents_count"] or 0,
                 "approved": month_totals["approved_count"] or 0,
-                "total_amount": month_totals["total_amount"] or 0,
-                "total_tax": month_totals["total_tax"] or 0,
                 "month": date_format(timezone.now(), "F"),
                 "year": date_format(timezone.now(), "Y"),
             },

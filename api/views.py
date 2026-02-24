@@ -143,7 +143,8 @@ class DocumentIngestAPIView(APIView):
             status=status,
             review_level=review_level,
             is_auto_approved=is_auto_approved,
-            confidence_global=confidence_global
+            confidence_global=confidence_global,
+            flow=data.get("flow", "in")
         )
 
         return Response(

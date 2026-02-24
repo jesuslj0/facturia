@@ -82,8 +82,8 @@ class Document(models.Model):
     ]
 
     FLOW_CHOICES = [
-        ("in", "Compra"),
-        ("out", "Venta"),
+        ("in", "Ingreso (venta)"),
+        ("out", "Gasto (compra)"),
         ("unknown", "Por revisar"),
     ]
 
