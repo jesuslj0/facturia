@@ -1,7 +1,10 @@
 from django.db.models import Sum, Count, Q, Avg, Case, When, DecimalField, F
+from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from django.utils.formats import date_format
 from documents.models import Document
+from collections import defaultdict
+from django.utils.dateformat import DateFormat
 
 
 class MetricsService:
@@ -57,6 +60,12 @@ class MetricsService:
             document_type__in=["invoice", "corrected_invoice"],
         )
 
+        # Expresión para extraer cantidad
+        amount_expression = Case(
+            When(document_type="corrected_invoice", then=-F("total_amount")),
+            default=F("total_amount"),
+            output_field=DecimalField()
+        )
         
         financial_totals = billing_queryset.aggregate(
             total_amount=Sum(
@@ -88,6 +97,35 @@ class MetricsService:
         month_queryset = billing_queryset.filter(
             issue_date__gte=start_month
         )
+
+        monthly_data = (
+            queryset
+            .filter(
+                status="approved",
+                document_type__in=["invoice", "corrected_invoice"],
+            )
+            .annotate(month=TruncMonth("issue_date"))
+            .values("month", "flow")
+            .annotate(total=Sum(amount_expression))
+            .order_by("month")
+        )
+
+        # Gráfica de datos mensuales
+        result = defaultdict(lambda: {"in": 0, "out": 0})
+
+        for row in monthly_data:
+            month_label = DateFormat(row["month"]).format("M Y")
+            result[month_label][row["flow"]] = float(row["total"] or 0)
+
+        labels = list(result.keys())
+        income = [result[m]["out"] for m in labels]
+        expense = [result[m]["in"] for m in labels]
+
+        income_expense_chart = {
+            "labels": labels,
+            "income": income,
+            "expense": expense,
+        }
 
         month_totals = month_queryset.aggregate(
             total_amount=Sum(
@@ -147,5 +185,6 @@ class MetricsService:
                 "total_tax": month_totals["total_tax"] or 0,
                 "month": date_format(timezone.now(), "F"),
                 "year": date_format(timezone.now(), "Y"),
-            }
+            },
+            "income_expense_chart": income_expense_chart
         }
