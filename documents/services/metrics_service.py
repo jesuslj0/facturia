@@ -33,6 +33,10 @@ class MetricsService:
 
         total_documents = totals["total_documents"] or 0
         approved_documents = totals["approved_documents"] or 0
+        auto_approved_documents = totals["auto_approved_count"] or 0
+        manual_approved_documents = totals["manual_approved_count"] or 0
+        rejected_documents = totals["rejected_documents"] or 0
+        pending_documents = totals["pending_documents"] or 0
 
         approval_rate = (
             (approved_documents / total_documents) * 100
@@ -40,12 +44,12 @@ class MetricsService:
         )
 
         auto_approval_rate = (
-            (totals["auto_approved_count"] / total_documents) * 100
+            (auto_approved_documents / total_documents) * 100
             if total_documents > 0 else 0
         )
 
         manual_approval_rate = (
-            (totals["manual_approved_count"] / total_documents) * 100
+            (manual_approved_documents / total_documents) * 100
             if total_documents > 0 else 0
         )
 
@@ -173,5 +177,15 @@ class MetricsService:
                 "month": date_format(timezone.now(), "F"),
                 "year": date_format(timezone.now(), "Y"),
             },
-            "income_expense_chart": income_expense_chart
+            "income_expense_chart": income_expense_chart,
+            "auto_approval_chart": {
+                "labels": ["Automático", "Manual", "Rechazados", "Pendientes"],
+                "data": [
+                    auto_approved_documents, 
+                    manual_approved_documents, 
+                    rejected_documents, 
+                    pending_documents,
+                ],
+                "total": total_documents or 1,
+            }
         }

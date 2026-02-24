@@ -55,7 +55,7 @@
     
     <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-file-invoice"></i> Facturación</h2>
     <small class="section-subtitle">Solo facturas aprobadas · Abonos descontados</small>
-    <div class="chart-container">
+    <div class="chart-container line-chart">
       <h3 class="chart-title">Ingresos vs Gastos</h3>
       <canvas id="incomeExpenseChart"></canvas>
     </div>
@@ -67,7 +67,7 @@
         <span class="kpi text-success">
           {{ financials.income.total_amount|floatformat:2 }} €
         </span>
-        <small>Base: {{ financials.income.total_base|floatformat:2 }} € · 
+        <small class="kpi-info">Base: {{ financials.income.total_base|floatformat:2 }} € · 
               IVA: {{ financials.income.total_tax|floatformat:2 }} €</small>
       </div>
 
@@ -77,7 +77,7 @@
         <span class="kpi text-danger">
           {{ financials.expense.total_amount|floatformat:2 }} €
         </span>
-        <small>Base: {{ financials.expense.total_base|floatformat:2 }} € · 
+        <small class="kpi-info">Base: {{ financials.expense.total_base|floatformat:2 }} € · 
               IVA: {{ financials.expense.total_tax|floatformat:2 }} €</small>
       </div>
 
@@ -100,37 +100,33 @@
     
     <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-gears"></i> Automatización</h2>
     <small class="section-subtitle">Rendimiento del sistema de revisión inteligente</small>
+    
+    <div class="chart-container donut-chart">
+      <h3 class="chart-title">Estado de aprobación</h3>
+      <canvas id="autoApprovalChart"></canvas>
+    </div>
     <div class="dashboard-cards">
-      <div class="card">
-        <h3>Tasa aprobación automática</h3>
-        <span class="kpi">
-          {% if documents.total_documents %}
-            {{ documents.auto_approval_rate|floatformat:1 }} %
-          {% else %}
-          0 %
-          {% endif %}
-        </span>
-      </div>
-      <div class="card">
-        <h3>Documentos aprobados</h3>
-        <span class="kpi">
-          {{ documents.auto_approved_count|default:0 }}
-        </span>
-      </div>
-  
       <div class="card">
         <h3>Confianza de extracción IA</h3>
         <span class="kpi text-success">
           {{ documents.confidence_average|floatformat:1 }} %
         </span>
       </div>
-      
+
       <div class="card">
-        <h3>Tasa revisión manual</h3>
+        <h3>Documentos aprobados</h3>
+        <span class="kpi">
+          {{ documents.auto_approved_count|default:0 }}
+        </span>
+      </div>
+
+      <div class="card">
+        <h3>Tasa aprobación manual</h3>
         <span class="kpi text-info">
           {{ documents.manual_approval_rate|floatformat:1 }} %
         </span>
       </div>
+  
     </div>
   
     <h2 class="section-title mt-4"><i class="section-icon fa-solid fa-chart-column"></i> Actividad de documentos</h2>
@@ -186,6 +182,84 @@
           ]
       }
   });
+
+  const ctx = document.getElementById('autoApprovalChart');
+  const chartData = {{ auto_approval_chart|safe }};
+
+  // Crear gráfico
+  const chart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+          labels: chartData.labels,
+          datasets: [{
+              data: chartData.data,
+              backgroundColor: ['#22c55e', '#17a2b8', '#ef4444', '#6c757d'],
+              borderWidth: 1,
+              cutout: '65%',
+          }]
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: { position: 'bottom' },
+              tooltip: {
+                  callbacks: {
+                      label: function(context) {
+                          let value = context.parsed;
+                          let total = context.dataset.data.reduce((a,b)=>a+b,0);
+                          let percentage = ((value/total)*100).toFixed(1);
+                          return `${context.label}: ${value} (${percentage}%)`;
+                      }
+                  }
+              }
+          }
+      }
+  });
+
+  
+// Div central dinámico
+ctx.parentNode.style.position = 'relative';
+const centerDiv = document.createElement('div');
+centerDiv.style.position = 'absolute';
+centerDiv.style.top = '50%';
+centerDiv.style.left = '50%';
+centerDiv.style.transform = 'translate(-50%, -50%)';
+centerDiv.style.fontSize = '1rem';
+centerDiv.style.fontWeight = '600';
+centerDiv.style.color = '#f8fafc';
+centerDiv.style.pointerEvents = 'none'; // no interfiere con hover
+ctx.parentNode.appendChild(centerDiv);
+
+// Función para actualizar el div central
+function updateCenterText(activeIndex = null) {
+    let total;
+    let labelText;
+
+    if (activeIndex !== null) {
+        // Solo el segmento seleccionado
+        total = chart.data.datasets[0].data[activeIndex];
+        labelText = chart.data.labels[activeIndex];
+        centerDiv.innerText = `${total} ${labelText}`;
+    } else {
+        // Todos los segmentos
+        total = chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+        centerDiv.innerText = `${total} documentos`;
+    }
+}
+
+// Inicial
+updateCenterText();
+
+// Evento hover: Chart.js 4 usa getElementsAtEventForMode
+ctx.addEventListener('mousemove', (evt) => {
+    const points = chart.getElementsAtEventForMode(evt, 'nearest', {intersect: true}, true);
+    if (points.length) {
+        const index = points[0].index;
+        updateCenterText(index);
+    } else {
+        updateCenterText(); // volver al total
+    }
+});
   </script>
 {% endblock %}
 

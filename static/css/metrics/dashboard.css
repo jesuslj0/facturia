@@ -1,14 +1,47 @@
-/* Estilos de tablas */
+/* Contenedor base para todos los gráficos */
 .chart-container {
+    position: relative;      /* necesario para div central dinámico */
     width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;     /* centra título y canvas */
+    justify-content: center;
+    padding: 1.2rem 1rem;
+    border-radius: 12px;
+    background: var(--card-bg-color);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
     margin-bottom: 1.5rem;
 }
 
+/* Título del gráfico */
 .chart-title {
-    font-size: 1.2rem;
-    font-weight: 500;
+    font-size: 1.1rem;
+    font-weight: 600;
     color: var(--body-fg-color);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
+
+/* Tamaño específico por tipo */
+.chart-container.donut-chart {
+    max-width: 300px;
+}
+
+.chart-container.line-chart {
+    max-width: 800px;
+}
+
+/* Canvas responsive */
+.chart-container canvas {
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* Ajuste móvil */
+@media (max-width: 768px) {
+    .chart-container.donut-chart,
+    .chart-container.line-chart {
+        max-width: 100%;
+    }
 }
