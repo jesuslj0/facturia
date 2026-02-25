@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status as rst_status
 from documents.utils import normalize_tax
+from rest_framework.exceptions import ValidationError
 
 def get_review_level(confidence: dict, document_type):
     extraction_confidence = confidence.get("confianza_extraccion", 0.0)
@@ -44,10 +45,9 @@ def normalize_name(name: str | None) -> str:
 from django.db import transaction, IntegrityError
 
 @transaction.atomic
-def get_or_create_company(*, client, name: str, tax_id: str | None, company_type="provider"):
+def get_or_create_company(*, client, name: str, tax_id: str | None, is_provider: bool, is_customer: bool):
     tax_id = normalize_tax_id(tax_id)
     name = normalize_name(name)
-
     company = None
 
     # 1️⃣ Buscar por CIF
@@ -69,6 +69,20 @@ def get_or_create_company(*, client, name: str, tax_id: str | None, company_type
         )
 
     if company:
+        # 🔥 Actualizar roles si hace falta
+        updated = False
+
+        if is_provider and not company.is_provider:
+            company.is_supplier = True
+            updated = True
+
+        if is_customer and not company.is_customer:
+            company.is_customer = True
+            updated = True
+
+        if updated:
+            company.save(update_fields=["is_provider", "is_customer"])
+
         return company
 
     # 3️⃣ Crear con protección contra race condition
@@ -77,7 +91,8 @@ def get_or_create_company(*, client, name: str, tax_id: str | None, company_type
             client=client,
             name=name,
             tax_id=tax_id,
-            type=company_type,
+            is_provider=is_provider,
+            is_customer=is_customer
         )
     except IntegrityError:
         # Otro proceso la creó justo antes
@@ -97,7 +112,6 @@ class DocumentIngestAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-
         # Revisión y status
         review_level = get_review_level(
             confidence=data.get("confidence", {}),
@@ -115,12 +129,24 @@ class DocumentIngestAPIView(APIView):
             data["total_amount"]
         )
 
-        # Obtener o crear Company
+        #Inferir tipo de company
+        FLOW_ROLE_MAP = {
+            "in": {"is_provider": True, "is_customer": False},
+            "out": {"is_provider": False, "is_customer": True},
+        }
+
+        flow = data.get("flow", "in")
+
+        if flow not in FLOW_ROLE_MAP:
+            raise ValidationError("Flow inválido")
+
+        roles = FLOW_ROLE_MAP[flow]
+
         company = get_or_create_company(
             client=request.client,
             name=data["provider_name"],
             tax_id=data["provider_tax_id"],
-            company_type=data.get("provider_type", "provider"),
+            **roles
         )
 
         confidence_dict = data.get("confidence") or {}
@@ -144,7 +170,7 @@ class DocumentIngestAPIView(APIView):
             review_level=review_level,
             is_auto_approved=is_auto_approved,
             confidence_global=confidence_global,
-            flow=data.get("flow", "in")
+            flow=flow
         )
 
         return Response(

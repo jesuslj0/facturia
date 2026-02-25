@@ -6,18 +6,12 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class Company(models.Model):
-    TYPE_CHOICES = [
-        ("provider", "Proveedor"),
-        ("customer", "Cliente"),
-    ]
-
     client = models.ForeignKey(
         Client, on_delete=models.CASCADE, 
         related_name="companies"
     )
     name = models.CharField(max_length=255)
     tax_id = models.CharField(max_length=50, null=True, blank=True)
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     is_provider = models.BooleanField(default=False, db_index=True)
     is_customer = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -47,6 +41,7 @@ class Company(models.Model):
         if self.name: 
             self.name = self.name.strip()
         super().save(*args, **kwargs)
+
 
     def __str__(self):
         return f"{self.name} ({self.get_type_display()})"
@@ -185,7 +180,7 @@ class Document(models.Model):
         null=True
     )
     rejected_at = models.DateTimeField(blank=True, null=True)
-    flow = models.CharField(max_length=20, choices=FLOW_CHOICES, default="in")
+    flow = models.CharField(max_length=20, choices=FLOW_CHOICES, default="in", db_index=True)
     flow_source = models.CharField(max_length=20, choices=FLOW_SOURCE_CHOICES, default="auto")
     is_auto_approved = models.BooleanField(default=False, db_index=True)
     review_started_at = models.DateTimeField(blank=True, null=True, db_index=True)

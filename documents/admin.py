@@ -20,6 +20,6 @@ class DocumentAdmin(admin.ModelAdmin):
 
 @register(Company)
 class CompanyAdmin(admin.ModelAdmin):
-    list_display = ['name', 'client', 'type', 'tax_id']
-    list_filter = ['client', 'type']
+    list_display = ['name', 'client', 'is_provider', 'is_customer', 'tax_id']
+    list_filter = ['client', 'is_provider', 'is_customer']
     search_fields = ['name', 'tax_id', 'client__name']

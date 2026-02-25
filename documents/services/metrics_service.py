@@ -28,7 +28,7 @@ class MetricsService:
             pending_documents=Count("id", filter=Q(status="pending")),
             manual_approved_count=Count("id", filter=Q(review_level="manual", status="approved")),
             auto_approved_count=Count("id", filter=Q(review_level="auto", status="approved", is_auto_approved=True)),
-            confidence_average=Avg("confidence_global", filter=Q(status="approved"))*100,
+            confidence_average=Avg("confidence_global", filter=Q(status="approved"))*100 or 0,
         )
 
         total_documents = totals["total_documents"] or 0
