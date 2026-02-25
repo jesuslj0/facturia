@@ -135,7 +135,7 @@ class DocumentIngestAPIView(APIView):
             "out": {"is_customer": True},
         }
 
-        flow = (data["flow"] or "").strip().lower()
+        flow = (data.get("flow") or "").strip().lower()
 
         if flow not in FLOW_ROLE_MAP:
             raise ValidationError("Flow inválido")

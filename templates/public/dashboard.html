@@ -19,14 +19,14 @@
     </div>
     
     <div class="card">
-      <a href="{% url 'documents:list' %}?status=pending?review_level=recommended">
+      <a href="{% url 'documents:list' %}?status=pending&review=recommended">
         <h3>Recomendados</h3>
         <span class="kpi text-warning">{% if recommended_review_count %}{{ recommended_review_count }}{% else %}0{% endif %}</span>
       </a>
     </div>
 
     <div class="card">
-      <a href="{% url 'documents:list' %}?status=pending?review_level=required">
+      <a href="{% url 'documents:list' %}?status=pending&review=required">
         <h3>Revisión obligatoria</h3>
         <span class="kpi text-danger">{% if required_review_count %}{{ required_review_count }}{% else %}0{% endif %}</span>
       </a>

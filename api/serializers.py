@@ -19,6 +19,7 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
     tax_amount = serializers.FloatField()
     tax_percentage = serializers.FloatField(min_value=0.0, max_value=100.0)
     total_amount = serializers.FloatField()
+    flow = serializers.CharField(max_length=255, required=False, allow_blank=True)
 
     # Confianza / revisión
     confidence = serializers.JSONField(default=dict)
@@ -44,6 +45,7 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
             "tax_percentage",
             "total_amount",
             "confidence",
+            "flow",
         ]
 
 
