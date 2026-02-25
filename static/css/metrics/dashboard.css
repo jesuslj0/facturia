@@ -11,7 +11,12 @@
     border-radius: 12px;
     background: var(--card-bg-color);
     box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    box-sizing: border-box;
     margin-bottom: 1.5rem;
+}
+
+.canvas {
+    max-width: 100%;
 }
 
 /* Título del gráfico */
@@ -19,7 +24,7 @@
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--body-fg-color);
-    margin-bottom: 0.75rem;
+    margin: 0 0 1rem;
     text-align: center;
 }
 
@@ -45,3 +50,4 @@
         max-width: 100%;
     }
 }
+

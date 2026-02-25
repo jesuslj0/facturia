@@ -39,8 +39,7 @@ h1, h2, h3, h4, h5, p {
 .app-header .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0.75rem 1.25rem;
-
+  padding: 0.85rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -94,7 +93,7 @@ h1, h2, h3, h4, h5, p {
   }
 
 
-    .app-header .nav form {
+  .app-header .nav form {
     display: flex;
     align-items: center;
     justify-content: end;
@@ -110,7 +109,7 @@ h1, h2, h3, h4, h5, p {
   }
 
   .nav-toggle-container {
-    margin-top: 0.7rem;
+    margin-top: 0;
   }
 }
 

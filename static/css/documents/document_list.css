@@ -330,6 +330,10 @@ label[for="q"] button:hover {
     width: 100%;
     box-sizing: border-box;
   }
+
+  .page-title {
+    margin-top: 0;
+  }
 }
 
 @media(max-width: 992px) {

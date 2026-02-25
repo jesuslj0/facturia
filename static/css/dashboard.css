@@ -6,6 +6,12 @@
   margin-top: 1.5rem;
 }
 
+@media (max-width: 768px) {
+  .dashboard {
+    margin-top: 0;
+  }
+}
+
 /* =========================
    Dashboard header
 ========================= */
@@ -258,7 +264,7 @@
   font-weight: 500;
   color: var(--muted-color);
   display: inline-block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.85rem;
 }
 
 .section-icon {
