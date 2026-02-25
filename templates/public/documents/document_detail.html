@@ -82,8 +82,8 @@
                     <span class="label">Flujo</span>
                     {% if document.is_editable %}
                         <select name="flow" class="editable-field">
-                            <option value="in" {% if document.flow == "in" %}selected{% endif %}>Compra</option>
-                            <option value="out" {% if document.flow == "out" %}selected{% endif %}>Venta</option>
+                            <option value="in" {% if document.flow == "in" %}selected{% endif %}>Venta</option>
+                            <option value="out" {% if document.flow == "out" %}selected{% endif %}>Compra</option>
                         </select>
                     {% else %}
                         <span class="value">{{ document.get_flow_display }}</span>

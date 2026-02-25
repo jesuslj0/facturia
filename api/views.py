@@ -131,8 +131,8 @@ class DocumentIngestAPIView(APIView):
 
         #Inferir tipo de company
         FLOW_ROLE_MAP = {
-            "in": {"is_provider": True},
-            "out": {"is_customer": True},
+            "in": {"is_customer": True},
+            "out": {"is_provider": True},
         }
 
         flow = (data.get("flow") or "").strip().lower()
