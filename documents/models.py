@@ -42,9 +42,12 @@ class Company(models.Model):
             self.name = self.name.strip()
         super().save(*args, **kwargs)
 
+    def get_type(self):
+        return "Proveedor" if self.is_provider else "Cliente"
+
 
     def __str__(self):
-        return f"{self.name} ({self.get_type_display()})"
+        return f"{self.name} ({self.get_type()})"
     
 
 class ActiveDocumentManager(models.Manager):

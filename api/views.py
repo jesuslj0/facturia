@@ -131,11 +131,11 @@ class DocumentIngestAPIView(APIView):
 
         #Inferir tipo de company
         FLOW_ROLE_MAP = {
-            "in": {"is_provider": True, "is_customer": False},
-            "out": {"is_provider": False, "is_customer": True},
+            "in": {"is_provider": True},
+            "out": {"is_customer": True},
         }
 
-        flow = data.get("flow", "in")
+        flow = (data["flow"] or "").strip().lower()
 
         if flow not in FLOW_ROLE_MAP:
             raise ValidationError("Flow inválido")
