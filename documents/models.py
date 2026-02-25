@@ -18,6 +18,8 @@ class Company(models.Model):
     name = models.CharField(max_length=255)
     tax_id = models.CharField(max_length=50, null=True, blank=True)
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    is_provider = models.BooleanField(default=False, db_index=True)
+    is_customer = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     edited_at = models.DateTimeField(blank=True, null=True)
 
@@ -139,6 +141,11 @@ class Document(models.Model):
         related_name="documents",
         null=True
     )
+
+    def save(self, *args, **kwargs):
+        if self.company and self.company.client != self.client:
+            raise ValueError("Company must belong to the same client")
+        super().save(*args, **kwargs)
 
     @property
     def status_message(self):
