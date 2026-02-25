@@ -37,8 +37,6 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
             "document_type",
             "provider_name",
             "provider_tax_id",
-            "is_provider",
-            "is_customer",
             "document_number",
             "issue_date",
             "base_amount",
