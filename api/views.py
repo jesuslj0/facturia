@@ -45,7 +45,7 @@ def normalize_name(name: str | None) -> str:
 from django.db import transaction, IntegrityError
 
 @transaction.atomic
-def get_or_create_company(*, client, name: str, tax_id: str | None, is_provider: bool, is_customer: bool):
+def get_or_create_company(*, client, name: str, tax_id: str | None, is_provider: bool = False, is_customer: bool = False):
     tax_id = normalize_tax_id(tax_id)
     name = normalize_name(name)
     company = None
