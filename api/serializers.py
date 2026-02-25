@@ -11,7 +11,6 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
     # Datos del proveedor / Company
     provider_name = serializers.CharField(max_length=255, required=True)
     provider_tax_id = serializers.CharField(max_length=50, required=True)
-    provider_type = serializers.ChoiceField(choices=[("provider", "Provider")], default="provider")
 
     # Datos de la factura
     document_number = serializers.CharField(max_length=255, required=False, allow_blank=True)

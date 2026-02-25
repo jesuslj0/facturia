@@ -12,20 +12,25 @@
   <!-- KPIs -->
   <div class="dashboard-cards">
     <div class="card">
-      <h3>Pendientes</h3>
-      <span class="kpi">{% if pending_count %}{{ pending_count }}{% else %}0{% endif %}</span>
+      <a href="{% url 'documents:list' %}?status=pending">
+        <h3>Pendientes</h3>
+        <span class="kpi">{% if pending_count %}{{ pending_count }}{% else %}0{% endif %}</span>
+      </a>
     </div>
     
     <div class="card">
-      <h3>Recomendados</h3>
-      <span class="kpi text-warning">{% if recommended_review_count %}{{ recommended_review_count }}{% else %}0{% endif %}</span>
+      <a href="{% url 'documents:list' %}?status=pending?review_level=recommended">
+        <h3>Recomendados</h3>
+        <span class="kpi text-warning">{% if recommended_review_count %}{{ recommended_review_count }}{% else %}0{% endif %}</span>
+      </a>
     </div>
 
     <div class="card">
-      <h3>Revisión obligatoria</h3>
-      <span class="kpi text-danger">{% if required_review_count %}{{ required_review_count }}{% else %}0{% endif %}</span>
+      <a href="{% url 'documents:list' %}?status=pending?review_level=required">
+        <h3>Revisión obligatoria</h3>
+        <span class="kpi text-danger">{% if required_review_count %}{{ required_review_count }}{% else %}0{% endif %}</span>
+      </a>
     </div>
-
   </div>
 
   <!-- Lista de documentos -->

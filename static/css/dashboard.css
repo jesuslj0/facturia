@@ -99,6 +99,10 @@
   margin-bottom: 0.5rem;
 }
 
+.dashboard-cards .card a {
+  text-decoration: none;
+}
+
 /* KPI número */
 .dashboard-cards .kpi {
   font-size: 1.8rem;
