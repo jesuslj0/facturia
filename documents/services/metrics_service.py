@@ -1,5 +1,5 @@
 from django.db.models import Sum, Count, Q, Avg, Case, When, DecimalField, F
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncMonth, TruncDay
 from django.utils import timezone
 from django.utils.formats import date_format
 from documents.models import Document
@@ -67,6 +67,12 @@ class MetricsService:
                 default=F(field),
                 output_field=DecimalField()
             )
+        
+        def get_granularity(start, end):
+            delta = (end - start).days
+            if delta <= 31:
+                return TruncDay, "%d %b"  # etiquetas tipo 1 Feb
+            return TruncMonth, "%b %Y"  # etiquetas tipo Feb 2026
 
         income_totals = income_queryset.aggregate(
             total_amount=Sum(signed("total_amount")),
@@ -86,43 +92,34 @@ class MetricsService:
         profit_margin = (profit / total_income * 100) if total_income > 0 else 0    
 
         # Datos mensuales (dentro del rango)
+        trunc_func, date_format_str = get_granularity(start, end)
+
         monthly_data = (
             queryset
-            .filter(
-                status="approved",
-                document_type__in=["invoice", "corrected_invoice"],
-            )
-            .annotate(month=TruncMonth("issue_date"))
-            .values("month", "flow")
+            .filter(issue_date__range=(start, end))
+            .annotate(period=trunc_func("issue_date"))
+            .values("period", "flow")
             .annotate(total=Sum(signed("total_amount")))
-            .order_by("month")
+            .order_by("period")
         )
 
-        monthly_data = (
-            billing_queryset
-            .annotate(month=TruncMonth("issue_date"))
-            .values("month", "flow")
-            .annotate(total=Sum(signed("total_amount")))
-            .order_by("month")
-        )
-
-        monthly_result = defaultdict(lambda: {"income": 0, "expense": 0})
+        chart_result = defaultdict(lambda: {"income": 0, "expense": 0})
 
         for row in monthly_data:
-            month_key = row["month"].strftime("%Y-%m")
+            key = row["period"].strftime(date_format_str)
             if row["flow"] == "in":
-                monthly_result[month_key]["income"] = float(row["total"] or 0)
-            else:
-                monthly_result[month_key]["expense"] = float(row["total"] or 0)
+                chart_result[key]["income"] += float(row["total"] or 0)
+            elif row["flow"] == "out":
+                chart_result[key]["expense"] += float(row["total"] or 0)
 
         chart = [
             {
-                "month": month,
-                "income": values["income"],
-                "expense": values["expense"],
-                "profit": values["income"] - values["expense"],
+                "period": k, 
+                "income": v["income"], 
+                "expense": v["expense"], 
+                "profit": v["income"] - v["expense"]
             }
-            for month, values in monthly_result.items()
+            for k, v in chart_result.items()
         ]
 
         status_distribution = {

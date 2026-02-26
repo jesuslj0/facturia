@@ -125,7 +125,7 @@
     <small class="section-subtitle">En el periodo seleccionado</small>
     <div class="dashboard-cards">
       <div class="card">
-        <a href="{% url 'documents:list' %}?status=approved">
+        <a href="{% url 'documents:list' %}">
           <h3>Total documentos</h3>
           <span class="kpi">{{ documents.approved|default:0 }}</span>
         </a>
@@ -167,12 +167,11 @@
   // ====== Preparar datos para Chart.js ======
   const rawData = {{ charts.income_expense_monthly|safe }};
 
-  // Labels: nombres de meses
-  const labels = rawData.map(item => item.month); // o formatear bonito si quieres "Feb 2026"
-
-  // Datasets
+  // Labels y datos
+  const labels = rawData.map(item => item.period); // "1 Feb", "Feb 2026", etc.
   const incomeData = rawData.map(item => item.income);
   const expenseData = rawData.map(item => item.expense);
+  const profitData = rawData.map(item => item.profit); // opcional para línea de beneficio
 
   new Chart(document.getElementById('incomeExpenseChart'), {
       type: 'line',
@@ -182,22 +181,43 @@
               {
                   label: 'Ingresos',
                   data: incomeData,
-                  borderColor: '#38bdf8',
+                  borderColor: '#22c55e',
                   backgroundColor: 'rgba(34,197,94,0.1)',
-                  tension: 0.4
+                  tension: 0.4,
+                  fill: true
               },
               {
                   label: 'Gastos',
                   data: expenseData,
                   borderColor: '#ef4444',
                   backgroundColor: 'rgba(239,68,68,0.1)',
-                  tension: 0.4
+                  tension: 0.4,
+                  fill: true
+              },
+              // Línea opcional de beneficio
+              {
+                  label: 'Beneficio',
+                  data: profitData,
+                  borderColor: '#3b82f6',
+                  backgroundColor: 'rgba(59,130,246,0.1)',
+                  tension: 0.4,
+                  fill: true,
+                  borderDash: [5, 5]
               }
           ]
       },
       options: {
           responsive: true,
-          plugins: { legend: { position: 'top' } },
+          plugins: {
+              legend: { position: 'top' },
+              tooltip: {
+                  callbacks: {
+                      label: function(context) {
+                          return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} €`;
+                      }
+                  }
+              }
+          },
           scales: {
               y: { beginAtZero: true },
               x: { ticks: { autoSkip: false } }
