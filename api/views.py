@@ -189,4 +189,22 @@ class DocumentListAPIView(ListAPIView):
             Document.objects.filter(client__clientuser__user=self.request.user)
             .order_by("-created_at")
         )
-    
+
+from rest_framework.views import APIView
+from documents.services import MetricsService
+from django.utils.dateparse import parse_date
+
+class MetricsDashboardView(APIView):
+
+    def get(self, request):
+        start = parse_date(request.GET.get("start"))
+        end = parse_date(request.GET.get("end"))
+
+        if not start or not end:
+            raise ValidationError("Fechas inválidas. Formato requerido: YYYY-MM-DD")
+        metrics = MetricsService.get_user_metrics(
+            user=request.user,
+            start=start,
+            end=end
+        )
+        return Response(metrics)

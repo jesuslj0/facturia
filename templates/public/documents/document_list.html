@@ -34,15 +34,14 @@
       </select>
       <select name="flow">
         <option value="">Flujo</option>
-        <option value="in" {% if request.GET.flow == "in" %}selected{% endif %}>Recibido (Compra)</option>
-        <option value="out" {% if request.GET.flow == "out" %}selected{% endif %}>Emitido (Venta)</option>
+        <option value="in" {% if request.GET.flow == "in" %}selected{% endif %}>Compra (Gasto)</option>
+        <option value="out" {% if request.GET.flow == "out" %}selected{% endif %}>Venta (Ingreso)</option>
       </select>
       <select name="doc_status">
         <option value="active" {% if request.GET.doc_status == "active" %}selected{% endif %}>Activos</option>
         <option value="archived" {% if request.GET.doc_status == "archived" %}selected{% endif %}>Archivados</option>
         <option value="all" {% if request.GET.doc_status == "all" %}selected{% endif %}>Todos</option>
       </select>
-
   </div>
   
   <div class="right-filters">

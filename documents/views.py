@@ -302,15 +302,47 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
         return context
 
 from .services import MetricsService
+from django.utils.dateparse import parse_date
+import locale
+locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
 
 class MetricsDashboardView(LoginRequiredMixin, TemplateView):
     template_name = "private/metrics/dashboard.html"
 
+    def get_dashboard_metrics(self, request):
+        start_str = request.GET.get("start")
+        end_str = request.GET.get("end")
+
+        start = parse_date(start_str) if start_str else None
+        end = parse_date(end_str) if end_str else None
+
+        # Default mes actual si falta cualquiera
+        today = timezone.now().date()
+        if not start:
+            start = today.replace(day=1)
+        if not end:
+            end = today
+
+        # Asegurarse de que son fechas
+        return MetricsService.get_user_metrics(
+            user=request.user,
+            start=start,
+            end=end
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        metrics = MetricsService.get_user_metrics(self.request.user)
-
+        metrics = self.get_dashboard_metrics(self.request)
         context.update(metrics)
-        context["client"] = ClientUser.objects.filter(user=self.request.user).first().client
+
+        client = ClientUser.objects.filter(user=self.request.user).first().client
+        context["client"] = client if client else None
+
+        selected_start = self.get_dashboard_metrics(self.request)["period"]["start"] or timezone.now().date().replace(day=1)
+        selected_end = self.get_dashboard_metrics(self.request)["period"]["end"] or timezone.now().date()
+        context["selected_start"] = selected_start
+        context["selected_end"] = selected_end
+        context["selected_start_formatted"] = selected_start.strftime("%-d %B %Y")
+        context["selected_end_formatted"] = selected_end.strftime("%-d %B %Y")
+        context["today"] = timezone.now().date()
         return context

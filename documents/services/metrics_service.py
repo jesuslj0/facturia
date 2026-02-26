@@ -5,59 +5,54 @@ from django.utils.formats import date_format
 from documents.models import Document
 from collections import defaultdict
 from django.utils.dateformat import DateFormat
+from decimal import Decimal
 
 
 class MetricsService:
 
     @staticmethod
-    def get_user_metrics(user):
+    def get_user_metrics(user, start=None, end=None):
         queryset = Document.all_objects.filter(
             client__clientuser__user=user
         )
 
-        now = timezone.now()
-        start_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        if start and end:
+            queryset = queryset.filter(issue_date__range=[start, end])
 
-        # =========================
-        # 📊 1. MÉTRICAS GLOBALES
-        # =========================
+
+        # 1. Metricas de documentos
         totals = queryset.aggregate(
             total_documents=Count("id"),
             approved_documents=Count("id", filter=Q(status="approved")),
             rejected_documents=Count("id", filter=Q(status="rejected")),
             pending_documents=Count("id", filter=Q(status="pending")),
-            manual_approved_count=Count("id", filter=Q(review_level="manual", status="approved")),
-            auto_approved_count=Count("id", filter=Q(review_level="auto", status="approved", is_auto_approved=True)),
-            confidence_average=Avg("confidence_global", filter=Q(status="approved"))*100 or 0,
+            auto_approved_count=Count(
+                "id",
+                filter=Q(status="approved", review_level="auto", is_auto_approved=True)
+            ),
+            manual_approved_count=Count(
+                "id",
+                filter=Q(status="approved", review_level="manual")
+            ),
+            confidence_average=Avg(
+                "confidence_global",
+                filter=Q(status="approved")
+            ),
         )
 
         total_documents = totals["total_documents"] or 0
-        approved_documents = totals["approved_documents"] or 0
-        auto_approved_documents = totals["auto_approved_count"] or 0
-        manual_approved_documents = totals["manual_approved_count"] or 0
-        rejected_documents = totals["rejected_documents"] or 0
-        pending_documents = totals["pending_documents"] or 0
+        approved = totals["approved_documents"] or 0
+        auto_approved = totals["auto_approved_count"] or 0
+        manual_approved = totals["manual_approved_count"] or 0
 
-        approval_rate = (
-            (approved_documents / total_documents) * 100
-            if total_documents > 0 else 0
-        )
+        approval_rate = (approved / total_documents * 100) if total_documents else 0
+        auto_rate = (auto_approved / total_documents * 100) if total_documents else 0
+        manual_rate = (manual_approved / total_documents * 100) if total_documents else 0
 
-        auto_approval_rate = (
-            (auto_approved_documents / total_documents) * 100
-            if total_documents > 0 else 0
-        )
+        confidence_avg = (totals["confidence_average"] or 0) * 100
 
-        manual_approval_rate = (
-            (manual_approved_documents / total_documents) * 100
-            if total_documents > 0 else 0
-        )
 
-        # =========================
-        # 💰 2. FINANCIERAS GLOBALES
-        # =========================
-
-        # Quitar Albaranes de Facturación Real
+        # Financial metrics
         billing_queryset = queryset.filter(
             status="approved",
             document_type__in=["invoice", "corrected_invoice"],
@@ -66,7 +61,6 @@ class MetricsService:
         income_queryset = billing_queryset.filter(flow="in")
         expense_queryset = billing_queryset.filter(flow="out")
 
-        # Expresión para extraer cantidad con signo
         def signed(field):
             return Case(
                 When(document_type="corrected_invoice", then=-F(field)),
@@ -74,7 +68,6 @@ class MetricsService:
                 output_field=DecimalField()
             )
 
-        # Totales facturacion 
         income_totals = income_queryset.aggregate(
             total_amount=Sum(signed("total_amount")),
             total_tax=Sum(signed("tax_amount")),
@@ -87,12 +80,12 @@ class MetricsService:
             total_base=Sum(signed("base_amount")),
         )
 
-        total_income = income_totals["total_amount"] or 0
-        total_expense = expense_totals["total_amount"] or 0
+        total_income = income_totals["total_amount"] or Decimal("0")
+        total_expense = expense_totals["total_amount"] or Decimal("0")
         profit = total_income - total_expense
         profit_margin = (profit / total_income * 100) if total_income > 0 else 0    
 
-        # Datos mensuales
+        # Datos mensuales (dentro del rango)
         monthly_data = (
             queryset
             .filter(
@@ -105,87 +98,63 @@ class MetricsService:
             .order_by("month")
         )
 
-        # Gráfica de datos mensuales
-        result = defaultdict(lambda: {"in": 0, "out": 0})
+        monthly_data = (
+            billing_queryset
+            .annotate(month=TruncMonth("issue_date"))
+            .values("month", "flow")
+            .annotate(total=Sum(signed("total_amount")))
+            .order_by("month")
+        )
+
+        monthly_result = defaultdict(lambda: {"income": 0, "expense": 0})
 
         for row in monthly_data:
-            month_label = DateFormat(row["month"]).format("M Y")
-            result[month_label][row["flow"]] = float(row["total"] or 0)
+            month_key = row["month"].strftime("%Y-%m")
+            if row["flow"] == "in":
+                monthly_result[month_key]["income"] = float(row["total"] or 0)
+            else:
+                monthly_result[month_key]["expense"] = float(row["total"] or 0)
 
-        labels = list(result.keys())
-        income = [result[m]["in"] for m in labels]
-        expense = [result[m]["out"] for m in labels]
+        chart = [
+            {
+                "month": month,
+                "income": values["income"],
+                "expense": values["expense"],
+                "profit": values["income"] - values["expense"],
+            }
+            for month, values in monthly_result.items()
+        ]
 
-        income_expense_chart = {
-            "labels": labels,
-            "income": income,
-            "expense": expense,
+        status_distribution = {
+            "auto_approved": totals["auto_approved_count"] or 0,
+            "rejected": totals["rejected_documents"] or 0,
+            "pending": totals["pending_documents"] or 0,
+            "manual_approved": totals["manual_approved_count"] or 0,
         }
 
-        # Totales mensuales
-        month_queryset = queryset.filter(
-            issue_date__gte=start_month
-        )
-
-        month_totals = month_queryset.aggregate(
-            documents_count=Count("id"),
-            approved_count = Count("id", filter=Q(status="approved")),
-        )
-
-        month_income_qs = month_queryset.filter(flow="in")
-        month_expense_qs = month_queryset.filter(flow="out")
-
-        month_income = month_income_qs.aggregate(
-            total_amount=Sum(signed("total_amount")),
-            total_tax=Sum(signed("tax_amount")),
-        )
-
-        month_expense = month_expense_qs.aggregate(
-            total_amount=Sum(signed("total_amount")),
-            total_tax=Sum(signed("tax_amount")),
-        )
-
-        month_profit = (month_income["total_amount"] or 0) - (month_expense["total_amount"] or 0)
-
         return {
+            "period": {
+                "start": start,
+                "end": end,
+            },
             "documents": {
-                **totals,
+                "total": total_documents,
+                "approved": approved,
+                "rejected": totals["rejected_documents"] or 0,
+                "pending": totals["pending_documents"] or 0,
                 "approval_rate": round(approval_rate, 2),
-                "auto_approval_rate": round(auto_approval_rate, 2),
-                "manual_approval_rate": round(manual_approval_rate, 2),
+                "auto_approval_rate": round(auto_rate, 2),
+                "manual_approval_rate": round(manual_rate, 2),
+                "confidence_average": round(confidence_avg, 2),
             },
             "financials": {
-                "income": {
-                    "total_amount": total_income,
-                    "total_tax": income_totals["total_tax"] or 0,
-                    "total_base": income_totals["total_base"] or 0,
-                },
-                "expense": {
-                    "total_amount": total_expense,
-                    "total_tax": expense_totals["total_tax"] or 0,
-                    "total_base": expense_totals["total_base"] or 0,
-                },
-                "profit": profit,
-                "profit_margin": profit_margin,
+                "income": float(total_income),
+                "expense": float(total_expense),
+                "profit": float(profit),
+                "profit_margin": round(float(profit_margin), 2),
             },
-            "current_month": {
-                "income": month_income["total_amount"] or 0,
-                "expense": month_expense["total_amount"] or 0,
-                "profit": month_profit,
-                "documents": month_totals["documents_count"] or 0,
-                "approved": month_totals["approved_count"] or 0,
-                "month": date_format(timezone.now(), "F"),
-                "year": date_format(timezone.now(), "Y"),
+            "charts": {
+                "income_expense_monthly": chart,
             },
-            "income_expense_chart": income_expense_chart,
-            "auto_approval_chart": {
-                "labels": ["Automático", "Manual", "Rechazados", "Pendientes"],
-                "data": [
-                    auto_approved_documents, 
-                    manual_approved_documents, 
-                    rejected_documents, 
-                    pending_documents,
-                ],
-                "total": total_documents or 1,
-            }
+            "status_distribution": status_distribution,
         }
