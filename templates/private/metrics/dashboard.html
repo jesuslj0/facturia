@@ -84,40 +84,42 @@
       <canvas id="incomeExpenseChart"></canvas>
     </div>
     
-    <h2 class="section-title mt-5">
-      <i class="section-icon fa-solid fa-gears"></i>
-      Automatización
-    </h2>
-    <small class="section-subtitle">
-      Rendimiento del sistema de revisión inteligente
-    </small>
-
-    <div class="chart-container donut-chart">
-      <h3 class="chart-title">Distribución de decisiones</h3>
-      <canvas id="autoApprovalChart"></canvas>
+    <div class="automation-header">
+      <h2 class="section-title mt-5">
+        <i class="section-icon fa-solid fa-gears"></i>
+        Automatización
+      </h2>
+      <small class="section-subtitle">
+        Rendimiento del sistema de revisión inteligente
+      </small>
     </div>
-
-    <div class="dashboard-cards">
-
-      <div class="card">
-        <h3>Confianza media de extracción</h3>
-        <span class="kpi text-success">
-          {{ documents.confidence_average|floatformat:1 }} %
-        </span>
+    <div class="automation-section">
+      <div class="chart-container donut-chart">
+        <h3 class="chart-title">Distribución de decisiones</h3>
+        <canvas id="autoApprovalChart"></canvas>
       </div>
-
-      <div class="card">
-        <h3>Tasa aprobación automática</h3>
-        <span class="kpi text-success">
-          {{ documents.auto_approval_rate|floatformat:1 }} %
-        </span>
-      </div>
-
-      <div class="card">
-        <h3>Tasa revisión manual</h3>
-        <span class="kpi text-info">
-          {{ documents.manual_approval_rate|floatformat:1 }} %
-        </span>
+  
+      <div class="dashboard-cards">
+        <div class="card">
+          <h3>Confianza media de extracción</h3>
+          <span class="kpi text-success">
+            {{ documents.confidence_average|floatformat:1 }} %
+          </span>
+        </div>
+  
+        <div class="card">
+          <h3>Tasa aprobación automática</h3>
+          <span class="kpi text-success">
+            {{ documents.auto_approval_rate|floatformat:1 }} %
+          </span>
+        </div>
+  
+        <div class="card">
+          <h3>Tasa revisión manual</h3>
+          <span class="kpi text-info">
+            {{ documents.manual_approval_rate|floatformat:1 }} %
+          </span>
+        </div>
       </div>
     </div>
   

@@ -30,11 +30,11 @@
 
 /* Tamaño específico por tipo */
 .chart-container.donut-chart {
-    max-width: 300px;
+    max-width: 320px;
 }
 
 .chart-container.line-chart {
-    max-width: 800px;
+    max-width: 900px;
 }
 
 /* Canvas responsive */
@@ -48,6 +48,18 @@
     .chart-container.donut-chart,
     .chart-container.line-chart {
         max-width: 100%;
+    }
+
+    .chart-container.donut-chart {
+        max-width: 400px;
+    }
+
+    .automation-section {
+        flex-direction: column;
+    }
+
+    .automation-section .dashboard-cards {
+        width: 100%;
     }
 }
 
@@ -103,3 +115,12 @@
     border-radius: 6px;
     cursor: pointer;
 }
+
+/* Sección automatización */
+.automation-section {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}   
