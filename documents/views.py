@@ -303,8 +303,6 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
 
 from .services import MetricsService
 from django.utils.dateparse import parse_date
-import locale
-locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
 
 class MetricsDashboardView(LoginRequiredMixin, TemplateView):
     template_name = "private/metrics/dashboard.html"
