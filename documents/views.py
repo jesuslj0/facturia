@@ -303,30 +303,44 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
 
 from .services import MetricsService
 from django.utils.dateparse import parse_date
+from babel.dates import format_date
+from django.utils import timezone
 
 class MetricsDashboardView(LoginRequiredMixin, TemplateView):
     template_name = "private/metrics/dashboard.html"
 
     def get_dashboard_metrics(self, request):
-        start_str = request.GET.get("start")
-        end_str = request.GET.get("end")
+        start = request.GET.get("start")
+        end = request.GET.get("end")
 
-        start = parse_date(start_str) if start_str else None
-        end = parse_date(end_str) if end_str else None
-
-        # Default mes actual si falta cualquiera
         today = timezone.now().date()
+
+        # Defaults
         if not start:
             start = today.replace(day=1)
+        else:
+            start = timezone.datetime.strptime(start, "%Y-%m-%d").date()
+
         if not end:
             end = today
+        else:
+            end = timezone.datetime.strptime(end, "%Y-%m-%d").date()
 
-        # Asegurarse de que son fechas
-        return MetricsService.get_user_metrics(
+        metrics = MetricsService.get_user_metrics(
             user=request.user,
             start=start,
             end=end
         )
+
+        # Formato bonito español
+        metrics["period"] = {
+            "start": start,
+            "end": end,
+            "start_formatted": format_date(start, format="d MMMM y", locale="es"),
+            "end_formatted": format_date(end, format="d MMMM y", locale="es"),
+        }
+
+        return metrics
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -335,12 +349,10 @@ class MetricsDashboardView(LoginRequiredMixin, TemplateView):
 
         client = ClientUser.objects.filter(user=self.request.user).first().client
         context["client"] = client if client else None
-
-        selected_start = self.get_dashboard_metrics(self.request)["period"]["start"] or timezone.now().date().replace(day=1)
-        selected_end = self.get_dashboard_metrics(self.request)["period"]["end"] or timezone.now().date()
-        context["selected_start"] = selected_start
-        context["selected_end"] = selected_end
-        context["selected_start_formatted"] = selected_start.strftime("%-d %B %Y")
-        context["selected_end_formatted"] = selected_end.strftime("%-d %B %Y")
+        context["selected_start"] = metrics["period"]["start"]
+        context["selected_end"] = metrics["period"]["end"]
+        context["selected_start_formatted"] = metrics["period"]["start_formatted"]
+        context["selected_end_formatted"] = metrics["period"]["end_formatted"]
         context["today"] = timezone.now().date()
+
         return context

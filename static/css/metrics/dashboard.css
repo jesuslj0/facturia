@@ -92,3 +92,14 @@
     filter: brightness(1.2);
     text-decoration: none;
 }
+
+.date-filter form .btn-clear {
+    font-size: 0.9rem;
+    color: var(--color-warning);
+    text-decoration: none;
+    transition: color 0.2s;
+    background-color: var(--card-bg-color);
+    padding: 0.45rem 0.6rem;
+    border-radius: 6px;
+    cursor: pointer;
+}

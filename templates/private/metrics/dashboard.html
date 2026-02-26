@@ -26,6 +26,9 @@
       <input type="date" name="end" value="{{ selected_end|date:'Y-m-d' }}">
 
       <button type="submit" class="btn">Ver</button>
+      {% if request.GET %}
+        <a href="?" class="btn-clear">Limpiar</a>
+      {% endif %}
     </form>
   </div>
 
@@ -80,44 +83,6 @@
       <h3 class="chart-title">Ingresos vs Gastos</h3>
       <canvas id="incomeExpenseChart"></canvas>
     </div>
-
-    {% comment %} <div class="dashboard-cards">
-      <!-- INGRESOS -->
-      <div class="card">
-        <h3>Ingresos totales</h3>
-        <span class="kpi text-success">
-          {{ financials.income.total_amount|floatformat:2 }} €
-        </span>
-        <small class="kpi-info">Base: {{ financials.income.total_base|floatformat:2 }} € · 
-              IVA: {{ financials.income.total_tax|floatformat:2 }} €</small>
-      </div>
-
-      <!-- GASTOS -->
-      <div class="card">
-        <h3>Gastos totales</h3>
-        <span class="kpi text-danger">
-          {{ financials.expense.total_amount|floatformat:2 }} €
-        </span>
-        <small class="kpi-info">Base: {{ financials.expense.total_base|floatformat:2 }} € · 
-              IVA: {{ financials.expense.total_tax|floatformat:2 }} €</small>
-      </div>
-
-      <!-- BENEFICIO -->
-      <div class="card">
-        <h3>Beneficio</h3>
-        <span class="kpi {% if financials.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
-          {{ financials.profit|floatformat:2 }} €
-        </span>
-      </div>
-
-      <!-- MARGEN -->
-      <div class="card">
-        <h3>Margen</h3>
-        <span class="kpi {% if financials.profit_margin >= 0 %}text-success{% else %}text-danger{% endif %}">
-          {{ financials.profit_margin|floatformat:2 }} %
-        </span>
-      </div>
-    </div> {% endcomment %}
     
     <h2 class="section-title mt-5">
       <i class="section-icon fa-solid fa-gears"></i>
