@@ -95,7 +95,7 @@ class MetricsService:
         trunc_func, date_format_str = get_granularity(start, end)
 
         monthly_data = (
-            queryset
+            billing_queryset
             .filter(issue_date__range=(start, end))
             .annotate(period=trunc_func("issue_date"))
             .values("period", "flow")

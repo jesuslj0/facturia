@@ -127,7 +127,7 @@
       <div class="card">
         <a href="{% url 'documents:list' %}">
           <h3>Total documentos</h3>
-          <span class="kpi">{{ documents.approved|default:0 }}</span>
+          <span class="kpi">{{ documents.total|default:0 }}</span>
         </a>
       </div>
 
