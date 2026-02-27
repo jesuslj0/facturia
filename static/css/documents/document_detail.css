@@ -6,20 +6,6 @@
   padding: 0;
 }
 
-.go-back {
-  margin-bottom: 1.25rem;
-}
-
-.go-back a {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--muted-color);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.75rem;
-  transition: color 0.2s ease;
-}
 /* Visor documento */
 .pdf {
   background: #020617;
@@ -374,6 +360,11 @@ select.editable-field {
   font-weight: 500;
 }
 
+.review_info .content.reason {
+  color: var(--muted-color);
+  font-style: italic;
+}
+
 /* Modal acciones formulario */
 .modal {
   position: fixed;
@@ -449,4 +440,23 @@ select.editable-field {
   font-size: 0.9rem;
   opacity: 0.7;
   margin-top: 4px;
+}
+
+#modal-reason {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--body-bg-color);
+  color: var(--body-fg-color);
+  font-weight: 600;
+  transition: border 0.2s;
+  cursor: pointer;
+  width: 100%;
+  font-size: 0.75rem;
+  box-sizing: border-box;
+  margin-bottom: 0.5rem;
+}
+
+#modal-reason.hidden {
+  display: none;
 }

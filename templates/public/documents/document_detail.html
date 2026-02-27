@@ -38,7 +38,9 @@
                 <a href="{{ document.file.url }}" target="_blank">Descargar PDF</a>
             </p>
         {% elif document.is_image %}
-            <img src="{{ document.file.url }}" style="max-width:100%;" />
+            <div id="image-container">
+                <img  src="{{ document.file.url }}" style="max-width:100%; height: auto;transform:scale(1); transform-origin:center;" />
+            </div>
         {% else %}
             <p>No se puede visualizar el archivo</p>
         {% endif %}
@@ -179,6 +181,11 @@
             <div class="review_info">
                 <span class="label">Estado del documento</span>
                 <span class="content">{{ document.status_message }}</span>
+                {% if document.rejection_reason %}
+                    <span class="content reason">
+                        Motivo: {{ document.rejection_reason }}
+                    </span>
+                {% endif %}
             
                 <span class="label">Nivel de confianza</span>
                 {% if document.review_level == "required" %}
@@ -197,33 +204,43 @@
             </div>
         </form>
 
-        <div class="modal" id="confirm-modal">
-        <div class="modal-backdrop" data-close></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-icon">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                </div>
-                <h3 id="modal-title">
-                    Confirmar acción
-                </h3>
-            </div>
-            <div class="modal-body">
-                <div id="modal-doc-info"></div>
-                <p id="modal-text">¿Seguro que quieres continuar?</p>
-                <textarea id="modal-reason" placeholder="Motivo (opcional)">
-                    
-                </textarea>
-            </div>
+        <form id="modal-form" method="post">
+            {% csrf_token %}
 
-            <button id="modal-confirm" class="btn btn-primary">
-            Confirmar
-            </button>
-            <button type="button" class="btn btn-light" data-close>
-            Cancelar
-            </button>
-        </div>
-        </div>
+            <div class="modal" id="confirm-modal">
+                <div class="modal-backdrop" data-close></div>
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <div class="modal-icon">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <h3 id="modal-title">Confirmar acción</h3>
+                    </div>
+
+                    <div class="modal-body">
+                        <div id="modal-doc-info"></div>
+                        <p id="modal-text">¿Seguro que quieres continuar?</p>
+
+                        <textarea
+                            id="modal-reason"
+                            name="rejection_reason"
+                            placeholder="Motivo (opcional)"
+                        ></textarea>
+                    </div>
+
+                    <button type="button" id="modal-confirm" class="btn btn-primary">
+                        Confirmar
+                    </button>
+
+                    <button type="button" class="btn btn-light" data-close>
+                        Cancelar
+                    </button>
+
+                </div>
+            </div>
+        </form>
+        
     </div>
 </div>
 {% endblock %}
@@ -234,12 +251,12 @@
     document.addEventListener("DOMContentLoaded", function () {
 
         const url = "{{ document.file.url }}";
-        const container = document.getElementById('pdf-viewer');
+        const pdfContainer = document.getElementById('pdf-viewer');
         const fallback = document.getElementById('pdf-fallback');
+        const imageContainer = document.getElementById('image-container');
 
-        if (!container) {
+        if (!pdfContainer) {
             console.warn("pdf-viewer no existe en este layout");
-            return;
         }
 
         let pdfDoc = null;
@@ -261,8 +278,8 @@
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
 
-                container.innerHTML = '';
-                container.appendChild(canvas);
+                pdfContainer.innerHTML = '';
+                pdfContainer.appendChild(canvas);
 
                 page.render({ canvasContext: ctx, viewport: viewport });
 
@@ -289,10 +306,68 @@
                 });
         }
 
+        let imageScale = 1;
+        const MIN_SCALE = 0.5;
+        const MAX_SCALE = 4;
+
         function showImage() {
-            container.innerHTML = `
-                <img src="${url}" style="max-width:100%; height:auto;" />
+            imageScale = 1;
+
+            imageContainer.innerHTML = `
+                <img id="zoomable-image" 
+                    src="${url}" 
+                    style="
+                        max-width:100%;
+                        height:auto;
+                        transform-origin:center center;
+                        transition: transform 0.1s ease;
+                    "
+                />
             `;
+
+            const img = document.getElementById("zoomable-image");
+
+            imageContainer.onwheel = function (e) {
+                e.preventDefault();
+
+                const rect = img.getBoundingClientRect();
+
+                // Posición del cursor dentro de la imagen
+                const offsetX = e.clientX - rect.left;
+                const offsetY = e.clientY - rect.top;
+
+                // Convertimos a porcentaje
+                const originX = (offsetX / rect.width) * 100;
+                const originY = (offsetY / rect.height) * 100;
+
+                img.style.transformOrigin = `${originX}% ${originY}%`;
+
+                const zoomIntensity = 0.1;
+
+                if (e.deltaY < 0) {
+                    imageScale = Math.min(MAX_SCALE, imageScale + zoomIntensity);
+                } else {
+                    imageScale = Math.max(MIN_SCALE, imageScale - zoomIntensity);
+                }
+
+                img.style.transform = `scale(${imageScale})`;
+            };
+        }
+        // wheel zoom para pdf
+        if (pdfContainer) {
+            pdfContainer.addEventListener("wheel", function (e) {
+            e.preventDefault();
+
+            const zoomIntensity = 0.05;
+
+            if (e.deltaY < 0) {
+                scale = Math.min(MAX_SCALE, scale + zoomIntensity); // Zoom in
+            } else {
+                scale = Math.max(MIN_SCALE, scale - zoomIntensity); // Zoom out
+            }
+
+            renderPage(pageNum);
+        });
         }
 
         // Detectar extensión
@@ -410,7 +485,8 @@
     document.addEventListener("DOMContentLoaded", function () {
         const modal = document.getElementById("confirm-modal");
         const confirmBtn = document.getElementById("modal-confirm");
-        const form = document.getElementById("review-form");
+        const form = document.getElementById("modal-form");
+        const modalReason = document.getElementById("modal-reason");
         
         let currentAction = null;
         
@@ -451,14 +527,19 @@
                     text.textContent = "El documento se marcará como aprobado.";
                     confirmBtn.textContent = "Aprobar";
                     confirmBtn.style.color = "var(--color-success)";
+                    modalReason.classList.add("hidden");
+                    modalReason.value = "";
                     break;
                 case "reject":
                     icon.className = "fa-solid fa-circle-xmark";
                     icon.style.color = "var(--color-danger)";
                     title.textContent = "Confirmar rechazo";
-                    text.textContent = "El documento se marcará como rechazado.";
+                    text.textContent = "El documento será rechazado definitivamente.";
                     confirmBtn.textContent = "Rechazar";
-                    confirmBtn.style.color = "var(--color-danger)";    
+                    confirmBtn.style.color = "var(--color-danger)";   
+                
+                    modalReason.classList.remove("hidden");
+                    modalReason.placeholder = "Motivo del rechazo (opcional)";
                     break;
                 case "archive":
                     icon.className = "fa-solid fa-box-archive";
@@ -484,30 +565,30 @@
         });
     });
 
-        confirmBtn.addEventListener("click", function () {
-            if (!currentAction) return;
+    confirmBtn.addEventListener("click", function () {
+        if (!currentAction) return;
 
-            // Crear input hidden dinámicamente
-            const hiddenInput = document.createElement("input");
-            hiddenInput.type = "hidden";
-            hiddenInput.name = "action";
-            hiddenInput.value = currentAction;
+        // Crear input hidden dinámicamente
+        const hiddenInput = document.createElement("input");
+        hiddenInput.type = "hidden";
+        hiddenInput.name = "action";
+        hiddenInput.value = currentAction;
 
-            form.appendChild(hiddenInput);
-            form.submit();
+        form.appendChild(hiddenInput);
+        form.submit();
+    });
+
+    document.querySelectorAll("[data-close]").forEach(btn => {
+        btn.addEventListener("click", function () {
+        modal.classList.remove("open");
         });
+    });
 
-        document.querySelectorAll("[data-close]").forEach(btn => {
-            btn.addEventListener("click", function () {
-            modal.classList.remove("open");
-            });
-        });
-
-        document.addEventListener("keydown", function (e) {
-            if (e.key === "Escape") {
-            modal.classList.remove("open");
-            }
-        });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+        modal.classList.remove("open");
+        }
+    });
 
     });
     </script>

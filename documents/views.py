@@ -117,7 +117,8 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
 
         # --- Rechazar ---
         if action == "reject" and self.object.status == "pending":
-            return reject_document(request, self.object)
+            rejection_reason = request.POST.get("rejection_reason")
+            return reject_document(request, self.object, rejection_reason)
 
         # --- Guardar cambios ---
         if action == "save":
@@ -142,17 +143,20 @@ def approve_document(request, document):
     document.review_level = "manual"
     document.reviewed_by = request.user
     document.approved_at = timezone.now()
+    document.approved_by = request.user
     document.save()
     messages.success(request, "El documento ha sido aprobado.")
     return redirect("documents:detail", pk=document.pk)
 
 
-def reject_document(request, document):
+def reject_document(request, document, rejection_reason=None):
     document.is_auto_approved = False   
     document.status = "rejected"
     document.review_level = "manual"
     document.reviewed_by = request.user
     document.rejected_by = request.user
+    document.rejected_at = timezone.now()
+    document.rejection_reason = rejection_reason
     document.save()
     messages.success(request, "El documento ha sido rechazado.")
     return redirect("documents:detail", pk=document.pk)

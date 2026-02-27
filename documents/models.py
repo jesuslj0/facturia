@@ -148,15 +148,15 @@ class Document(models.Model):
     @property
     def status_message(self):
         if self.is_archived:
-            return f"Documento archivado el {self.archived_at.strftime('%d-%m-%Y')}"
+            return f"Documento archivado  por {self.archived_by} el {self.archived_at.strftime('%d-%m-%Y')}"
         if self.status == "rejected":
-            return f"El documento ha sido rechazado por {self.rejected_by}"
+            return f"El documento ha sido rechazado por {self.rejected_by} el {self.rejected_at.strftime('%d-%m-%Y')}"
         if self.approved_at:
-            return f"Documento aprobado el {self.approved_at.strftime('%d-%m-%Y')}"
+            return f"Documento aprobado por {self.approved_by} el {self.approved_at.strftime('%d-%m-%Y')}"
         if self.is_auto_approved:
             return "Documento aprobado automáticamente"
         if self.edited_at:
-            return f"Documento editado manualmente el {self.edited_at.strftime('%d-%m-%Y')}"
+            return f"Documento editado y guardado manualmente por {self.reviewed_by} el {self.edited_at.strftime('%d-%m-%Y')}"
         return "Documento pendiente de revisión"
 
 
@@ -193,6 +193,7 @@ class Document(models.Model):
         null=True
     )
     rejection_reason = models.CharField(max_length=255, null=True, blank=True)
+    rejected_at = models.DateTimeField(blank=True, null=True)
     rejected_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, 
         related_name="rejected_documents",
