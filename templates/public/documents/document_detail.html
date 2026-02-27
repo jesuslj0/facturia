@@ -32,7 +32,7 @@
         {% endif %}
 
         {% if document.is_pdf %}
-            <div id="pdf-viewer" style="width:100%; height:600px; overflow:auto;"></div>
+            <div id="pdf-viewer" style="width:100%; height:600px; overflow:auto; transition: transform 0.2s ease;"></div>
             <p id="pdf-fallback" style="display:none;">
                 No se puede visualizar el PDF.
                 <a href="{{ document.file.url }}" target="_blank">Descargar PDF</a>
@@ -309,9 +309,16 @@
         let imageScale = 1;
         const MIN_SCALE = 0.5;
         const MAX_SCALE = 4;
+        let translateX = 0;
+        let translateY = 0;
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
 
         function showImage() {
             imageScale = 1;
+            translateX = 0;
+            translateY = 0;
 
             imageContainer.innerHTML = `
                 <img id="zoomable-image" 
@@ -319,28 +326,22 @@
                     style="
                         max-width:100%;
                         height:auto;
-                        transform-origin:center center;
-                        transition: transform 0.1s ease;
+                        cursor: grab;
+                        user-select: none;
+                        transform-origin: center center;
+                        transition: transform 0.05s ease;
                     "
                 />
             `;
 
             const img = document.getElementById("zoomable-image");
 
+            function updateTransform() {
+                img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${imageScale})`;
+            }
+
             imageContainer.onwheel = function (e) {
                 e.preventDefault();
-
-                const rect = img.getBoundingClientRect();
-
-                // Posición del cursor dentro de la imagen
-                const offsetX = e.clientX - rect.left;
-                const offsetY = e.clientY - rect.top;
-
-                // Convertimos a porcentaje
-                const originX = (offsetX / rect.width) * 100;
-                const originY = (offsetY / rect.height) * 100;
-
-                img.style.transformOrigin = `${originX}% ${originY}%`;
 
                 const zoomIntensity = 0.1;
 
@@ -350,9 +351,51 @@
                     imageScale = Math.max(MIN_SCALE, imageScale - zoomIntensity);
                 }
 
-                img.style.transform = `scale(${imageScale})`;
+                if (imageScale === 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+
+                updateTransform();
             };
+
+            img.addEventListener("dragstart", (e) => {
+                e.preventDefault();
+            });
+
+            img.addEventListener("mousedown", (e) => {
+                if (imageScale <= 1) return; // solo mover si está ampliada
+
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+
+                img.style.cursor = "grabbing";
+            });
+
+            window.addEventListener("mousemove", (e) => {
+                if (!isDragging) return;
+
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+
+                updateTransform();
+            });
+
+            window.addEventListener("mouseup", () => {
+                isDragging = false;
+                img.style.cursor = "grab";
+            });
+
+            imageContainer.addEventListener("dblclick", () => {
+                imageScale = 1;
+                translateX = 0;
+                translateY = 0;
+                updateTransform();
+            });
+
         }
+
         // wheel zoom para pdf
         if (pdfContainer) {
             pdfContainer.addEventListener("wheel", function (e) {
@@ -367,6 +410,35 @@
             }
 
             renderPage(pageNum);
+
+            let isDragging = false;
+            let startX, startY, scrollLeft, scrollTop;
+
+            pdfContainer.addEventListener("mousedown", (e) => {
+                if (scale <= 1) return;
+                isDragging = true;
+                startX = e.pageX - pdfContainer.offsetLeft;
+                startY = e.pageY - pdfContainer.offsetTop;
+                scrollLeft = pdfContainer.scrollLeft;
+                scrollTop = pdfContainer.scrollTop;
+            });
+
+            pdfContainer.addEventListener("mousemove", (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const x = e.pageX - pdfContainer.offsetLeft;
+                const y = e.pageY - pdfContainer.offsetTop;
+                pdfContainer.scrollLeft = scrollLeft - (x - startX);
+                pdfContainer.scrollTop = scrollTop - (y - startY);
+            });
+
+            pdfContainer.addEventListener("mouseup", () => isDragging = false);
+            pdfContainer.addEventListener("mouseleave", () => isDragging = false);
+
+            pdfContainer.addEventListener("dblclick" , (e) => {
+                scale = 1.2;
+                renderPage(pageNum);
+            })
         });
         }
 
