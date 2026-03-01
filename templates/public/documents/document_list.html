@@ -70,7 +70,7 @@
       <option value="rejected" {% if request.GET.status == "rejected" %}selected{% endif %}>Rechazados</option>
     </select>
     
-    <select name="review">
+    <select name="review_level">
       <option value="">Revisión</option>
       <option value="auto" {% if request.GET.review == "auto" %}selected{% endif %}>Auto</option>
       <option value="manual" {% if request.GET.review == "manual" %}selected{% endif %}>Manual</option>
@@ -127,7 +127,7 @@
     <thead>
       <tr>
         <th>Nombre</th>
-        <th>Proveedor</th>
+        <th>Empresa</th>
         <th>Total (€)</th>
         <th>Fecha</th>
         <th>Tipo</th>

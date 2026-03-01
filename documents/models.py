@@ -1,6 +1,8 @@
 from django.db import models
 from clients.models import Client
 import os
+from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -140,11 +142,6 @@ class Document(models.Model):
         null=True
     )
 
-    def save(self, *args, **kwargs):
-        if self.company and self.company.client != self.client:
-            raise ValueError("Company must belong to the same client")
-        super().save(*args, **kwargs)
-
     @property
     def status_message(self):
         if self.is_archived:
@@ -158,6 +155,79 @@ class Document(models.Model):
         if self.edited_at:
             return f"Documento editado y guardado manualmente por {self.reviewed_by} el {self.edited_at.strftime('%d-%m-%Y')}"
         return "Documento pendiente de revisión"
+    
+    def save(self, *args, **kwargs):
+        if self.company and self.company.client != self.client:
+            raise ValueError("Company must belong to the same client.")
+        super().save(*args, **kwargs)
+
+    def can_be_approved(self): 
+        return (
+            self.status == "pending" 
+            and self.total_amount is not None
+            and self.issue_date is not None
+        )
+    def mark_as_manually_reviewed(self, user):
+        self.review_level = "manual"
+        self.is_auto_approved = False
+        self.reviewed_by = user
+        self.edited_at = timezone.now()
+    
+    def approve(self, user=None, auto=False):
+        if not self.can_be_approved():
+            raise ValueError("Document cannot be approved.")
+        
+        self.status = "approved"
+        self.approved_at = None if auto else timezone.now()
+        self.approved_by = None if auto else user
+        self.is_auto_approved = auto
+        self.save(
+            update_fields=[
+                "status", "approved_at", "approved_by", "is_auto_approved"
+            ]
+        )
+
+    def reject(self, user=None, reason=None):
+        if self.status != "pending":
+            raise ValidationError("Document cannot be rejected.")
+
+        self.status = "rejected"
+        self.rejected_at = timezone.now()
+        self.rejected_by = user
+        self.rejection_reason = reason
+
+        self.save(
+            update_fields=[
+                "status", "rejected_at", "rejected_by", "rejection_reason"
+            ]
+        )
+
+    def archive(self, user=None):
+        if self.status not in ["approved", "rejected"]:
+            raise ValidationError("Document cannot be archived.")
+
+        self.is_archived = True
+        self.archived_at = timezone.now()
+        self.archived_by = user
+        self.save(
+            update_fields=[
+                "is_archived", "archived_at", "archived_by"
+            ]
+        )
+
+    def unarchive(self, user=None):
+        if not self.is_archived:
+            raise ValidationError("Document is not archived.")
+
+        self.is_archived = False
+        self.archived_at = None
+        self.archived_by = None
+        self.save(
+            update_fields=[
+                "is_archived", "archived_at", "archived_by"
+            ]
+        )
+
 
 
     external_id = models.CharField(max_length=255, unique=True)

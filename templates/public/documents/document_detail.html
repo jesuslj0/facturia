@@ -23,11 +23,13 @@
         
         {% if document.is_pdf %}
         <div class="pdf-toolbar">
-            <button id="prev-page">◀</button>
+            <button id="prev-page"><i class="fa-solid fa-chevron-left"></i></button>
             <span>Pagina <span id="page-num"></span> / <span id="page-count"></span></span>
-            <button id="next-page">▶</button>
-            <button id="zoom-in">+</button>
-            <button id="zoom-out">-</button>
+            <button id="next-page"><i class="fa-solid fa-chevron-right"></i></button>
+            <button id="zoom-in"><i class="fa-solid fa-plus"></i></button>
+            <button id="zoom-out"><i class="fa-solid fa-minus"></i></button>
+            <button id="rotate-left"><i class="fa-solid fa-rotate-left"></i></button>
+            <button id="rotate-right"><i class="fa-solid fa-rotate-right"></i></button>
         </div>
         {% endif %}
 
@@ -249,19 +251,29 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
     <script>
     document.addEventListener("DOMContentLoaded", function () {
-
+        
         const url = "{{ document.file.url }}";
         const pdfContainer = document.getElementById('pdf-viewer');
         const fallback = document.getElementById('pdf-fallback');
         const imageContainer = document.getElementById('image-container');
-
+        
         if (!pdfContainer) {
             console.warn("pdf-viewer no existe en este layout");
         }
-
+        
         let pdfDoc = null;
         let pageNum = 1;
         let scale = 1.2;
+
+        let imageScale = 1;
+        const MIN_SCALE = 0.5;
+        const MAX_SCALE = 4;
+        let translateX = 0;
+        let translateY = 0;
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+        let rotation = 0;
 
         pdfjsLib.GlobalWorkerOptions.workerSrc =
         "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.worker.min.js";
@@ -271,7 +283,10 @@
 
             pdfDoc.getPage(num).then(page => {
 
-                const viewport = page.getViewport({ scale });
+                const viewport = page.getViewport({
+                    scale: scale,
+                    rotation: rotation
+                });
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
 
@@ -281,7 +296,9 @@
                 pdfContainer.innerHTML = '';
                 pdfContainer.appendChild(canvas);
 
-                page.render({ canvasContext: ctx, viewport: viewport });
+                page.render({ 
+                    canvasContext: ctx, viewport: viewport 
+                });
 
                 const pageNumEl = document.getElementById('page-num');
                 const pageCountEl = document.getElementById('page-count');
@@ -306,14 +323,6 @@
                 });
         }
 
-        let imageScale = 1;
-        const MIN_SCALE = 0.5;
-        const MAX_SCALE = 4;
-        let translateX = 0;
-        let translateY = 0;
-        let isDragging = false;
-        let startX = 0;
-        let startY = 0;
 
         function showImage() {
             imageScale = 1;
@@ -456,6 +465,8 @@
         const nextBtn = document.getElementById('next-page');
         const zoomInBtn = document.getElementById('zoom-in');
         const zoomOutBtn = document.getElementById('zoom-out');
+        const rotateRightBtn = document.getElementById('rotate-right');
+        const rotateLeftBtn = document.getElementById('rotate-left');
 
         if (prevBtn) {
             prevBtn.addEventListener('click', () => {
@@ -486,6 +497,28 @@
             zoomOutBtn.addEventListener('click', () => {
                 scale = Math.max(0.2, scale - 0.2);
                 renderPage(pageNum);
+            });
+        }
+
+        function rotateRight() {
+            rotation = (rotation + 90) % 360;
+            renderPage(pageNum);
+        }
+
+        function rotateLeft() {
+            rotation = (rotation - 90 + 360) % 360;
+            renderPage(pageNum);
+        }
+
+        if (rotateRightBtn) {
+            rotateRightBtn.addEventListener('click', () => {
+                rotateRight();
+            });
+        }
+
+        if (rotateLeftBtn) {
+            rotateLeftBtn.addEventListener('click', () => {
+                rotateLeft();
             });
         }
 
@@ -620,6 +653,8 @@
                     text.textContent = "El documento será archivado.";
                     confirmBtn.textContent = "Archivar";
                     confirmBtn.style.color = "var(--color-warning)";
+                    modalReason.classList.add("hidden");
+                    modalReason.value = "";
                     break;
                 case "unarchive":
                     icon.className = "fa-solid fa-box-archive";
@@ -628,6 +663,8 @@
                     text.textContent = "El documento volverá a estar activo.";
                     confirmBtn.textContent = "Desarchivar";
                     confirmBtn.style.color = "var(--color-warning)";
+                    modalReason.classList.add("hidden");
+                    modalReason.value = "";
                     break;
                 default:
                     break;

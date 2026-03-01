@@ -1,5 +1,5 @@
 from django.shortcuts import redirect, get_object_or_404
-from documents.models import Document
+from .models import Document
 from clients.models import ClientUser
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, TemplateView
@@ -7,65 +7,43 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime
+from .selectors import DocumentSelector
+from .services import DocumentService
 
-
-# Create your views here.
 def get_filtered_documents(request):
-    qs = Document.objects.filter(
-            client__clientuser__user=request.user
-        )
-    q = request.GET.get("q")
+    doc_status = request.GET.get("doc_status")
+    query = request.GET.get("q")
     company = request.GET.get("company")
     status = request.GET.get("status")
-    review = request.GET.get("review")
+    review_level = request.GET.get("review_level")
     date_from = request.GET.get("date_from")
     date_to = request.GET.get("date_to")
     document_type = request.GET.get("document_type")
     flow = request.GET.get("flow")
-    doc_status = request.GET.get("doc_status")
 
-    if doc_status: 
-        if doc_status == "archived":
-            qs = Document.all_objects.filter(
-                client__clientuser__user=request.user,
-                is_archived=True
-            )
-        elif doc_status == "all":
-            qs = Document.all_objects.all().filter(
-                client__clientuser__user=request.user
-            )
+    filters = {}
 
-    if q:
-        qs = qs.filter(
-            Q(original_name__icontains=q) | Q(company__name__icontains=q)
-        )
-
+    if doc_status:
+        filters["doc_status"] = doc_status
+    if query:
+        filters["query"] = query
     if company:
-        qs = qs.filter(company__name=company)
+        filters["company"] = company
     if status:
-        qs = qs.filter(status=status)
-
-    if review:
-        qs = qs.filter(review_level=review)
-    
+        filters["status"] = status
+    if review_level:
+        filters["review_level"] = review_level
     if date_from:
-        qs = qs.filter(issue_date__gte=date_from)
-
+        filters["date_from"] = date_from
     if date_to:
-        qs = qs.filter(
-            issue_date__lte=datetime.combine(
-                datetime.fromisoformat(date_to).date(), 
-                datetime.max.time()
-            )
-        )
-
-    if document_type: 
-        qs = qs.filter(document_type=document_type)
-
+        filters["date_to"] = date_to
+    if document_type:
+        filters["document_type"] = document_type
     if flow:
-        qs = qs.filter(flow=flow)
-        
-    return qs.order_by("-issue_date", "-created_at")
+        filters["flow"] = flow
+
+    client = ClientUser.objects.get(user=request.user).client
+    return DocumentSelector.filtered(client, filters)
 
 from documents.models import Company
 class DocumentListView(LoginRequiredMixin, ListView): 
@@ -98,14 +76,12 @@ class DocumentListView(LoginRequiredMixin, ListView):
     
 
 class DocumentDetailView(LoginRequiredMixin, DetailView):
-    model = Document
     template_name = "public/documents/document_detail.html"
     context_object_name = "document"
 
     def get_queryset(self):
-        return Document.all_objects.filter(
-            client__clientuser__user=self.request.user
-        )
+        client = ClientUser.objects.get(user=self.request.user).client
+        return DocumentSelector.detail_queryset(client)
     
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -135,122 +111,39 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         # Si no hay acción reconocida, redirigir
         messages.warning(request, "Acción no reconocida.")
         return redirect("documents:detail", pk=self.object.pk)
-    
+
 
 def approve_document(request, document):
-    document.status = "approved"
-    document.is_auto_approved = False
-    document.review_level = "manual"
-    document.reviewed_by = request.user
-    document.approved_at = timezone.now()
-    document.approved_by = request.user
-    document.save()
+    DocumentService.approve(document, user=request.user)
     messages.success(request, "El documento ha sido aprobado.")
     return redirect("documents:detail", pk=document.pk)
 
-
-def reject_document(request, document, rejection_reason=None):
-    document.is_auto_approved = False   
-    document.status = "rejected"
-    document.review_level = "manual"
-    document.reviewed_by = request.user
-    document.rejected_by = request.user
-    document.rejected_at = timezone.now()
-    document.rejection_reason = rejection_reason
-    document.save()
+def reject_document(request, document, reason=None):
+    DocumentService.reject(document, user=request.user, reason=reason)
     messages.success(request, "El documento ha sido rechazado.")
     return redirect("documents:detail", pk=document.pk)
 
-from decimal import Decimal, InvalidOperation
-import re
-
-def parse_decimal(value):
-    if not value:
-        return None
-
-    if isinstance(value, str):
-        value = value.strip()
-        value = value.replace(".", "") if value.count(",") == 1 else value
-        value = value.replace(",", ".")
-        value = re.sub(r"[^\d.]", "", value)
-
-    return Decimal(value)
-
-
 def save_document(request, document):
-    if document.status == "rejected":
-        messages.error(request, "El documento ha sido rechazado.")
-        return redirect("documents:detail", pk=document.pk)
-
-    # Obtener datos del formulario
-    issue_date = request.POST.get("issue_date")
-    base_amount = request.POST.get("base_amount")
-    tax_percentage = request.POST.get("tax_percentage")
-    tax_amount = request.POST.get("tax_amount")
-    total_amount = request.POST.get("total_amount")
-    document_number = request.POST.get("document_number")
-    flow = request.POST.get("flow")
-
-    # Validar importes
     try:
-        new_base = parse_decimal(base_amount)
-        new_tax_percentage = parse_decimal(tax_percentage)
-        new_tax_amount = parse_decimal(tax_amount)
-        new_total = parse_decimal(total_amount)
-    except (InvalidOperation, ValueError):
+        DocumentService.update_from_form(
+            document=document,
+            user=request.user,
+            data=request.POST
+        )
+    except ValueError:
         messages.error(request, "Importe inválido en uno de los campos.")
         return redirect("documents:detail", pk=document.pk)
 
-    # Asignar solo si pasó validación
-    if document_number:
-        document.document_number = document_number
-
-    if issue_date:
-        document.issue_date = issue_date
-
-    if new_base is not None:
-        document.base_amount = new_base
-
-    if new_tax_percentage is not None:
-        document.tax_percentage = new_tax_percentage
-
-    if new_tax_amount is not None:
-        document.tax_amount = new_tax_amount
-
-    if new_total is not None:
-        document.total_amount = new_total
-
-    if flow:
-        document.flow = flow
-
-    # Marcar como revisado manualmente
-    document.review_level = "manual"
-    document.is_auto_approved = False
-    document.reviewed_by = request.user
-    document.edited_at = timezone.now()
-    document.save()
     messages.success(request, "Cambios guardados correctamente.")
     return redirect("documents:detail", pk=document.pk)
 
 def archive_document(request, document): 
-    if document.status not in ["approved", "rejected"]:
-        messages.error(request, "Solo puedes archivar documentos cerrados.")
-        return redirect("documents:detail", pk=document.pk)
-    
-    document.is_archived = True
-    document.archived_at = timezone.now()
-    document.archived_by = request.user
-    document.save(update_fields=["is_archived", "archived_at", "archived_by"])
-
+    DocumentService.archive(document, user=request.user)
     messages.success(request, "Documento archivado correctamente.")
     return redirect("documents:detail", pk=document.pk)
 
 def unarchive_document(request, document):
-    document.is_archived = False
-    document.archived_at = None
-    document.archived_by = None
-    document.save(update_fields=["is_archived", "archived_at", "archived_by"])
-
+    DocumentService.unarchive(document, user=request.user)
     messages.warning(request, "Documento desarchivado correctamente.")
     return redirect("documents:detail", pk=document.pk)
 
@@ -259,13 +152,15 @@ class DashboardView(LoginRequiredMixin,TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        qs = Document.objects.filter(status="pending", client__clientuser__user=self.request.user)
+
+        client = ClientUser.objects.filter(user=self.request.user).first().client
+        client = client if client else None
+
+        qs = DocumentSelector.pending(client)
 
         pending_count = qs.count()
         required_count = qs.filter(review_level="required").count() or 0
         recommended_count = qs.filter(review_level="recommended").count() or 0
-        client = ClientUser.objects.filter(user=self.request.user).first().client 
-        client = client if client else None
 
         context = {
             "pending_documents": qs.order_by("-created_at")[:10],
@@ -298,7 +193,9 @@ class DocumentExportView(LoginRequiredMixin, ListView):
     
 class DocumentExportPreviewView(LoginRequiredMixin, ListView):
     template_name = "public/documents/document_export_preview.html"
-    model = Document
+
+    def get_queryset(self):
+        return get_filtered_documents(self.request)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -306,7 +203,6 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
         return context
 
 from .services import MetricsService
-from django.utils.dateparse import parse_date
 from babel.dates import format_date
 from django.utils import timezone
 

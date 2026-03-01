@@ -7,7 +7,7 @@ def export_to_csv(qs):
     writer = csv.writer(response)
     writer.writerow([
         "Fecha",
-        "Número factura",
+        "Número documento",
         "Proveedor",
         "Base imponible",
         "IVA %",
@@ -18,7 +18,7 @@ def export_to_csv(qs):
     for doc in qs:
         writer.writerow([
             doc.issue_date,
-            doc.invoice_number,  
+            doc.document_number,  
             doc.company.name,
             doc.base_amount,
             doc.tax_percentage,
@@ -36,7 +36,7 @@ def export_to_excel(qs):
 
     headers = [
         "Fecha",
-        "Número factura",
+        "Número documento",
         "Proveedor",
         "Base imponible",
         "IVA %",
@@ -49,7 +49,7 @@ def export_to_excel(qs):
     for doc in qs:
         ws.append([
             doc.issue_date.strftime("%d/%m/%Y"),
-            doc.invoice_number,  
+            doc.document_number,  
             doc.company.name,
             doc.base_amount,
             doc.tax_percentage,
@@ -88,3 +88,17 @@ def normalize_tax(base, tax_amount, tax_percentage, total):
         "total": total,
     }
 
+from decimal import Decimal
+import re
+
+def parse_decimal(value):
+    if not value:
+        return None
+
+    if isinstance(value, str):
+        value = value.strip()
+        value = value.replace(".", "") if value.count(",") == 1 else value
+        value = value.replace(",", ".")
+        value = re.sub(r"[^\d.]", "", value)
+
+    return Decimal(value)
