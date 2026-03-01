@@ -60,7 +60,7 @@
 
     <div class="card">
       <h3>Beneficio</h3>
-      <span class="kpi {% if current_month.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+      <span class="kpi {% if financials.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
         {{ financials.profit|floatformat:2 }} €
       </span>
     </div>
