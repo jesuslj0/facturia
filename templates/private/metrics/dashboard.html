@@ -36,23 +36,26 @@
     <i class="section-icon fa-solid fa-calendar-check"></i> 
     Periodo seleccionado
   </h2>
+
   <small class="section-subtitle">
     {% if today == selected_end %}
       Este mes
     {% elif selected_start_formatted and selected_end_formatted %}
       Desde: {{ selected_start_formatted }} - Hasta: {{ selected_end_formatted }}
     {% endif %}
-    </small>
+  </small>
+
   <div class="dashboard-cards">
+
     <div class="card">
-      <h3>Ingresos</h3>
+      <h3>Ingresos <small>(sin IVA)</small></h3>
       <span class="kpi text-success">
         {{ financials.income|floatformat:2 }} €
       </span>
     </div>
 
     <div class="card">
-      <h3>Gastos</h3>
+      <h3>Gastos <small>(sin IVA)</small></h3>
       <span class="kpi text-danger">
         {{ financials.expense|floatformat:2 }} €
       </span>
@@ -63,6 +66,9 @@
       <span class="kpi {% if financials.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
         {{ financials.profit|floatformat:2 }} €
       </span>
+      <small class="kpi-info">
+        Margen {{ financials.profit_margin }} %
+      </small>
     </div>
 
     <div class="card">
@@ -75,6 +81,44 @@
         <strong>{{ documents.approved }}</strong> aprobados
       </small>
     </div>
+
+  </div>
+
+  <h2 class="section-title mt-4">
+    <i class="section-icon fa-solid fa-receipt"></i> 
+    IVA del periodo
+  </h2>
+
+  <div class="dashboard-cards">
+
+    <div class="card">
+      <h3>IVA repercutido</h3>
+      <span class="kpi text-success">
+        {{ financials.vat.collected|floatformat:2 }} €
+      </span>
+    </div>
+
+    <div class="card">
+      <h3>IVA soportado</h3>
+      <span class="kpi text-danger">
+        {{ financials.vat.paid|floatformat:2 }} €
+      </span>
+    </div>
+
+    <div class="card">
+      <h3>Saldo IVA</h3>
+      <span class="kpi {% if financials.vat.balance >= 0 %}text-danger{% else %}text-success{% endif %}">
+        {{ financials.vat.balance|floatformat:2 }} €
+      </span>
+      <small class="kpi-info">
+        {% if financials.vat.balance >= 0 %}
+          A pagar
+        {% else %}
+          A compensar
+        {% endif %}
+      </small>
+    </div>
+
   </div>
     
     <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-file-invoice"></i> Facturación</h2>

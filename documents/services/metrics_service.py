@@ -97,10 +97,13 @@ class MetricsService:
             total_base=Sum(signed("base_amount")),
         )
 
-        total_income = income_totals["total_amount"] or Decimal("0")
-        total_expense = expense_totals["total_amount"] or Decimal("0")
-        profit = total_income - total_expense
-        profit_margin = (profit / total_income * 100) if total_income > 0 else 0    
+        base_income = income_totals["total_base"] or 0
+        base_expense = expense_totals["total_base"] or 0
+
+        tax_income = income_totals["total_tax"] or 0
+        tax_expense = expense_totals["total_tax"] or 0
+        profit = base_income - base_expense
+        profit_margin = (profit / base_income * 100) if base_income > 0 else 0    
 
         # Datos mensuales (dentro del rango)
         trunc_func, date_format_str = get_granularity(start, end)
@@ -156,10 +159,15 @@ class MetricsService:
                 "confidence_average": round(confidence_avg, 2),
             },
             "financials": {
-                "income": float(total_income),
-                "expense": float(total_expense),
+                "income": float(base_income),
+                "expense": float(base_expense),
                 "profit": float(profit),
                 "profit_margin": round(float(profit_margin), 2),
+                "vat": {
+                    "collected": float(tax_income), # IVA cobrado
+                    "paid": float(tax_expense), # IVA pagado
+                    "balance": float(tax_income - tax_expense),
+                }
             },
             "charts": {
                 "income_expense_monthly": chart,
