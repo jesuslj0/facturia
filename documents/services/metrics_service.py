@@ -63,7 +63,18 @@ class MetricsService:
 
         def signed(field):
             return Case(
-                When(document_type="corrected_invoice", then=-F(field)),
+                # Rectificativa de ingreso → resta
+                When(
+                    document_type="corrected_invoice",
+                    flow="in",
+                    then=-F(field)
+                ),
+                # Rectificativa de gasto → suma (anula gasto previo)
+                When(
+                    document_type="corrected_invoice",
+                    flow="out",
+                    then=F(field)
+                ),
                 default=F(field),
                 output_field=DecimalField()
             )

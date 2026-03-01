@@ -1,4 +1,4 @@
-from .models import Document
+from .models import Document, Company
 from django.db.models import Q
 
 class DocumentSelector:
@@ -35,7 +35,8 @@ class DocumentSelector:
             )
 
         if filters.get("company"):
-            qs = qs.filter(company=filters["company"])
+            company = Company.objects.filter(name=filters["company"]).first()
+            qs = qs.filter(company=company)
 
         if filters.get("status"):
             qs = qs.filter(status=filters["status"])
