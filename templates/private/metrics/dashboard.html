@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load humanize %}
+{% load custom_filters %}
 {% block title %}Métricas - FacturIA{% endblock %}
 {% load static %}
 {% block styles %}
@@ -60,21 +60,21 @@
     <div class="card">
       <h3>Ingresos <small>(sin IVA)</small></h3>
       <span class="kpi text-success">
-        {{ financials.income|floatformat:2|intcomma }} €
+        {{ financials.income|spanish_currency }} €
       </span>
     </div>
 
     <div class="card">
       <h3>Gastos <small>(sin IVA)</small></h3>
       <span class="kpi text-danger">
-        {{ financials.expense|floatformat:2|intcomma }} €
+        {{ financials.expense|spanish_currency }} €
       </span>
     </div>
 
     <div class="card">
       <h3>Beneficio</h3>
       <span class="kpi {% if financials.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
-        {{ financials.profit|floatformat:2|intcomma }} €
+        {{ financials.profit|spanish_currency }} €
       </span>
       <small class="kpi-info">
         Margen {{ financials.profit_margin }} %
@@ -108,21 +108,21 @@
     <div class="card">
       <h3>IVA repercutido</h3>
       <span class="kpi text-success">
-        {{ financials.vat.collected|floatformat:2|intcomma }} €
+        {{ financials.vat.collected|spanish_currency }} €
       </span>
     </div>
 
     <div class="card">
       <h3>IVA soportado</h3>
       <span class="kpi text-danger">
-        {{ financials.vat.paid|floatformat:2|intcomma }} €
+        {{ financials.vat.paid|spanish_currency }} €
       </span>
     </div>
 
     <div class="card">
       <h3>Saldo IVA</h3>
       <span class="kpi {% if financials.vat.balance >= 0 %}text-danger{% else %}text-success{% endif %}">
-        {{ financials.vat.balance|floatformat:2|intcomma }} €
+        {{ financials.vat.balance|spanish_currency }} €
       </span>
       <small class="kpi-info">
         {% if financials.vat.balance >= 0 %}
