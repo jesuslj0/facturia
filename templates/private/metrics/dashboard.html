@@ -16,37 +16,46 @@
     </h1>
     <p>Resumen general de actividad y rendimiento</p>
   </div>
-
-  <div class="date-filter">
-    <form method="get">
-      <label>Desde:</label>
-      <input type="date" name="start" value="{{ selected_start|date:'Y-m-d' }}">
-      
-      <label>Hasta:</label>
-      <input type="date" name="end" value="{{ selected_end|date:'Y-m-d' }}">
-
-      <button type="submit" class="btn">Ver</button>
-      {% if request.GET %}
-        <a href="?" class="btn-clear">Limpiar</a>
-      {% endif %}
-    </form>
+  
+  <div class="period-header">
+    <div>
+      <h2 class="section-title mt-5">
+        <i class="section-icon fa-solid fa-calendar-check"></i> 
+        Periodo seleccionado
+      </h2>
+      <small class="section-subtitle">
+        {% if period.is_current_month %}
+          Este mes
+        {% else %}
+          Rango seleccionado: {{ period.start_formatted }} - {{ period.end_formatted }}
+        {% endif %}
+        
+      </small>
+    </div>
+    <div class="date-filter">
+      <form method="get">
+        <div class="date-range">
+          <div class="date-input-container">
+            <label>Desde:</label>
+            <input type="date" name="start" value="{{ period.start|date:'Y-m-d' }}">
+          </div>
+          <div class="date-input-container">
+            <label>Hasta:</label>
+            <input type="date" name="end" value="{{ period.end|date:'Y-m-d' }}">
+          </div>
+          </div>
+        <div class="buttons">
+          <button type="submit" class="btn">Ver</button>
+          {% if request.GET %}
+            <a href="?" class="btn-clear">Limpiar</a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
   </div>
 
-  <h2 class="section-title mt-5">
-    <i class="section-icon fa-solid fa-calendar-check"></i> 
-    Periodo seleccionado
-  </h2>
-
-  <small class="section-subtitle">
-    {% if today == selected_end %}
-      Este mes
-    {% elif selected_start_formatted and selected_end_formatted %}
-      Desde: {{ selected_start_formatted }} - Hasta: {{ selected_end_formatted }}
-    {% endif %}
-  </small>
-
   <div class="dashboard-cards">
-
+    
     <div class="card">
       <h3>Ingresos <small>(sin IVA)</small></h3>
       <span class="kpi text-success">
@@ -121,89 +130,89 @@
 
   </div>
     
-    <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-file-invoice"></i> Facturación</h2>
-    <small class="section-subtitle">Solo facturas aprobadas · Abonos descontados</small>
-    <div class="chart-container line-chart">
-      <h3 class="chart-title">Ingresos vs Gastos</h3>
-      <canvas id="incomeExpenseChart"></canvas>
-    </div>
+  <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-file-invoice"></i> Facturación</h2>
+  <small class="section-subtitle">Solo facturas aprobadas · Abonos descontados</small>
+  <div class="chart-container line-chart">
+    <h3 class="chart-title">Ingresos vs Gastos</h3>
+    <canvas id="incomeExpenseChart"></canvas>
+  </div>
     
-    <div class="automation-header">
-      <h2 class="section-title mt-5">
-        <i class="section-icon fa-solid fa-gears"></i>
-        Automatización
-      </h2>
-      <small class="section-subtitle">
-        Rendimiento del sistema de revisión inteligente
-      </small>
+  <div class="automation-header">
+    <h2 class="section-title mt-5">
+      <i class="section-icon fa-solid fa-gears"></i>
+      Automatización
+    </h2>
+    <small class="section-subtitle">
+      Rendimiento del sistema de revisión inteligente
+    </small>
+  </div>
+  <div class="automation-section">
+    <div class="chart-container donut-chart">
+      <h3 class="chart-title">Distribución de decisiones</h3>
+      <canvas id="autoApprovalChart"></canvas>
     </div>
-    <div class="automation-section">
-      <div class="chart-container donut-chart">
-        <h3 class="chart-title">Distribución de decisiones</h3>
-        <canvas id="autoApprovalChart"></canvas>
-      </div>
-  
-      <div class="dashboard-cards">
-        <div class="card">
-          <h3>Confianza media de extracción</h3>
-          <span class="kpi text-success">
-            {{ documents.confidence_average|floatformat:1 }} %
-          </span>
-        </div>
-  
-        <div class="card">
-          <h3>Tasa aprobación automática</h3>
-          <span class="kpi text-success">
-            {{ documents.auto_approval_rate|floatformat:1 }} %
-          </span>
-        </div>
-  
-        <div class="card">
-          <h3>Tasa revisión manual</h3>
-          <span class="kpi text-info">
-            {{ documents.manual_approval_rate|floatformat:1 }} %
-          </span>
-        </div>
-      </div>
-    </div>
-  
-    <h2 class="section-title mt-4"><i class="section-icon fa-solid fa-chart-column"></i> Actividad de documentos</h2>
-    <small class="section-subtitle">En el periodo seleccionado</small>
+
     <div class="dashboard-cards">
       <div class="card">
-        <a href="{% url 'documents:list' %}">
-          <h3>Total documentos</h3>
-          <span class="kpi">{{ documents.total|default:0 }}</span>
-        </a>
+        <h3>Confianza media de extracción</h3>
+        <span class="kpi text-success">
+          {{ documents.confidence_average|floatformat:1 }} %
+        </span>
       </div>
 
       <div class="card">
-        <a href="{% url 'documents:list' %}?status=approved">
-          <h3>Aprobados</h3>
-          <span class="kpi text-success">
-            {{ documents.approved|default:0 }}
-          </span>
-        </a>
+        <h3>Tasa aprobación automática</h3>
+        <span class="kpi text-success">
+          {{ documents.auto_approval_rate|floatformat:1 }} %
+        </span>
       </div>
-  
+
       <div class="card">
-        <a href="{% url 'documents:list' %}?status=pending">
-          <h3>Pendientes</h3>
-          <span class="kpi text-warning">
-            {{ documents.pending|default:0 }}
-          </span>
-        </a>
-      </div>
-  
-      <div class="card">
-        <a href="{% url 'documents:list' %}?status=rejected">
-          <h3>Rechazados</h3>
-          <span class="kpi text-danger">
-            {{ documents.rejected|default:0 }}
-          </span>
-        </a>
+        <h3>Tasa revisión manual</h3>
+        <span class="kpi text-info">
+          {{ documents.manual_approval_rate|floatformat:1 }} %
+        </span>
       </div>
     </div>
+  </div>
+  
+  <h2 class="section-title mt-4"><i class="section-icon fa-solid fa-chart-column"></i> Actividad de documentos</h2>
+  <small class="section-subtitle">En el periodo seleccionado</small>
+  <div class="dashboard-cards">
+    <div class="card">
+      <a href="{% url 'documents:list' %}">
+        <h3>Total documentos</h3>
+        <span class="kpi">{{ documents.total|default:0 }}</span>
+      </a>
+    </div>
+
+    <div class="card">
+      <a href="{% url 'documents:list' %}?status=approved">
+        <h3>Aprobados</h3>
+        <span class="kpi text-success">
+          {{ documents.approved|default:0 }}
+        </span>
+      </a>
+    </div>
+
+    <div class="card">
+      <a href="{% url 'documents:list' %}?status=pending">
+        <h3>Pendientes</h3>
+        <span class="kpi text-warning">
+          {{ documents.pending|default:0 }}
+        </span>
+      </a>
+    </div>
+
+    <div class="card">
+      <a href="{% url 'documents:list' %}?status=rejected">
+        <h3>Rechazados</h3>
+        <span class="kpi text-danger">
+          {{ documents.rejected|default:0 }}
+        </span>
+      </a>
+    </div>
+  </div>
 </div>
 {% endblock %}
 {% block scripts %}

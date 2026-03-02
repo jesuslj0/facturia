@@ -205,6 +205,7 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
 from .services import MetricsService
 from babel.dates import format_date
 from django.utils import timezone
+from calendar import monthrange
 
 class MetricsDashboardView(LoginRequiredMixin, TemplateView):
     template_name = "private/metrics/dashboard.html"
@@ -212,10 +213,8 @@ class MetricsDashboardView(LoginRequiredMixin, TemplateView):
     def get_dashboard_metrics(self, request):
         start = request.GET.get("start")
         end = request.GET.get("end")
-
         today = timezone.now().date()
 
-        # Defaults
         if not start:
             start = today.replace(day=1)
         else:
@@ -225,6 +224,11 @@ class MetricsDashboardView(LoginRequiredMixin, TemplateView):
             end = today
         else:
             end = timezone.datetime.strptime(end, "%Y-%m-%d").date()
+
+        first_day_of_month = today.replace(day=1)
+        is_current_month = (
+            start == first_day_of_month and end == today
+        )
 
         metrics = MetricsService.get_user_metrics(
             user=request.user,
@@ -238,6 +242,7 @@ class MetricsDashboardView(LoginRequiredMixin, TemplateView):
             "end": end,
             "start_formatted": format_date(start, format="d MMMM y", locale="es"),
             "end_formatted": format_date(end, format="d MMMM y", locale="es"),
+            "is_current_month": is_current_month
         }
 
         return metrics
@@ -249,10 +254,12 @@ class MetricsDashboardView(LoginRequiredMixin, TemplateView):
 
         client = ClientUser.objects.filter(user=self.request.user).first().client
         context["client"] = client if client else None
-        context["selected_start"] = metrics["period"]["start"]
-        context["selected_end"] = metrics["period"]["end"]
-        context["selected_start_formatted"] = metrics["period"]["start_formatted"]
-        context["selected_end_formatted"] = metrics["period"]["end_formatted"]
-        context["today"] = timezone.now().date()
+        context["period"] = {
+            "start": metrics["period"]["start"],
+            "end": metrics["period"]["end"],
+            "start_formatted": metrics["period"]["start_formatted"],
+            "end_formatted": metrics["period"]["end_formatted"],
+            "is_current_month": metrics["period"]["is_current_month"]
+        }
 
         return context

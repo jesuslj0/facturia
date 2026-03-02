@@ -43,25 +43,14 @@
     height: auto !important;
 }
 
-/* Ajuste móvil */
-@media (max-width: 768px) {
-    .chart-container.donut-chart,
-    .chart-container.line-chart {
-        max-width: 100%;
-    }
-
-    .chart-container.donut-chart {
-        max-width: 400px;
-    }
-
-    .automation-section {
-        flex-direction: column;
-    }
-
-    .automation-section .dashboard-cards {
-        width: 100%;
-    }
+.period-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
 }
+
+
 
 /* Estilos de filtros por fecha */
 .date-filter {
@@ -105,6 +94,11 @@
     text-decoration: none;
 }
 
+.date-filter form button[type="submit"]:active {
+    background-color: var(--enfasis-color-dark);
+    transition: background-color 0.2s ease;
+}
+
 .date-filter form .btn-clear {
     font-size: 0.9rem;
     color: var(--color-warning);
@@ -116,6 +110,11 @@
     cursor: pointer;
 }
 
+.date-range {
+    display: flex;
+    gap: 0.5rem;
+}
+
 /* Sección automatización */
 .automation-section {
     display: flex;
@@ -124,3 +123,58 @@
     gap: 1rem;
     margin-bottom: 1.5rem;
 }   
+
+/* Ajuste móvil */
+@media (max-width: 768px) {
+    .chart-container.donut-chart,
+    .chart-container.line-chart {
+        max-width: 100%;
+    }
+
+    .chart-container.donut-chart {
+        max-width: 400px;
+    }
+
+    .automation-section {
+        flex-direction: column;
+    }
+
+    .automation-section .dashboard-cards {
+        width: 100%;
+    }
+
+    .period-header {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+    }
+
+    .period-header > .date-filter {
+        align-self: center;
+    }
+
+    .period-header > .date-filter form {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        align-self: center;
+    }
+
+    .date-range {
+        display: flex;
+        width: 100%;
+        justify-content: space-around;
+    }
+
+    .date-input-container {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .date-filter form .buttons {
+        display: flex;
+        width: 100%;
+        justify-content: end;
+    }
+}
