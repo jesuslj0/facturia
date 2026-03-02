@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block title %}Métricas - FacturIA{% endblock %}
 {% load static %}
 {% block styles %}
@@ -14,7 +15,7 @@
       <i class="fa-solid fa-chart-line"></i>
       Métricas · <span class="client-name">{{ client.name }}</span>
     </h1>
-    <p>Resumen general de actividad y rendimiento</p>
+    <p>Resumen financiero del negocio</p>
   </div>
   
   <div class="period-header">
@@ -59,21 +60,21 @@
     <div class="card">
       <h3>Ingresos <small>(sin IVA)</small></h3>
       <span class="kpi text-success">
-        {{ financials.income|floatformat:2 }} €
+        {{ financials.income|floatformat:2|intcomma }} €
       </span>
     </div>
 
     <div class="card">
       <h3>Gastos <small>(sin IVA)</small></h3>
       <span class="kpi text-danger">
-        {{ financials.expense|floatformat:2 }} €
+        {{ financials.expense|floatformat:2|intcomma }} €
       </span>
     </div>
 
     <div class="card">
       <h3>Beneficio</h3>
       <span class="kpi {% if financials.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
-        {{ financials.profit|floatformat:2 }} €
+        {{ financials.profit|floatformat:2|intcomma }} €
       </span>
       <small class="kpi-info">
         Margen {{ financials.profit_margin }} %
@@ -81,14 +82,18 @@
     </div>
 
     <div class="card">
-      <h3>Documentos</h3>
-      <span class="kpi">
-        {{ documents.total }}
-      </span>
-      <small class="kpi-info">
-        <span class="dot"></span>
-        <strong>{{ documents.approved }}</strong> aprobados
-      </small>
+      <a href="{% url 'documents:list' %}?date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
+        <h3>Documentos</h3>
+        <span class="kpi">
+          {{ documents.total }}
+        </span>
+        <small class="kpi-info">
+          <span class="dot"></span>
+          <strong>{{ documents.approved }}</strong> aprobados
+          <span class="dot dot-info"></span>
+          <strong>{{ documents.pending }}</strong> pendientes
+        </small>
+      </a>
     </div>
 
   </div>
@@ -103,21 +108,21 @@
     <div class="card">
       <h3>IVA repercutido</h3>
       <span class="kpi text-success">
-        {{ financials.vat.collected|floatformat:2 }} €
+        {{ financials.vat.collected|floatformat:2|intcomma }} €
       </span>
     </div>
 
     <div class="card">
       <h3>IVA soportado</h3>
       <span class="kpi text-danger">
-        {{ financials.vat.paid|floatformat:2 }} €
+        {{ financials.vat.paid|floatformat:2|intcomma }} €
       </span>
     </div>
 
     <div class="card">
       <h3>Saldo IVA</h3>
       <span class="kpi {% if financials.vat.balance >= 0 %}text-danger{% else %}text-success{% endif %}">
-        {{ financials.vat.balance|floatformat:2 }} €
+        {{ financials.vat.balance|floatformat:2|intcomma }} €
       </span>
       <small class="kpi-info">
         {% if financials.vat.balance >= 0 %}
@@ -180,14 +185,14 @@
   <small class="section-subtitle">En el periodo seleccionado</small>
   <div class="dashboard-cards">
     <div class="card">
-      <a href="{% url 'documents:list' %}">
+      <a href="{% url 'documents:list' %}?date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
         <h3>Total documentos</h3>
         <span class="kpi">{{ documents.total|default:0 }}</span>
       </a>
     </div>
 
     <div class="card">
-      <a href="{% url 'documents:list' %}?status=approved">
+      <a href="{% url 'documents:list' %}?status=approved&date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
         <h3>Aprobados</h3>
         <span class="kpi text-success">
           {{ documents.approved|default:0 }}
@@ -196,7 +201,7 @@
     </div>
 
     <div class="card">
-      <a href="{% url 'documents:list' %}?status=pending">
+      <a href="{% url 'documents:list' %}?status=pending&date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
         <h3>Pendientes</h3>
         <span class="kpi text-warning">
           {{ documents.pending|default:0 }}
@@ -205,12 +210,42 @@
     </div>
 
     <div class="card">
-      <a href="{% url 'documents:list' %}?status=rejected">
+      <a href="{% url 'documents:list' %}?status=rejected&date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
         <h3>Rechazados</h3>
         <span class="kpi text-danger">
           {{ documents.rejected|default:0 }}
         </span>
       </a>
+    </div>
+  </div>
+
+  <h2 class="section-title mt-4"><i class="section-icon fa-solid fa-history"></i> Histórico de documentos</h2>
+  <small class="section-subtitle">Desde {{ historical_metrics.first_document_date }} hasta hoy</small>
+  <div class="dashboard-cards">
+    <div class="card">
+      <h3>Total</h3>
+      <span class="kpi">{{ historical_metrics.total }}</span>
+    </div>
+    <div class="card">
+      <h3>Aprobados</h3>
+      <span class="kpi text-success">{{ historical_metrics.approved }}</span>
+    </div>
+
+    <div class="card">
+      <h3>Rechazados</h3>
+      <span class="kpi text-danger">{{ historical_metrics.rejected }}</span>
+    </div>
+
+    <div class="card">
+      <h3>Pendientes</h3>
+      <span class="kpi text-warning">{{ historical_metrics.pending }}</span>
+    </div>
+
+    <div class="card">
+      <h3>% aprobación</h3>
+      <span class="kpi {% if historical_metrics.approval_rate >= 50 %}text-success{% else %}text-danger{% endif %}">
+        {{ historical_metrics.approval_rate }} %
+      </span>
     </div>
   </div>
 </div>

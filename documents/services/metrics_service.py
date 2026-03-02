@@ -7,13 +7,16 @@ from collections import defaultdict
 from django.utils.dateformat import DateFormat
 from decimal import Decimal
 
+from clients.models import ClientUser
+from documents.selectors import DocumentSelector
+from babel.dates import format_date
 
 class MetricsService:
 
     @staticmethod
     def get_user_metrics(user, start=None, end=None):
-        queryset = Document.all_objects.filter(
-            client__clientuser__user=user
+        queryset = DocumentSelector.for_client(
+            ClientUser.objects.filter(user=user).first().client
         )
 
         if start and end:
@@ -173,4 +176,36 @@ class MetricsService:
                 "income_expense_monthly": chart,
             },
             "status_distribution": status_distribution,
+        }
+    
+    @staticmethod
+    def get_historical_metrics(user):
+        qs = DocumentSelector.for_client(
+            ClientUser.objects.filter(user=user).first().client
+        )
+
+        totals = qs.aggregate(
+            total=Count("id"),
+            approved=Count("id", filter=Q(status="approved")),
+            rejected=Count("id", filter=Q(status="rejected")),
+            pending=Count("id", filter=Q(status="pending")),
+        )
+
+        total = totals["total"] or 0
+        approved = totals["approved"] or 0
+        approval_rate = (approved / total * 100) if total else 0
+
+        first_document_date = format_date(
+            qs.order_by("issue_date").first().issue_date, 
+            format="d MMMM y", 
+            locale="es"
+        )
+
+        return {
+            "total": total,
+            "approved": approved,
+            "rejected": totals["rejected"] or 0,
+            "pending": totals["pending"] or 0,
+            "approval_rate": round(approval_rate, 2),
+            "first_document_date": first_document_date
         }

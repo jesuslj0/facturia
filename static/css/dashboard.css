@@ -101,6 +101,9 @@
 
 .dashboard-cards .card a {
   text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 /* KPI número */
@@ -158,10 +161,6 @@
   font-size: 0.9rem;
   color: var(--muted-color);
 }
-
-/* =========================
-   Tabla de pendientes (Dashboard)
-========================= */
 
 /* Wrapper específico dashboard */
 
@@ -308,6 +307,11 @@
   height: 6px;
   border-radius: 50%;
   background-color: var(--color-success);
+  margin-left: 0.25rem;
+}
+
+.kpi-info .dot.dot-info {
+  background-color: var(--color-info);
 }
 
 .kpi-info strong {

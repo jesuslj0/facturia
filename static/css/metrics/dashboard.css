@@ -1,18 +1,17 @@
 /* Contenedor base para todos los gráficos */
 .chart-container {
-    position: relative;      /* necesario para div central dinámico */
     width: 100%;
     max-width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;     /* centra título y canvas */
+    align-items: center;  
     justify-content: center;
     padding: 1.2rem 1rem;
     border-radius: 12px;
     background: var(--card-bg-color);
     box-shadow: 0 8px 20px rgba(0,0,0,0.06);
     box-sizing: border-box;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.5rem; 
 }
 
 .canvas {
@@ -30,11 +29,12 @@
 
 /* Tamaño específico por tipo */
 .chart-container.donut-chart {
-    max-width: 320px;
+    max-width: 310px;
 }
 
 .chart-container.line-chart {
     max-width: 900px;
+    margin: auto auto;
 }
 
 /* Canvas responsive */
@@ -119,8 +119,8 @@
 .automation-section {
     display: flex;
     align-items: center;
-    justify-content: start;
-    gap: 1rem;
+    justify-content: center;
+    gap: 1.5rem;
     margin-bottom: 1.5rem;
 }   
 
@@ -176,5 +176,6 @@
         display: flex;
         width: 100%;
         justify-content: end;
+        gap: 0.5rem;
     }
 }

@@ -47,7 +47,6 @@ def get_filtered_documents(request):
 
 from documents.models import Company
 class DocumentListView(LoginRequiredMixin, ListView): 
-    model = Document
     template_name = "public/documents/document_list.html"
     context_object_name = "documents"
     paginate_by = 20
@@ -252,6 +251,8 @@ class MetricsDashboardView(LoginRequiredMixin, TemplateView):
         metrics = self.get_dashboard_metrics(self.request)
         context.update(metrics)
 
+        historical_metrics = MetricsService.get_historical_metrics(self.request.user)
+
         client = ClientUser.objects.filter(user=self.request.user).first().client
         context["client"] = client if client else None
         context["period"] = {
@@ -261,5 +262,6 @@ class MetricsDashboardView(LoginRequiredMixin, TemplateView):
             "end_formatted": metrics["period"]["end_formatted"],
             "is_current_month": metrics["period"]["is_current_month"]
         }
+        context["historical_metrics"] = historical_metrics
 
         return context
