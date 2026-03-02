@@ -116,7 +116,7 @@ class MetricsService:
             .filter(issue_date__range=(start, end))
             .annotate(period=trunc_func("issue_date"))
             .values("period", "flow")
-            .annotate(total=Sum(signed("total_amount")))
+            .annotate(total=Sum(signed("base_amount")))
             .order_by("period")
         )
 
