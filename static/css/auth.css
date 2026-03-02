@@ -32,13 +32,25 @@
   letter-spacing: 0.05em;
 }
 
+/* Fila por input */
+.login-form .form-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
 
 /* Labels */
-.login-form label {
-  display: block;
-  margin-bottom: 0.25rem;
-  font-size: 0.85rem;
-  color: #cbd5f5;
+.login-form .form-row label {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+  font-size: 1rem;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
 }
 
 /* Inputs */
@@ -46,13 +58,14 @@
 .login-form input[type="password"] {
   width: 100%;
   box-sizing: border-box;
-  padding: 0.7rem 0.85rem;
+  padding: 0.5rem 2.5rem 0.5rem 2.5rem;
   border-radius: 10px;
   border: 1px solid var(--border-color);
   background: var(--body-bg-color);
   color: var(--body-fg-color);
   transition: border-color 0.2s, box-shadow 0.2s ease;
 }
+
 
 .login-form input:focus {
   outline: none;
@@ -61,7 +74,7 @@
 }
 
 /* Botón */
-.login-form button {
+.login-form .btn {
   width: 100%;
   margin-top: 0.5rem;
   padding: 0.65rem;
@@ -74,17 +87,34 @@
   transition: background 0.2s ease, transform 0.05s ease, box-shadow 0.2s ease;
 }
 
-.login-form button:hover {
+.login-form .btn:hover {
   background: var(--enfasis-color-dark);
   box-shadow: 0 6px 18px rgba(56, 189, 248, 0.25);
 }
 
-.login-form button:active {
+.login-form .btn:active {
   transform: translateY(1px);
 }
 
+/* Password toggle */
+.login-form .password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #aaa;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
 /* Errores Django */
-.login-form .errorlist {
+.login-form .error-list {
   margin-bottom: 1rem;
   padding: 0;
   list-style: none;

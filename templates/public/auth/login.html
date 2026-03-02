@@ -8,7 +8,7 @@
     <div class="text-container">
         <img src="{% static 'favicons/android-chrome-192x192.png' %}">
         <h2>Gestión inteligente de documentos</h2>
-        <p>Revisa, valida y exporta facturas de forma rápida y sencilla.</p>
+        <p>Revisa, valida y exporta tus facturas de forma rápida y sencilla.</p>
         <small>Automatización OCR · Uso interno empresarial</small>    
     </div>
     <div class="form-container">
@@ -16,14 +16,35 @@
             {% csrf_token %}
             <fieldset>
                 <legend>Iniciar sesión</legend>
-                {% for field in form %}
-                    <div class="form-row">
-                        {{ field.label_tag }}
-                        {{ field.errors }}
-                        {{ field }}
-                    </div>
-                {% endfor %}
-                <button type="submit">Entrar</button>
+                {% if form.errors %}
+                    <ul class="error-list">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                <div class="form-row">
+                    <label for="id_username">
+                        <i class="fa-solid fa-user"></i>
+                        <span class="sr-only">Usuario</span>
+                    </label>
+                    {{ form.username }}
+                </div>
+
+                <div class="form-row">
+                    <label for="id_password">
+                        <i class="fa-solid fa-lock"></i>
+                        <span class="sr-only">Contraseña</span>
+                    </label>
+                    {{ form.password }}
+                    <button type="button" id="toggle-password-btn" class="password-toggle">
+                        <i class="fa-solid fa-eye-slash"></i>
+                    </button>
+                </div>
+
+                <button type="submit" class="btn">Entrar</button>
             </fieldset>
         </form>
     </div>
@@ -32,14 +53,21 @@
 {% block scripts %}
 {{ block.super }}
 <script>
-    const usernameInput = document.getElementById('id_username');
-    const passwordInput = document.getElementById('id_password');
-    const usernameLabel = document.querySelector('label[for="id_username"]');
-    const passwordLabel = document.querySelector('label[for="id_password"]');
+    document.addEventListener("DOMContentLoaded", function () {
+        const usernameInput = document.getElementById('id_username');
+        const passwordInput = document.getElementById('id_password');
+        const togglePasswordBtn = document.getElementById('toggle-password-btn');
 
-    usernameLabel.textContent = "Nombre de usuario";
-    passwordLabel.textContent = "Contraseña";
-    usernameInput.placeholder = "ej. admin_taller";
-    passwordInput.placeholder = "ej. secreto123";
+        usernameInput.placeholder = "Tu usuario (ej. admin_taller)";
+        passwordInput.placeholder = "Tu contraseña";
+
+        togglePasswordBtn.addEventListener("click", () => {
+            const type = passwordInput.type === "password" ? "text" : "password";
+            passwordInput.type = type;
+            togglePasswordBtn.innerHTML = type === "password"
+                ? `<i class="fa-solid fa-eye-slash"></i>`
+                : `<i class="fa-solid fa-eye"></i>`;
+        });
+    });
 </script>
 {% endblock %}
