@@ -83,6 +83,12 @@ class Document(models.Model):
         ('required', 'Revisión requerida'),
     ]
 
+    OCR_CONFIDENCE_CHOICES = [
+        ('low', 'Bajo'),
+        ('medium', 'Medio'),
+        ('high', 'Alto'),
+    ]
+
     FLOW_CHOICES = [
         ("in", "Ingreso (venta)"),
         ("out", "Gasto (compra)"),
@@ -155,6 +161,19 @@ class Document(models.Model):
         if self.edited_at:
             return f"Documento editado y guardado manualmente por {self.reviewed_by} el {self.edited_at.strftime('%d-%m-%Y')}"
         return "Documento pendiente de revisión"
+    
+    @property
+    def ocr_confidence(self):
+        if self.confidence_global is not None:
+            if self.confidence_global >= 0.9:
+                return self.OCR_CONFIDENCE_CHOICES[2][0]
+            if self.confidence_global >= 0.6 <= 0.9:
+                return self.OCR_CONFIDENCE_CHOICES[1][0]
+            if self.confidence_global <0.6:
+                return self.OCR_CONFIDENCE_CHOICES[0][0]
+        else:
+            return self.OCR_CONFIDENCE_CHOICES[0][0]
+            
     
     def save(self, *args, **kwargs):
         if self.company and self.company.client != self.client:

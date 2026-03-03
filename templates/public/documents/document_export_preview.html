@@ -1,13 +1,70 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block title %}Vista previa de Exportación - FacturIA{% endblock %}
 {% block styles %}
 {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'css/documents/document_list.css' %}">
 {% endblock %}
 {% block content %}
-<h1 class="page-title">Previsualización de exportación <span class="document-count">({{ documents|length }} documentos)</span></h1>
+<h1 class="page-title">Previsualización de exportación</h1>
+<div class="export-summary">
+    <h3>Resumen de exportación</h3>
+    <div class="summary-grid">
+        <div class="summary-item">
+            <span class="label">Documentos</span>
+            <span class="value">{{ documents_count }}</span>
+        </div>
+
+        <div class="summary-item">
+            <span class="label">Total base</span>
+            <span class="value">
+                {{ summary.base_total|floatformat:2|spanish_currency }} €
+            </span>
+        </div>
+
+        <div class="summary-item">
+            <span class="label">Total IVA</span>
+            <span class="value">
+                {{ summary.tax_total|floatformat:2|spanish_currency }} €
+            </span>
+        </div>
+
+        <div class="summary-item">
+            <span class="label">Total acumulado</span>
+            <span class="value">
+                {{ summary.grand_total|floatformat:2|spanish_currency }} €
+            </span>
+        </div>
+
+        <div class="summary-item">
+            <span class="label">Rango de fechas</span>
+            <span class="value">
+                {{ summary.min_date }} – {{ summary.max_date }}
+            </span>
+        </div>
+
+        <div class="summary-item">
+            <span class="label">Proveedores</span>
+            <span class="value">{{ providers_count }}</span>
+        </div>
+
+        <div class="summary-item">
+            <span class="label">Confianza Media OCR</span>
+            <span class="value">
+                {{ summary.avg_confidence|to_percent}} %
+            </span>
+        </div>
+    </div>
+</div>
 <form method="post" action="{% url 'documents:export' %}">
     {% csrf_token %}
+    <div class="export-bar">
+        <select name="format">
+          <option value="xlsx">Excel (XLSX)</option>
+            <option value="csv">CSV</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Exportar <i class="fa-solid fa-download"></i></button>
+    </div>
     <div class="table-wrapper">
       <table class="table">
         <thead>
@@ -25,7 +82,7 @@
         </thead>
     
         <tbody>
-          {% for doc in documents %}
+          {% for doc in object_list %}
           <tr>
             <td>
                 <input 
@@ -75,13 +132,6 @@
           {% endfor %}
         </tbody>
       </table>
-    </div>
-    <div class="export-bar">
-        <select name="format">
-          <option value="xlsx">Excel (XLSX)</option>
-            <option value="csv">CSV</option>
-        </select>
-        <button type="submit" class="btn btn-primary">Exportar <i class="fa-solid fa-download"></i></button>
     </div>
 </form>
 {% endblock %}

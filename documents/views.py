@@ -173,32 +173,76 @@ class DashboardView(LoginRequiredMixin,TemplateView):
     
 from .utils import export_to_csv, export_to_excel
 class DocumentExportView(LoginRequiredMixin, ListView):
+
+    def get_approved_queryset(self, request, ids=None):
+        client = (
+            ClientUser.objects
+            .select_related("client")
+            .get(user=request.user)
+            .client
+        )
+
+        qs = DocumentSelector.approved(client)
+
+        if ids:
+            qs = qs.filter(id__in=ids)
+
+        return qs
     def get(self, request):
-        qs = get_filtered_documents(request)
+        qs = self.get_approved_queryset(request)
         return export_to_csv(qs)
     
-    def post(self,request):
+    def post(self, request):
         ids = request.POST.getlist("ids")
         fmt = request.POST.get("format", "csv")
 
-        qs = Document.objects.filter(
-            id__in=ids, 
-            client__clientuser__user=request.user
-        )
+        qs = self.get_approved_queryset(request, ids)
 
         if fmt == "xlsx":
             return export_to_excel(qs)
         return export_to_csv(qs)
     
+from django.db.models import Sum, Min, Max, Avg
 class DocumentExportPreviewView(LoginRequiredMixin, ListView):
     template_name = "public/documents/document_export_preview.html"
 
+    def get_approved_queryset(self, request, ids=None):
+        client = (
+            ClientUser.objects
+            .select_related("client")
+            .get(user=request.user)
+            .client
+        )
+
+        qs = DocumentSelector.approved(client)
+
+        if ids:
+            qs = qs.filter(id__in=ids)
+
+        return qs
+
     def get_queryset(self):
-        return get_filtered_documents(self.request)
+        return self.get_approved_queryset(self.request)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["documents"] = get_filtered_documents(self.request)
+        qs = context["object_list"]
+        context["documents_count"] = qs.count()
+        context["providers_count"] = qs.values("company").distinct().count()
+
+        summary = qs.aggregate(
+            base_total=Sum("base_amount"),
+            tax_total=Sum("tax_amount"),
+            grand_total=Sum("total_amount"),
+            min_date=Min("issue_date"),
+            max_date=Max("issue_date"),
+            avg_confidence=Avg("confidence_global"),
+        )
+
+        context["summary"] = summary
+        summary["min_date"] = format_date(summary["min_date"], format="d MMMM y", locale="es")
+        summary["max_date"] = format_date(summary["max_date"], format="d MMMM y", locale="es")
+
         return context
 
 from .services import MetricsService

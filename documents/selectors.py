@@ -16,6 +16,10 @@ class DocumentSelector:
     @staticmethod
     def pending(client):
         return DocumentSelector.for_client(client).filter(status="pending")
+    
+    @staticmethod
+    def approved(client):
+        return DocumentSelector.for_client(client).filter(status="approved")
 
     @staticmethod
     def filtered(client, filters: dict):

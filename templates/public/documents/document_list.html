@@ -188,10 +188,10 @@
         <td>
           <span class="review_level {{ doc.review_level }}">
             {{ doc.display_review_level }}
-            {% if doc.confidence %}
+            {% if doc.confidence_global %}
               <span class="confidence">
-                ({{ doc.confidence.confianza_extraccion|floatformat:2 }})
-              </span>
+                ({{ doc.confidence_global|floatformat:2|default:"-" }})
+              </span> 
             {% endif %}
           </span>
       </td>

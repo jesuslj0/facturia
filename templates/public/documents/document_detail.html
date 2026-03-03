@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block title %}Ver documento - FacturIA{% endblock %}
 {% block styles %}
 {% load static %}
@@ -180,7 +181,7 @@
                 {% endif %}
             </div>
             
-            <div class="review_info">
+            <div class="document-info">
                 <span class="label">Estado del documento</span>
                 <span class="content">{{ document.status_message }}</span>
                 {% if document.rejection_reason %}
@@ -188,21 +189,84 @@
                         Motivo: {{ document.rejection_reason }}
                     </span>
                 {% endif %}
+                <div class="separator"></div>
             
-                <span class="label">Nivel de confianza</span>
-                {% if document.review_level == "required" %}
-                <span class="content">
-                    Revisión obligatoria. Los datos extraídos pueden ser incorrectos.
+               <div class="confidence-container">
+
+            <!-- Nivel de revisión -->
+            <div class="review-level">
+                <span class="label">Nivel de revisión</span>
+
+                <span class="badge 
+                    {% if document.review_level == 'required' %}badge-danger
+                    {% elif document.review_level == 'recommended' %}badge-warning
+                    {% elif document.review_level == 'auto' %}badge-success
+                    {% elif document.review_level == 'manual' %}badge-info
+                    {% endif %}">
+
+                    {% if document.review_level == "required" %}
+                        Revisión obligatoria
+                    {% elif document.review_level == "recommended" %}
+                        Revisión recomendada
+                    {% elif document.review_level == "auto" %}
+                        Aprobado automáticamente
+                    {% elif document.review_level == "manual" %}
+                        Revisado manualmente
+                    {% endif %}
+
                 </span>
-                {% elif document.review_level == "recommended" %}
-                <span class="content">
-                    Revisión recomendada. Algunos campos podrían no ser exactos.
-                </span>
-                {% else %}
-                <span class="content">
-                    Alta confianza. Los datos extraídos son consistentes.
-                </span>
-                {% endif %}
+
+                <small class="description">
+                    {% if document.review_level == "required" %}
+                        El sistema detectó inconsistencias que requieren validación humana.
+                    {% elif document.review_level == "recommended" %}
+                        Se recomienda validar los datos antes de continuar.
+                    {% elif document.review_level == "auto" %}
+                        El documento cumple los criterios de validación automática.
+                    {% elif document.review_level == "manual" %}
+                        Los datos fueron corregidos o verificados manualmente.
+                    {% endif %}
+                </small>
+            </div>
+
+
+            <!-- Confianza OCR -->
+            <div class="ocr-confidence">
+                <span class="label">Confianza OCR</span>
+
+                <div class="confidence-score">
+                    <span class="confidence-value 
+                        {% if document.ocr_confidence == 'high' %}high
+                        {% elif document.ocr_confidence == 'medium' %}medium
+                        {% elif document.ocr_confidence == 'low' %}low
+                        {% endif %}">
+                        
+                        {{ document.confidence_global|floatformat:2 }}%
+                    </span>
+                </div>
+
+                <div class="confidence-bar">
+                    <div class="confidence-fill 
+                        {% if document.ocr_confidence == 'high' %}high
+                        {% elif document.ocr_confidence == 'medium' %}medium
+                        {% elif document.ocr_confidence == 'low' %}low
+                        {% endif %}"
+                        style="width: {{ document.confidence_global|to_percent }}%;">
+                    </div>
+                </div>
+
+                <small class="description">
+                    {% if document.ocr_confidence == "high" %}
+                        Datos extraídos con alta consistencia.
+                    {% elif document.ocr_confidence == "medium" %}
+                        Posibles pequeñas inconsistencias detectadas.
+                    {% elif document.ocr_confidence == "low" %}
+                        Se recomienda revisión manual.
+                    {% endif %}
+                </small>
+            </div>
+
+        </div>
             </div>
         </form>
 

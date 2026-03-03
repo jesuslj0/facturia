@@ -13,3 +13,9 @@ def spanish_currency(value):
         return "{:,.2f}".format(value).replace(",", "X").replace(".", ",").replace("X", ".")
     except (ValueError, TypeError):
         return value
+    
+@register.filter
+def to_percent(value):
+    if value is None:
+        return 0
+    return "{:.2f}".format(value * 100)
