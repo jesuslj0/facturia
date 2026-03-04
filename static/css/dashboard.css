@@ -6,6 +6,7 @@
   margin-top: 1.5rem;
   width: 100%;
   max-width: 1500px;
+  min-widtH: 800px;
 }
 
 @media (max-width: 768px) {
@@ -55,10 +56,6 @@
 
   .dashboard-header p {
     font-size: 0.85rem;
-  }
-
-  .dashboard-cards {
-    min-width: 700px;
   }
 }
 

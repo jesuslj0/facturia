@@ -60,7 +60,8 @@ class Document(models.Model):
     TYPE_CHOICES = [
         ("invoice", "Factura"),
         ("delivery", "Albarán"),
-        ("corrected_invoice", "Abono")
+        ("corrected_invoice", "Factura rectificativa"),
+        ("delivery_credit_note", "Abono de albarán"),
     ]
 
     TOTAL_SOURCE_CHOICES = [

@@ -195,10 +195,16 @@ class MetricsService:
         approved = totals["approved"] or 0
         approval_rate = (approved / total * 100) if total else 0
 
+        if qs.count() > 0:
+            first_document_date = qs.order_by("issue_date").first().issue_date
+        else:
+            first_document_date = None
+
         return {
             "total": total,
             "approved": approved,
             "rejected": totals["rejected"] or 0,
             "pending": totals["pending"] or 0,
-            "approval_rate": round(approval_rate, 2)
+            "approval_rate": round(approval_rate, 2),
+            "first_document_date": first_document_date
         }
