@@ -199,7 +199,7 @@ class MetricsService:
             qs.order_by("issue_date").first().issue_date, 
             format="d MMMM y", 
             locale="es"
-        )
+        ) or None
 
         return {
             "total": total,
