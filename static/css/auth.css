@@ -1,9 +1,36 @@
 /* Contenedor centrado */
+
+/* Reescribir fondo de pantalla */
+.app-main {
+  background-image: url('/static/img/ondas-a-cuadros-azules-editada.jpg');
+  background-size: cover;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  flex-grow: 1;
+}
+
+.app-header {
+  background: transparent;
+  border: none;
+}
+
+/*Contenedor principal */
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  gap: 5rem;
+  padding: 2rem;
+  padding-top: 8vh;
+}
+
 .form-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--body-bg-color);
+  background: transparent;
   padding: 2rem;
   padding-top: 8vh;
 }
@@ -20,6 +47,7 @@
   border-radius: 12px;
   padding: 2rem;
   background: var(--card-bg-color);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 
@@ -28,7 +56,7 @@
   padding: 0 0.5rem;
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--muted-color);
+  color: var(--body-fg-color);
   letter-spacing: 0.05em;
 }
 
@@ -123,7 +151,7 @@
 }
 
 /* Contenedor del texto */
-.text-container {
+.hero-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -134,25 +162,35 @@
 }
 
 /* Icono */
-.text-container > img {
+.hero-container > img {
   width: 120px;
   border-radius: 22px;
   box-shadow: 0px 0px 25px rgba(56, 189, 248, 0.25);
   margin: 24px 0;
 }
 
-.text-container > img {
+.hero-container > img {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.text-container > img:hover {
+.hero-container > img:hover {
   transform: translateY(-4px);
   box-shadow: 0 10px 35px rgba(56, 189, 248, 0.35);
 }
 
+/* Texto del hero */
+.text-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.35rem;
+}
+
 /* Título */
 .text-container > h2 {
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   font-weight: 600;
   margin: 0;
   color: var(--body-fg-color);
@@ -162,10 +200,11 @@
 /* Texto descriptivo */
 .text-container > p {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: var(--enfasis-color);
   font-weight: 500;
   opacity: 0.9;
+  margin-bottom: 0.5rem;
 }
 
 .text-container > small {
@@ -174,4 +213,14 @@
   color: var(--muted-color);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+
+/* Media query movil */
+
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+    gap: 2rem;
+  }
 }

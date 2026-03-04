@@ -5,48 +5,52 @@
 {% endblock %}
 {% block title %}FacturIA - Login{% endblock %}
 {% block content %}
-    <div class="text-container">
-        <img src="{% static 'favicons/android-chrome-192x192.png' %}">
-        <h2>Gestión inteligente de documentos</h2>
-        <p>Revisa, valida y exporta tus facturas de forma rápida y sencilla.</p>
-        <small>Automatización OCR · Uso interno empresarial</small>    
-    </div>
-    <div class="form-container">
-        <form method="POST" class="login-form">
-            {% csrf_token %}
-            <fieldset>
-                <legend>Iniciar sesión</legend>
-                {% if form.errors %}
-                    <ul class="error-list">
-                        {% for field, errors in form.errors.items %}
-                            {% for error in errors %}
-                                <li><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</li>
+    <div class="login-container">
+        <div class="hero-container">
+            <img src="{% static 'favicons/android-chrome-192x192.png' %}">
+            <div class="text-container">
+                <h2>Gestión inteligente de documentos</h2>
+                <p>Revisa, valida y exporta tus facturas de forma rápida y sencilla.</p>
+                <small>Automatización OCR · Uso interno empresarial</small>    
+            </div>
+        </div>
+        <div class="form-container">
+            <form method="POST" class="login-form">
+                {% csrf_token %}
+                <fieldset>
+                    <legend>Iniciar sesión</legend>
+                    {% if form.errors %}
+                        <ul class="error-list">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</li>
+                                {% endfor %}
                             {% endfor %}
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-                <div class="form-row">
-                    <label for="id_username">
-                        <i class="fa-solid fa-user"></i>
-                        <span class="sr-only">Usuario</span>
-                    </label>
-                    {{ form.username }}
-                </div>
-
-                <div class="form-row">
-                    <label for="id_password">
-                        <i class="fa-solid fa-lock"></i>
-                        <span class="sr-only">Contraseña</span>
-                    </label>
-                    {{ form.password }}
-                    <button type="button" id="toggle-password-btn" class="password-toggle">
-                        <i class="fa-solid fa-eye-slash"></i>
-                    </button>
-                </div>
-
-                <button type="submit" class="btn">Entrar</button>
-            </fieldset>
-        </form>
+                        </ul>
+                    {% endif %}
+                    <div class="form-row">
+                        <label for="id_username">
+                            <i class="fa-solid fa-user"></i>
+                            <span class="sr-only">Usuario</span>
+                        </label>
+                        {{ form.username }}
+                    </div>
+    
+                    <div class="form-row">
+                        <label for="id_password">
+                            <i class="fa-solid fa-lock"></i>
+                            <span class="sr-only">Contraseña</span>
+                        </label>
+                        {{ form.password }}
+                        <button type="button" id="toggle-password-btn" class="password-toggle">
+                            <i class="fa-solid fa-eye-slash"></i>
+                        </button>
+                    </div>
+    
+                    <button type="submit" class="btn">Entrar</button>
+                </fieldset>
+            </form>
+        </div>
     </div>
 {% endblock %}
 

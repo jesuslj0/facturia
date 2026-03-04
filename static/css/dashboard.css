@@ -4,6 +4,8 @@
 
 .dashboard {
   margin-top: 1.5rem;
+  width: 100%;
+  max-width: 1500px;
 }
 
 @media (max-width: 768px) {
@@ -54,6 +56,10 @@
   .dashboard-header p {
     font-size: 0.85rem;
   }
+
+  .dashboard-cards {
+    min-width: 700px;
+  }
 }
 
 /* =========================
@@ -88,7 +94,6 @@
   border-color: rgba(56, 189, 248, 0.35);
   transform: translateY(-2px);
 }
-
 
 .dashboard-cards .card h3 {
   font-size: 0.75rem;
@@ -165,15 +170,45 @@
 /* Wrapper específico dashboard */
 
 .dashboard .table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 0;
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0;
 }
 
 .dashboard .table-wrapper {
   margin-top: 0.5rem;
   border-radius: 12px;
   overflow-x: auto;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.clickable-row:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+.clickable-row:hover td {
+  color: var(--enfasis-color);
+}
+
+/* Filas */
+.table tbody tr {
+  transition: background 0.15s;
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Celdas */
+.table td {
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: #e5e7eb;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .table-footer {

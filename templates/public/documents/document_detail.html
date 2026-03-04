@@ -241,7 +241,7 @@
                         {% elif document.ocr_confidence == 'low' %}low
                         {% endif %}">
                         
-                        {{ document.confidence_global|floatformat:2 }}%
+                        {{ document.confidence_global|to_percent|floatformat:0 }}%
                     </span>
                 </div>
 

@@ -4,7 +4,8 @@
 {% block styles %}
 {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'css/documents/document_list.css' %}">
-{% endblock %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/documents/export_preview.css' %}">
+    {% endblock %}
 {% block content %}
 <h1 class="page-title">Previsualización de exportación</h1>
 <div class="export-summary">
@@ -12,7 +13,7 @@
     <div class="summary-grid">
         <div class="summary-item">
             <span class="label">Documentos</span>
-            <span class="value">{{ documents_count }}</span>
+            <span class="value" id="documents-count">{{ documents_count }}</span>
         </div>
 
         <div class="summary-item">
@@ -59,11 +60,12 @@
 <form method="post" action="{% url 'documents:export' %}">
     {% csrf_token %}
     <div class="export-bar">
+        <label for="format">Formato:<label>
         <select name="format">
           <option value="xlsx">Excel (XLSX)</option>
-            <option value="csv">CSV</option>
+          <option value="csv">CSV</option>
         </select>
-        <button type="submit" class="btn btn-primary">Exportar <i class="fa-solid fa-download"></i></button>
+        <button type="submit" class="btn btn-primary">Confirmar exportación <i class="fa-solid fa-download"></i></button>
     </div>
     <div class="table-wrapper">
       <table class="table">
@@ -72,6 +74,7 @@
             <th>
                 <input type="checkbox" id="select-all">
             </th>
+            <th>N.º Documento</th>
             <th>Fecha</th>
             <th>Nombre</th>
             <th>Proveedor</th>
@@ -93,6 +96,7 @@
                 checked
                 >
             </td>
+            <td>{{ doc.document_number }}</td>
             <td>{{ doc.issue_date|date:"d/m/Y" }}</td>
             <!-- Nombre / enlace al archivo -->
             <td>
@@ -141,16 +145,19 @@
     <script>
         const selectAll = document.getElementById("select-all");
         const checkboxes = document.querySelectorAll(".row-checkbox");
+        const summaryDocsCount = document.getElementById("documents-count");
 
         selectAll.checked = [...checkboxes].every(c => c.checked);
 
         selectAll.addEventListener("change", () => {
             checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            summaryDocsCount.textContent = [...checkboxes].filter(c => c.checked).length;
         });
 
         checkboxes.forEach(cb => {
             cb.addEventListener("change", () => {
             selectAll.checked = [...checkboxes].every(c => c.checked);
+            summaryDocsCount.textContent = [...checkboxes].filter(c => c.checked).length;
             });
         });
     </script>

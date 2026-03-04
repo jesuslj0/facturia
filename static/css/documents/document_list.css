@@ -73,6 +73,15 @@
   text-decoration: underline;
 }
 
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.clickable-row:hover {
+  background: rgba(255,255,255,0.04);
+}
+
 /* Botón Ver Detalle */
 .table a.btn-action {
   color: var(--body-fg-color);
@@ -406,7 +415,7 @@ label[for="q"] button:hover {
 /* Exportación */
 .export-bar {
   display: flex;
-  justify-content: start;
+  justify-content: space-between;
   gap: 1rem;
   align-items: center;
   margin-bottom: 1rem;

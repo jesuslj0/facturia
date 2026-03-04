@@ -139,7 +139,7 @@
 
     <tbody>
       {% for doc in documents %}
-      <tr>
+      <tr class="clickable-row" data-href="{% url 'documents:detail' doc.id %}">
         <!-- Nombre / enlace al archivo -->
         <td>
           <a href="{{ doc.file.url }}">
@@ -241,5 +241,17 @@
           toggleFiltersBtn.innerHTML = "Mostrar filtros <i class='fa-solid fa-caret-down'></i>";
         }
       });
+  </script>
+  <script>
+  document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll(".clickable-row").forEach(row => {
+      row.addEventListener("click", function(e) {
+
+          if (e.target.closest("a")) return;
+
+          window.location = this.dataset.href;
+      });
+    });
+  });
   </script>
 {% endblock %}

@@ -1,5 +1,6 @@
 import csv
 from django.http import HttpResponse
+from django.db.models import Sum
 
 def export_to_csv(qs):
     response = HttpResponse(content_type='text/csv')
@@ -25,6 +26,21 @@ def export_to_csv(qs):
             doc.tax_amount,
             doc.total_amount,
         ])
+    
+    # calcular totales
+    total_base_amount = round(float(qs.aggregate(Sum('base_amount'))['base_amount__sum']), 2)
+    total_tax_amount = round(float(qs.aggregate(Sum('tax_amount'))['tax_amount__sum']), 2)
+    total_total_amount = round(float(qs.aggregate(Sum('total_amount'))['total_amount__sum']), 2)
+
+    writer.writerow([
+        "Totales",
+        "",
+        "",
+        total_base_amount,
+        "",
+        total_tax_amount,
+        total_total_amount
+    ])
     return response
 
 from openpyxl import Workbook
@@ -56,6 +72,21 @@ def export_to_excel(qs):
             doc.tax_amount,
             doc.total_amount,
         ])
+
+    # calcular totales
+    total_base_amount = round(float(qs.aggregate(Sum('base_amount'))['base_amount__sum']), 2)
+    total_tax_amount = round(float(qs.aggregate(Sum('tax_amount'))['tax_amount__sum']), 2)
+    total_total_amount = round(float(qs.aggregate(Sum('total_amount'))['total_amount__sum']), 2)
+
+    ws.append([
+        "Totales",
+        "",
+        "",
+        total_base_amount,
+        "",
+        total_tax_amount,
+        total_total_amount
+    ])
 
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

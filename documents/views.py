@@ -222,13 +222,12 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
         return qs
 
     def get_queryset(self):
-        qs = self.get_approved_queryset(self.request)
-        return get_filtered_documents(self.request)
+        return self.get_approved_queryset(self.request)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        qs = context["object_list"]
-        qs = get_filtered_documents(self.request)
+
+        qs = self.get_queryset()
 
         context["documents_count"] = qs.count()
         context["providers_count"] = qs.values("company").distinct().count()

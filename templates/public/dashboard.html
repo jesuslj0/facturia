@@ -44,6 +44,7 @@
             <tr>
               <th>Proveedor</th>
               <th>Fecha</th>
+              <th>Tipo</th>
               <th>Total</th>
               <th></th>
             </tr>
@@ -53,16 +54,17 @@
               <tr><td colspan="5">No hay documentos pendientes.</td></tr>
             {% else %}
               {% for doc in pending_documents %}
-                <tr>
-                  <td>{{ doc.company.name|default:"—" }}</td>
-                  <td>{{ doc.issue_date|date:"d/m/Y"|default:"—" }}</td>
-                  <td class="amount">{% if doc.total_amount %}{{ doc.total_amount|floatformat:2 }}{% else %}—{% endif %} €</td>
-                  <td class="text-end">
-                    <a href="{% url 'documents:detail' doc.id %}" class="btn btn-sm btn-primary">
-                      Ver
-                    </a>
-                  </td>
-                </tr>
+                  <tr class="clickable-row" data-href="{% url 'documents:detail' doc.id %}">
+                    <td>{{ doc.company.name|default:"—" }} </td>
+                    <td>{{ doc.issue_date|date:"d/m/Y"|default:"—" }}</td>
+                    <td>{{ doc.get_document_type_display|default:"—" }}</td>
+                    <td class="amount">{% if doc.total_amount %}{{ doc.total_amount|floatformat:2 }}{% else %}—{% endif %} €</td>
+                    <td class="text-end">
+                      <a href="{% url 'documents:detail' doc.id %}" class="btn btn-sm btn-primary">
+                        Ver
+                      </a>
+                    </td>
+                  </tr>
               {% endfor %}
             {% endif %}
           </tbody>
@@ -77,4 +79,20 @@
       <p class="text-muted">No hay documentos pendientes.</p>
     {% endif %}
   </div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll(".clickable-row").forEach(row => {
+      row.addEventListener("click", function(e) {
+
+          if (e.target.closest("a")) return;
+
+          window.location = this.dataset.href;
+      });
+    });
+  });
+</script>
 {% endblock %}
