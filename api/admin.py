@@ -4,4 +4,4 @@ from api.models import ApiKey
 # Register your models here.
 @register(ApiKey)
 class APIKeyAdmin(admin.ModelAdmin):
-    list_display = ('name', 'key', 'is_active')
+    list_display = ('name', 'key_hash', 'is_active')
