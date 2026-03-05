@@ -14,7 +14,8 @@
   --color-info: #3b82f6;
 }
 
-html, body {
+html,
+body {
   height: 100%;
 }
 
@@ -24,7 +25,7 @@ body {
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,"Segoe UI", sans-serif;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 15px;
   line-height: 1.5;
   letter-spacing: -0.01em;
@@ -32,18 +33,24 @@ body {
   color: var(--body-fg-color);
 }
 
-h1, h2, h3, h4, h5, p {
+h1,
+h2,
+h3,
+h4,
+h5,
+p {
   color: var(--body-fg-color);
 }
 
 /* Header base */
 .app-header {
-  background: transparent; /* slate-900 */
+  background: transparent;
+  /* slate-900 */
   color: #f8fafc;
 }
 
 /* Contenedor */
-.app-header .container{
+.app-header .container {
   max-width: 1500px;
   margin: 0 auto;
   padding: 0.85rem 1.25rem;
@@ -61,7 +68,7 @@ h1, h2, h3, h4, h5, p {
   align-items: center;
 }
 
-.app-header .logo > img {
+.app-header .logo>img {
   width: 64px;
   height: auto;
   margin-right: 8px;
@@ -70,14 +77,16 @@ h1, h2, h3, h4, h5, p {
   transition: transform 0.2s ease;
 }
 
-.app-header .logo > img:hover {
+.app-header .logo>img:hover {
   transform: scale(1.05);
 }
 
 
 .app-header .nav {
-  display: flex; /* siempre visible en desktop */
-  flex-direction: row; /* horizontal por defecto */
+  display: flex;
+  /* siempre visible en desktop */
+  flex-direction: row;
+  /* horizontal por defecto */
   gap: 20px;
 }
 
@@ -88,8 +97,8 @@ h1, h2, h3, h4, h5, p {
     gap: 10px;
     max-height: 0;
     overflow: hidden;
-    transition: 
-      max-height 0.3s ease, 
+    transition:
+      max-height 0.3s ease,
       opacity 0.3s ease;
   }
 
@@ -106,7 +115,7 @@ h1, h2, h3, h4, h5, p {
     justify-content: end;
   }
 
-  .app-header .logo > img {
+  .app-header .logo>img {
     width: 44px;
     border-radius: 8px;
   }
@@ -196,36 +205,40 @@ h1, h2, h3, h4, h5, p {
 }
 
 .messages {
-    list-style: none;
-    padding: 0;
-    margin: 1em 0;
+  list-style: none;
+  padding: 0;
+  margin: 1em 0;
 }
 
 .messages .message {
-    padding: 10px 15px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    font-weight: 500;
-    color: #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  font-weight: 500;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Tipos de mensaje */
 .messages .success {
-    background-color: var(--color-success); /* verde */
+  background-color: var(--color-success);
+  /* verde */
 }
 
 .messages .error {
-    background-color: var(--color-danger); /* rojo */
+  background-color: var(--color-danger);
+  /* rojo */
 }
 
 .messages .warning {
-    background-color: var(--color-warning); /* naranja */
-    color: #000;
+  background-color: var(--color-warning);
+  /* naranja */
+  color: #000;
 }
 
 .messages .info {
-    background-color: var(--color-info); /* azul */
+  background-color: var(--color-info);
+  /* azul */
 }
 
 /* Página de error */
@@ -241,7 +254,7 @@ h1, h2, h3, h4, h5, p {
   padding: 3rem;
   background: var(--card-bg-color);
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   max-width: 500px;
 }
 
@@ -272,4 +285,3 @@ h1, h2, h3, h4, h5, p {
 .btn:hover {
   filter: brightness(1.2);
 }
-

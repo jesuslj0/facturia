@@ -268,33 +268,41 @@ class Document(models.Model):
     edited_at = models.DateTimeField(blank=True, null=True)
     approved_at = models.DateTimeField(blank=True, null=True)
     approved_by = models.ForeignKey(
-        User, on_delete=models.SET_NULL, 
+        User,
         related_name="approved_documents",
-        null=True
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT
     )
     flow = models.CharField(max_length=20, choices=FLOW_CHOICES, default="in", db_index=True)
     flow_source = models.CharField(max_length=20, choices=FLOW_SOURCE_CHOICES, default="auto")
     is_auto_approved = models.BooleanField(default=False, db_index=True)
     review_started_at = models.DateTimeField(blank=True, null=True, db_index=True)
     reviewed_by = models.ForeignKey(
-        User, on_delete=models.SET_NULL, 
+        User,
         related_name="reviewed_documents",
-        null=True
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT
     )
     rejection_reason = models.CharField(max_length=255, null=True, blank=True)
     rejected_at = models.DateTimeField(blank=True, null=True)
     rejected_by = models.ForeignKey(
-        User, on_delete=models.SET_NULL, 
+        User, 
         related_name="rejected_documents",
         null=True, 
-        blank=True
+        blank=True,
+        on_delete=models.PROTECT
+
     )
     is_archived = models.BooleanField(default=False, db_index=True)
     archived_at = models.DateTimeField(blank=True, null=True)
     archived_by = models.ForeignKey(
-        User, on_delete=models.SET_NULL, 
+        User, 
         related_name="archived_documents",
-        null=True
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT
     )
     confidence_global = models.DecimalField(max_digits=5, decimal_places=4, null=True, blank=True, db_index=True)
 
