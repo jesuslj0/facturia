@@ -8,13 +8,20 @@ class ClientAdmin(admin.ModelAdmin):
     list_display = ('name', 'tax_id', 'is_active')
     search_fields = ('name', 'tax_id')
 
-@register(CustomUser)
+@admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'client')
-    search_fields = ('client', 'username', 'first_name', 'last_name', 'email')
+    list_display = ('username', 'client', 'get_roles')
+    search_fields = ('client__name', 'username', 'first_name', 'last_name', 'email')
 
     fieldsets = UserAdmin.fieldsets + (
-        ('Client & Role', {'fields': ('client', 'role', 'roles')}),
+        ('Client & Roles', {'fields': ('client', 'roles')}),
     )
+
+    filter_horizontal = ('roles',)  # útil para ManyToMany
+
+    def get_roles(self, obj):
+        return ", ".join([r.name for r in obj.roles.all()])
+    get_roles.short_description = "Roles"
+
 
 admin.site.register(Role)
