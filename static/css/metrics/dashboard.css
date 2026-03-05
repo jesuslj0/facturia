@@ -124,11 +124,6 @@
     margin-bottom: 1.5rem;
 }   
 
-.automation-section .dashboard-cards {
-    display: flex;
-    flex-direction: column;
-}
-
 /* Ajuste móvil */
 @media (max-width: 768px) {
     .chart-container.donut-chart,
