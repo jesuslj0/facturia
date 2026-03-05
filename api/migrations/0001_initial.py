@@ -18,6 +18,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=100)),
                 ('prefix', models.CharField(db_index=True, max_length=32)),
                 ('key_hash', models.CharField(max_length=128)),
+                ('client', models.ForeignKey(on_delete=models.CASCADE, related_name='api_keys', to='clients.Client')),
                 ('environment', models.CharField(choices=[('live', 'Live'), ('test', 'Test')], default='live', max_length=10)),
                 ('scopes', models.JSONField(blank=True, default=list)),
                 ('is_active', models.BooleanField(default=True)),
