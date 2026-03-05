@@ -27,28 +27,30 @@ urlpatterns += [
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
 
+from django.http import HttpResponse
 from django.core.management import call_command
-from django.http import FileResponse
+from io import StringIO
+
 
 def download_backup(request):
-    with open("backup_docs.json", "w", encoding="utf-8") as f:
-        call_command(
-            "dumpdata",
-            "clients.Client",
-            "documents.Company",
-            "documents.Document",
-            indent=2,
-            natural_foreign=True,
-            natural_primary=True,
-            stdout=f
-        )
+    buffer = StringIO()
 
-    return FileResponse(
-        open("backup_docs.json", "rb"),
-        as_attachment=True,
-        filename="backup_docs.json"
+    call_command(
+        "dumpdata",
+        "clients.Client",
+        "documents.Company",
+        "documents.Document",
+        indent=2,
+        stdout=buffer
     )
 
+    response = HttpResponse(buffer.getvalue(), content_type="application/json")
+    response["Content-Disposition"] = 'attachment; filename="backup_docs.json"'
+
+    return response
+
+from django.urls import path
+
 urlpatterns += [
-    path("download-backup/", download_backup)
+    path("backup-docs/", download_backup),
 ]
