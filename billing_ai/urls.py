@@ -34,7 +34,7 @@ def create_backup():
         call_command(
             "dumpdata",
             "clients.Client",
-            "clients.Company",
+            "documents.Company",
             "documents.Document",
             indent=2,
             stdout=f
