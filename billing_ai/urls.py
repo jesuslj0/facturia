@@ -28,8 +28,9 @@ urlpatterns += [
 ]
 
 from django.core.management import call_command
+from django.http import FileResponse
 
-def create_backup():
+def download_backup(request):
     with open("backup_docs.json", "w", encoding="utf-8") as f:
         call_command(
             "dumpdata",
@@ -37,18 +38,16 @@ def create_backup():
             "documents.Company",
             "documents.Document",
             indent=2,
+            natural_foreign=True,
+            natural_primary=True,
             stdout=f
         )
 
-create_backup()
-
-
-# urls.py temporal
-from django.http import FileResponse
-from django.urls import path
-
-def download_backup(request):
-    return FileResponse(open("backup_docs.json", "rb"),  as_attachment=True, filename="backup_docs.json")
+    return FileResponse(
+        open("backup_docs.json", "rb"),
+        as_attachment=True,
+        filename="backup_docs.json"
+    )
 
 urlpatterns += [
     path("download-backup/", download_backup)
