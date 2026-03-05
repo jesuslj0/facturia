@@ -3,7 +3,7 @@
 {% load static %}
 {% block styles %}<link rel="stylesheet" href="{% static "css/dashboard.css" %}" />{% endblock %}
 {% block content %}
-<div class="container dashboard">
+<div class="container dashboard home">
   <div class="dashboard-header">
     <h1><i class="fa-solid fa-house"></i> Inicio · <span class="client-name">{{ client.name }}</span></h1>
     <p>Tienes {{ pending_count }} documentos por revisar</p>
