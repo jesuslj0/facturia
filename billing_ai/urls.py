@@ -26,3 +26,14 @@ if settings.DEBUG:
 urlpatterns += [
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
+
+# urls.py temporal
+from django.http import FileResponse
+from django.urls import path
+
+def download_backup(request):
+    return FileResponse(open("backup_docs_2.json", "rb"))
+
+urlpatterns += [
+    path("download-backup/", download_backup)
+]
