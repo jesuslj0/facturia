@@ -165,20 +165,21 @@ class Document(models.Model):
     
     @property
     def ocr_confidence(self):
-        if self.confidence_global is not None:
-            if self.confidence_global >= 0.9:
-                return self.OCR_CONFIDENCE_CHOICES[2][0]
-            if self.confidence_global >= 0.6 <= 0.9:
-                return self.OCR_CONFIDENCE_CHOICES[1][0]
-            if self.confidence_global <0.6:
-                return self.OCR_CONFIDENCE_CHOICES[0][0]
-        else:
+        if self.confidence_global is None:
             return self.OCR_CONFIDENCE_CHOICES[0][0]
+
+        if self.confidence_global >= 0.9:
+            return self.OCR_CONFIDENCE_CHOICES[2][0]
+        elif self.confidence_global >= 0.6:
+            return self.OCR_CONFIDENCE_CHOICES[1][0]
+        return self.OCR_CONFIDENCE_CHOICES[0][0]
             
     
     def save(self, *args, **kwargs):
         if self.company and self.company.client != self.client:
             raise ValueError("Company must belong to the same client.")
+        
+        self.full_clean()
         super().save(*args, **kwargs)
 
     def can_be_approved(self): 
@@ -249,8 +250,7 @@ class Document(models.Model):
         )
 
 
-
-    external_id = models.CharField(max_length=255, unique=True)
+    external_id = models.CharField(max_length=255, null=True, blank=True)
     original_name = models.CharField(max_length=255)
     file = models.FileField(upload_to="documents/")
     document_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
@@ -272,7 +272,6 @@ class Document(models.Model):
         related_name="approved_documents",
         null=True
     )
-    rejected_at = models.DateTimeField(blank=True, null=True)
     flow = models.CharField(max_length=20, choices=FLOW_CHOICES, default="in", db_index=True)
     flow_source = models.CharField(max_length=20, choices=FLOW_SOURCE_CHOICES, default="auto")
     is_auto_approved = models.BooleanField(default=False, db_index=True)
@@ -302,15 +301,20 @@ class Document(models.Model):
     objects = ActiveDocumentManager() #Queryset Documentos activos
     all_objects = models.Manager() #Queryset Documentos archivados y activos
 
-    indexes = [
-        models.Index(fields=["client", "status"]),
-        models.Index(fields=["client", "review_level"]),
-        models.Index(fields=["client", "created_at"]),
-        models.Index(fields=["client", "company"]),
-    ]
-
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["client", "status"]),
+            models.Index(fields=["client", "review_level"]),
+            models.Index(fields=["client", "created_at"]),
+            models.Index(fields=["client", "company"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["client", "external_id"],
+                name="unique_external_id_per_client",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.document_number or self.original_name} ({self.flow})"

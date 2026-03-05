@@ -1,6 +1,5 @@
 from django.db import transaction
 from documents.models import Document
-from .metrics_service import MetricsService
 from documents.utils import parse_decimal
 from decimal import InvalidOperation
 

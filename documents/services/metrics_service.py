@@ -6,18 +6,17 @@ from documents.models import Document
 from collections import defaultdict
 from django.utils.dateformat import DateFormat
 from decimal import Decimal
-
-from clients.models import ClientUser
+from django.contrib.auth import get_user_model
 from documents.selectors import DocumentSelector
 from babel.dates import format_date
+
+User = get_user_model()
 
 class MetricsService:
 
     @staticmethod
     def get_user_metrics(user, start=None, end=None):
-        queryset = DocumentSelector.for_client(
-            ClientUser.objects.filter(user=user).first().client
-        )
+        queryset = DocumentSelector.for_client(user.client)
 
         if start and end:
             queryset = queryset.filter(issue_date__range=[start, end])
@@ -180,9 +179,7 @@ class MetricsService:
     
     @staticmethod
     def get_historical_metrics(user):
-        qs = DocumentSelector.for_client(
-            ClientUser.objects.filter(user=user).first().client
-        )
+        qs = DocumentSelector.for_client(user.client)
 
         totals = qs.aggregate(
             total=Count("id"),

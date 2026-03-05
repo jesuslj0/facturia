@@ -1,6 +1,5 @@
 from django.shortcuts import redirect, get_object_or_404
 from .models import Document
-from clients.models import ClientUser
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib import messages
@@ -9,6 +8,9 @@ from django.db.models import Q
 from datetime import datetime
 from .selectors import DocumentSelector
 from .services import DocumentService
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 def get_filtered_documents(request):
     doc_status = request.GET.get("doc_status")
@@ -42,7 +44,7 @@ def get_filtered_documents(request):
     if flow:
         filters["flow"] = flow
 
-    client = ClientUser.objects.get(user=request.user).client
+    client = request.user.client
     return DocumentSelector.filtered(client, filters)
 
 from documents.models import Company
@@ -62,9 +64,7 @@ class DocumentListView(LoginRequiredMixin, ListView):
 
         context["client"] = first_doc.client if first_doc else None
         context["document_types"] = Document.TYPE_CHOICES
-        context["companies"] = Company.objects.filter(
-            client__clientuser__user=self.request.user
-        ).order_by("name")
+        context["companies"] = Company.objects.filter(client=self.request.user.client).order_by("name")
 
         # 🔹 Querystring sin page
         querydict = self.request.GET.copy()
@@ -79,7 +79,7 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
     context_object_name = "document"
 
     def get_queryset(self):
-        client = ClientUser.objects.get(user=self.request.user).client
+        client = self.request.user.client
         return DocumentSelector.detail_queryset(client)
     
     def post(self, request, *args, **kwargs):
@@ -152,7 +152,7 @@ class DashboardView(LoginRequiredMixin,TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        client = ClientUser.objects.filter(user=self.request.user).first().client
+        client = self.request.user.client
         client = client if client else None
 
         qs = DocumentSelector.pending(client)
@@ -175,12 +175,7 @@ from .utils import export_to_csv, export_to_excel
 class DocumentExportView(LoginRequiredMixin, ListView):
 
     def get_approved_queryset(self, request, ids=None):
-        client = (
-            ClientUser.objects
-            .select_related("client")
-            .get(user=request.user)
-            .client
-        )
+        client = request.user.client
 
         qs = DocumentSelector.approved(client)
 
@@ -207,12 +202,7 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
     template_name = "public/documents/document_export_preview.html"
 
     def get_approved_queryset(self, request, ids=None):
-        client = (
-            ClientUser.objects
-            .select_related("client")
-            .get(user=request.user)
-            .client
-        )
+        client = request.user.client
 
         qs = DocumentSelector.approved(client)
 
@@ -287,7 +277,7 @@ class MetricsDashboardView(LoginRequiredMixin, TemplateView):
             "end": end,
             "start_formatted": format_date(start, format="d MMMM y", locale="es"),
             "end_formatted": format_date(end, format="d MMMM y", locale="es"),
-            "is_current_month": is_current_month
+            "is_current_month": is_current_month, 
         }
 
         return metrics
@@ -299,7 +289,7 @@ class MetricsDashboardView(LoginRequiredMixin, TemplateView):
 
         historical_metrics = MetricsService.get_historical_metrics(self.request.user)
 
-        client = ClientUser.objects.filter(user=self.request.user).first().client
+        client = self.request.user.client
         context["client"] = client if client else None
         context["period"] = {
             "start": metrics["period"]["start"],
