@@ -43,6 +43,17 @@ class CustomUser(AbstractUser):
         return self.has_role("owner")
     def clean(self):
         super().clean()
-        for role in self.roles.all():
-            if role.client_id != self.client_id:
-                raise ValidationError("Role must belong to the same client.")
+        if self.client is None:
+            raise ValidationError("User must have a client assigned.")
+        
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+@receiver(m2m_changed, sender=CustomUser.roles.through)
+def validate_roles_client(sender, instance, action, reverse, model, pk_set, **kwargs):
+    if action in ["pre_add", "pre_set"]:
+        for role_id in pk_set:
+            role = model.objects.get(pk=role_id)
+            if role.client_id != instance.client_id:
+                raise ValidationError(
+                    f"Role '{role}' does not belong to the same client as the user '{instance.username}'."
+                )
