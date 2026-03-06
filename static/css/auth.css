@@ -225,7 +225,7 @@
 
 /* Carousel de producto */
 .product-carousel {
-  margin-top: 3rem;
+  margin-top: 1.5rem;
   overflow: hidden;
   width: 100%;
 }
@@ -234,7 +234,7 @@
   display: flex;
   align-items: center;  
   gap: 1.5rem;
-  padding-bottom: 1rem;
+  padding: 1.5rem 0;
   width: max-content;
   will-change: transform;
   transform: translate3d(0,0,0);
@@ -307,25 +307,5 @@
 @media(max-width: 768px) {
   .carousel-track {
     width: max-content;
-  }
-
-  .product-carousel::before,
-  .product-carousel::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    width: 40px;
-    height: 100%;
-    pointer-events: none;
-  }
-  
-  .product-carousel::before {
-    left: 0;
-    background: linear-gradient(to right, #0f0f12, transparent);
-  }
-  
-  .product-carousel::after {
-    right: 0;
-    background: linear-gradient(to left, #0f0f12, transparent);
   }
 }
