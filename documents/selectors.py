@@ -33,7 +33,7 @@ class DocumentSelector:
         elif doc_status == "all":
             qs = DocumentSelector.for_client(client)
 
-        elif doc_status == None:
+        elif doc_status == None or doc_status == "active":
             qs = DocumentSelector.for_client(client).filter(
                 is_archived=False
             )
