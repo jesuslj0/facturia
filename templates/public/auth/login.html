@@ -147,7 +147,7 @@
 
         const track = document.getElementById("carouselTrack");
         if (!track) return;
-        let speed = 0.4;
+        let speed = 0.5;
         let pos = 0;
 
         function animate() {
@@ -166,10 +166,10 @@
         }
 
         track.addEventListener("mouseenter", () => speed = 0.2);
-        track.addEventListener("mouseleave", () => speed = 0.4);
+        track.addEventListener("mouseleave", () => speed = 0.5);
 
         track.addEventListener("touchstart", () => speed = 0.2);
-        track.addEventListener("touchend", () => speed = 0.4);
+        track.addEventListener("touchend", () => speed = 0.5);
 
         });
 </script>
