@@ -33,6 +33,11 @@ class DocumentSelector:
         elif doc_status == "all":
             qs = DocumentSelector.for_client(client)
 
+        elif doc_status == None:
+            qs = DocumentSelector.for_client(client).filter(
+                is_archived=False
+            )
+
         if filters.get("query"):
             qs = qs.filter(
                 Q(original_name__icontains=filters["query"]) | Q(company__name__icontains=filters["query"])
