@@ -315,54 +315,119 @@ select.editable-field {
   color: #cbd5f5;
 }
 
-.badge.status-approved {
+.badge.approved, .badge.success {
   background: rgba(34, 197, 94, 0.15);
   color: var(--color-success);
 }
 
-.badge.status-rejected {
+.badge.rejected, .badge.danger {
   background: rgba(239, 68, 68, 0.15);
   color: var(--color-danger);
 }
 
-.badge.status-pending {
+.badge.pending, .badge.info {
   background: rgba(59, 130, 246, 0.15);
   color: var(--color-info);
 }
 
-/*Review info*/
-.review_info {
-  margin-bottom: 0.5rem;
-  padding: 0.6rem 0.8rem;
+/* Badges de nivel de revisión */
+.badge.review {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 500;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: var(--card-bg-color);
-  color: var(--body-fg-color);
+  color: #fff;
+  text-transform: uppercase;
+  max-width: fit-content;
+}
+
+
+/* Colores según tipo */
+.badge.review.required {
+  background-color: #ef4444; /* rojo */
+}
+.badge.review.recommended {
+  background-color: #f59e0b; /* naranja */
+}
+.badge.review.auto {
+  background-color: #22c55e; /* verde */
+}
+.badge.review.manual {
+  background-color: #3b82f6; /* azul */
+}
+
+/* Contenedor común */
+.review-level,
+.ocr-confidence {
+  margin-bottom: 1.5rem;
+  font-family: "Inter", sans-serif;
+}
+
+.review-level {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
-.review_info .label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
+.label {
+  display: block;
   font-weight: 600;
-  letter-spacing: 0.004em;
-  margin-right: 0.5rem;
-  color: var(--muted-color)
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+  color: #94a3b8; /* gris medio */
 }
 
-.review_info .content {
-  font-size: 0.85rem;
-  font-weight: 500;
-  line-height: 1.4;
-  color: var(--body-fg-color);
-  font-weight: 500;
+/* Descripción */
+.description {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b; /* gris oscuro */
+  margin-top: 0.25rem;
 }
 
-.review_info .content.reason {
-  color: var(--muted-color);
-  font-style: italic;
+/* --- Confianza OCR --- */
+.confidence-score {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Colores según confianza */
+.confidence-value.high {
+  color: #22c55e; /* verde */
+}
+.confidence-value.medium {
+  color: #f59e0b; /* naranja */
+}
+.confidence-value.low {
+  color: #ef4444; /* rojo */
+}
+
+/* Barra de progreso */
+.confidence-bar {
+  width: 100%;
+  height: 0.5rem;
+  background-color: #e2e8f0; /* gris claro */
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.4s ease;
+}
+
+/* Colores de la barra */
+.confidence-fill.high {
+  background-color: #22c55e;
+}
+.confidence-fill.medium {
+  background-color: #f59e0b;
+}
+.confidence-fill.low {
+  background-color: #ef4444;
 }
 
 /* Modal acciones formulario */

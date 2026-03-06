@@ -16,7 +16,7 @@
             
             <div class="pdf-badges">
                 <span class="badge type">{{ document.get_document_type_display }}</span>
-                <span class="badge status status-{{ document.status }}">
+                <span class="badge status {{ document.status }}">
                     {{ document.get_status_display }}
                 </span>
             </div>
@@ -190,18 +190,18 @@
                     </span>
                 {% endif %}
                 <div class="separator"></div>
-            
-               <div class="confidence-container">
+            </div>
+            <div class="separator"></div>
 
             <!-- Nivel de revisión -->
             <div class="review-level">
                 <span class="label">Nivel de revisión</span>
 
-                <span class="badge 
-                    {% if document.review_level == 'required' %}badge-danger
-                    {% elif document.review_level == 'recommended' %}badge-warning
-                    {% elif document.review_level == 'auto' %}badge-success
-                    {% elif document.review_level == 'manual' %}badge-info
+                <span class="badge review
+                    {% if document.review_level == 'required' %}required
+                    {% elif document.review_level == 'recommended' %}recommended
+                    {% elif document.review_level == 'auto' %}auto
+                    {% elif document.review_level == 'manual' %}manual
                     {% endif %}">
 
                     {% if document.review_level == "required" %}

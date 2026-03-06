@@ -6,9 +6,7 @@
   background-size: cover;
   margin: 0;
   padding: 0;
-  flex: 1;
   max-width: 100vw;
-  min-height: 100vh;
 }
 
 .app-header {
@@ -24,7 +22,6 @@
   background: transparent;
   gap: 5rem;
   padding: 2rem;
-  padding-top: 8vh;
 }
 
 .form-container {
@@ -223,5 +220,112 @@
   .login-container {
     flex-direction: column;
     gap: 2rem;
+  }
+}
+
+/* Carousel de producto */
+.product-carousel {
+  margin-top: 3rem;
+  overflow: hidden;
+  width: 100%;
+}
+
+.carousel-track {
+  display: flex;
+  align-items: center;  
+  gap: 1.5rem;
+  padding-bottom: 1rem;
+  width: max-content;
+  will-change: transform;
+  transform: translate3d(0,0,0);
+}
+
+.carousel-item {
+  flex: 0 0 260px;
+  scroll-snap-align: start;
+
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+
+  padding: 1.5rem;
+  text-align: center;
+  
+  transform: translate3d(0,0,0);
+  backface-visibility: hidden;
+}
+
+.carousel-item:hover {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  transform: translateY(-4px);
+  transition: background 0.2s ease, border 0.2s ease, transform 0.2s ease;
+}
+
+.carousel-item:not(:hover) {
+  transition: background 0.2s ease, border 0.2s ease, transform 0.2s ease;
+}
+
+.carousel-item h3 {
+  margin-top: .5rem;
+  font-size: 1.1rem;
+}
+
+.carousel-item p {
+  font-size: .9rem;
+  opacity: .8;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon img {
+  width: 60px;
+  border-radius: 22px;
+  box-shadow: 0px 0px 25px rgba(56, 189, 248, 0.25);
+  margin: 24px 0;
+  display: inline-block;
+  backface-visibility: hidden;
+  will-change: transform;
+  transform: translate3d(0,0,0);
+}
+
+@media (min-width: 768px) {
+  .duplicate {
+    display: none;
+  }
+
+  .carousel-track {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+@media(max-width: 768px) {
+  .carousel-track {
+    width: max-content;
+  }
+
+  .product-carousel::before,
+  .product-carousel::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 40px;
+    height: 100%;
+    pointer-events: none;
+  }
+  
+  .product-carousel::before {
+    left: 0;
+    background: linear-gradient(to right, #0f0f12, transparent);
+  }
+  
+  .product-carousel::after {
+    right: 0;
+    background: linear-gradient(to left, #0f0f12, transparent);
   }
 }

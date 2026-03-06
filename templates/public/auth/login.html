@@ -52,6 +52,74 @@
             </form>
         </div>
     </div>
+    <section class="product-carousel">
+        <div class="carousel-track" id="carouselTrack">
+            <div class="carousel-item">
+                <div class="icon">
+                    <img src="{% static "icons/clipboard.svg" %}" />
+                </div>
+                <h3>Gestión centralizada</h3>
+                <p>Controla todas tus facturas y documentos desde un único panel.</p>
+            </div>
+
+            <div class="carousel-item">
+                <div class="icon">
+                    <img src="{% static "icons/robot.svg" %}" />
+                </div>
+                <h3>Automatización</h3>
+                <p>Procesa documentos automáticamente con OCR y flujos.</p>
+            </div>
+
+            <div class="carousel-item">
+                <div class="icon">
+                    <img src="{% static "icons/computer-download.svg" %}" />
+                </div>
+                <h3>Exportación profesional</h3>
+                <p>Genera PDF y exporta datos para contabilidad o clientes.</p>
+            </div>
+
+            <div class="carousel-item">
+                <div class="icon">
+                    <img src="{% static "icons/graph.svg" %}" />
+                </div>
+                <h3>Métricas precisas</h3>
+                <p>Visualiza tus indicadores de calidad y rendimiento.</p>
+            </div>
+
+            <!-- duplicados -->
+             <div class="carousel-item duplicate">
+                <div class="icon">
+                    <img src="{% static "icons/clipboard.svg" %}" />
+                </div>
+                <h3>Gestión centralizada</h3>
+                <p>Controla todas tus facturas y documentos desde un único panel.</p>
+            </div>
+
+            <div class="carousel-item duplicate">
+                <div class="icon">
+                    <img src="{% static "icons/robot.svg" %}" />
+                </div>
+                <h3>Automatización</h3>
+                <p>Procesa documentos automáticamente con OCR y flujos.</p>
+            </div>
+
+            <div class="carousel-item duplicate">
+                <div class="icon">
+                    <img src="{% static "icons/computer-download.svg" %}" />
+                </div>
+                <h3>Exportación profesional</h3>
+                <p>Genera PDF y exporta datos para contabilidad o clientes.</p>
+            </div>
+
+            <div class="carousel-item duplicate">
+                <div class="icon">
+                    <img src="{% static "icons/graph.svg" %}" />
+                </div>
+                <h3>Métricas precisas</h3>
+                <p>Visualiza tus indicadores de calidad y rendimiento.</p>
+            </div>
+        </div>
+    </section>
 {% endblock %}
 
 {% block scripts %}
@@ -73,5 +141,36 @@
                 : `<i class="fa-solid fa-eye"></i>`;
         });
     });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const track = document.getElementById("carouselTrack");
+        if (!track) return;
+        let speed = 0.4;
+        let pos = 0;
+
+        function animate() {
+            pos += speed;
+            track.style.transform = `translate3d(-${Math.round(pos)}px,0,0)`;
+
+            if (pos >= track.scrollWidth / 2) {
+            pos = 0;
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        if (window.innerWidth < 768) {
+            animate();
+        }
+
+        track.addEventListener("mouseenter", () => speed = 0.2);
+        track.addEventListener("mouseleave", () => speed = 0.4);
+
+        track.addEventListener("touchstart", () => speed = 0.2);
+        track.addEventListener("touchend", () => speed = 0.4);
+
+        });
 </script>
 {% endblock %}
