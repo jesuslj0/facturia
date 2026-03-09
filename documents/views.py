@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime
-from .selectors import DocumentSelector
+from .selectors.document_selector import DocumentSelector
 from .services import DocumentService
 from django.contrib.auth import get_user_model
 
@@ -71,7 +71,6 @@ class DocumentListView(LoginRequiredMixin, ListView):
         querydict.pop("page", None)
         context["querystring"] = querydict.urlencode()
         return context
-
     
 
 class DocumentDetailView(LoginRequiredMixin, DetailView):
@@ -174,15 +173,16 @@ class DashboardView(LoginRequiredMixin,TemplateView):
 from .utils import export_to_csv, export_to_excel
 class DocumentExportView(LoginRequiredMixin, ListView):
 
-    def get_approved_queryset(self, request, ids=None):
+    def get_exportable_queryset(self, request, ids=None):
         client = request.user.client
 
-        qs = DocumentSelector.approved(client)
+        qs = DocumentSelector.exportable(client)
 
         if ids:
             qs = qs.filter(id__in=ids)
 
         return qs
+    
     def get(self, request):
         qs = self.get_approved_queryset(request)
         return export_to_csv(qs)
@@ -204,7 +204,7 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
     def get_approved_queryset(self, request, ids=None):
         client = request.user.client
 
-        qs = DocumentSelector.approved(client)
+        qs = DocumentSelector.exportable(client)
 
         if ids:
             qs = qs.filter(id__in=ids)
@@ -240,7 +240,6 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
 from .services import MetricsService
 from babel.dates import format_date
 from django.utils import timezone
-from calendar import monthrange
 
 class MetricsDashboardView(LoginRequiredMixin, TemplateView):
     template_name = "private/metrics/dashboard.html"

@@ -7,7 +7,7 @@ from collections import defaultdict
 from django.utils.dateformat import DateFormat
 from decimal import Decimal
 from django.contrib.auth import get_user_model
-from documents.selectors import DocumentSelector
+from documents.selectors.document_selector import DocumentSelector
 from babel.dates import format_date
 
 User = get_user_model()

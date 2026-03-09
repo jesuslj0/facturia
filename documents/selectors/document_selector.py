@@ -1,4 +1,4 @@
-from .models import Document, Company
+from ..models import Document, Company
 from django.db.models import Q
 
 class DocumentSelector:
@@ -78,4 +78,12 @@ class DocumentSelector:
                 "reviewed_by",
                 "archived_by"
             )
+        )
+    
+    @staticmethod
+    def exportable(client):
+        return DocumentSelector.for_client(client).filter(
+            is_archived=False,
+            status="approved",
+            document_type__in=["invoice", "corrected_invoice"]
         )
