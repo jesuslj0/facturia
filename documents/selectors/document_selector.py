@@ -23,17 +23,16 @@ class DocumentSelector:
 
     @staticmethod
     def filtered(client, filters: dict, base_qs=None):
+        qs = base_qs if base_qs is not None else DocumentSelector.for_client(client)
         
-        if base_qs is not None:
-            qs = base_qs
-        else:
-            doc_status = filters.get("doc_status")
-            if doc_status == "archived":
-                qs = DocumentSelector.archived(client)
-            elif doc_status == "all":
-                qs = DocumentSelector.for_client(client)
-            else:  # None o "active"
-                qs = DocumentSelector.for_client(client).filter(is_archived=False)
+        doc_status = filters.get("doc_status")
+
+        if doc_status == "archived":
+            qs = DocumentSelector.archived(client)
+        elif doc_status == "active":
+            qs = qs.filter(is_archived=False)
+        elif doc_status == "all":
+            pass
 
         if filters.get("query"):
             qs = qs.filter(
@@ -41,8 +40,7 @@ class DocumentSelector:
             )
 
         if filters.get("company"):
-            company = Company.objects.filter(name=filters["company"]).first()
-            qs = qs.filter(company=company)
+            qs = qs.filter(company__name=filters["company"])
 
         if filters.get("status"):
             qs = qs.filter(status=filters["status"])
