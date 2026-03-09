@@ -30,7 +30,7 @@ def get_filtered_documents(request, base_qs=None):
     client = request.user.client
 
     if base_qs is None:
-        base_qs = DocumentSelector.for_client(client)
+        base_qs = DocumentSelector.for_client(client).filter(is_archived=False)
 
     return DocumentSelector.filtered(client, filters, base_qs=base_qs)
 
