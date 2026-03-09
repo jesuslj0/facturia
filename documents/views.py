@@ -191,7 +191,10 @@ class DocumentExportView(LoginRequiredMixin, ListView):
         ids = request.POST.getlist("ids")
         fmt = request.POST.get("format", "csv")
 
-        qs = self.get_exportable_queryset(ids=ids)
+        if ids:
+            qs = self.get_exportable_queryset(ids=ids)
+        else:
+            qs = self.get_exportable_queryset()
 
         if fmt == "xlsx":
             return export_to_excel(qs)
