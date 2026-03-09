@@ -173,8 +173,8 @@ class DashboardView(LoginRequiredMixin,TemplateView):
 from .utils import export_to_csv, export_to_excel
 class DocumentExportView(LoginRequiredMixin, ListView):
 
-    def get_exportable_queryset(self, request, ids=None):
-        client = request.user.client
+    def get_exportable_queryset(self, ids=None):
+        client = self.request.user.client
 
         qs = DocumentSelector.exportable(client)
 
@@ -191,7 +191,7 @@ class DocumentExportView(LoginRequiredMixin, ListView):
         ids = request.POST.getlist("ids")
         fmt = request.POST.get("format", "csv")
 
-        qs = self.get_approved_queryset(request, ids)
+        qs = self.get_exportable_queryset(ids=ids)
 
         if fmt == "xlsx":
             return export_to_excel(qs)
@@ -201,8 +201,8 @@ from django.db.models import Sum, Min, Max, Avg
 class DocumentExportPreviewView(LoginRequiredMixin, ListView):
     template_name = "public/documents/document_export_preview.html"
 
-    def get_exportable_queryset(self, request, ids=None):
-        client = request.user.client
+    def get_exportable_queryset(self, ids=None):
+        client = self.request.user.client
 
         qs = DocumentSelector.exportable(client)
 
@@ -212,7 +212,8 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
         return qs
 
     def get_queryset(self):
-        return self.get_exportable_queryset(self.request)
+        ids = self.request.GET.getlist("ids")
+        return self.get_exportable_queryset(ids=ids)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
