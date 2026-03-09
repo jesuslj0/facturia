@@ -22,21 +22,18 @@ class DocumentSelector:
         return DocumentSelector.for_client(client).filter(status="approved")
 
     @staticmethod
-    def filtered(client, filters: dict):
-        qs = DocumentSelector.for_client(client)
-
-        doc_status = filters.get("doc_status")
-
-        if doc_status == "archived":
-            qs = DocumentSelector.archived(client)
-
-        elif doc_status == "all":
-            qs = DocumentSelector.for_client(client)
-
-        elif doc_status == None or doc_status == "active":
-            qs = DocumentSelector.for_client(client).filter(
-                is_archived=False
-            )
+    def filtered(client, filters: dict, base_qs=None):
+        
+        if base_qs is not None:
+            qs = base_qs
+        else:
+            doc_status = filters.get("doc_status")
+            if doc_status == "archived":
+                qs = DocumentSelector.archived(client)
+            elif doc_status == "all":
+                qs = DocumentSelector.for_client(client)
+            else:  # None o "active"
+                qs = DocumentSelector.for_client(client).filter(is_archived=False)
 
         if filters.get("query"):
             qs = qs.filter(

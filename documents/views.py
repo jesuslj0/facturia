@@ -12,40 +12,27 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-def get_filtered_documents(request):
-    doc_status = request.GET.get("doc_status")
-    query = request.GET.get("q")
-    company = request.GET.get("company")
-    status = request.GET.get("status")
-    review_level = request.GET.get("review_level")
-    date_from = request.GET.get("date_from")
-    date_to = request.GET.get("date_to")
-    document_type = request.GET.get("document_type")
-    flow = request.GET.get("flow")
+def get_filtered_documents(request, base_qs=None):
+    filters = {
+        "doc_status": request.GET.get("doc_status"),
+        "query": request.GET.get("q"),
+        "company": request.GET.get("company"),
+        "status": request.GET.get("status"),
+        "review_level": request.GET.get("review_level"),
+        "date_from": request.GET.get("date_from"),
+        "date_to": request.GET.get("date_to"),
+        "document_type": request.GET.get("document_type"),
+        "flow": request.GET.get("flow"),
+    }
 
-    filters = {}
-
-    if doc_status:
-        filters["doc_status"] = doc_status
-    if query:
-        filters["query"] = query
-    if company:
-        filters["company"] = company
-    if status:
-        filters["status"] = status
-    if review_level:
-        filters["review_level"] = review_level
-    if date_from:
-        filters["date_from"] = date_from
-    if date_to:
-        filters["date_to"] = date_to
-    if document_type:
-        filters["document_type"] = document_type
-    if flow:
-        filters["flow"] = flow
+    filters = {k: v for k, v in filters.items() if v}
 
     client = request.user.client
-    return DocumentSelector.filtered(client, filters)
+
+    if base_qs is None:
+        base_qs = DocumentSelector.for_client(client)
+
+    return DocumentSelector.filtered(client, filters, base_qs=base_qs)
 
 from documents.models import Company
 class DocumentListView(LoginRequiredMixin, ListView): 
@@ -54,7 +41,10 @@ class DocumentListView(LoginRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        return get_filtered_documents(self.request)
+        return get_filtered_documents(
+            self.request,
+            base_qs=DocumentSelector.for_client(self.request.user.client)
+        )
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -176,7 +166,9 @@ class DocumentExportView(LoginRequiredMixin, View):
     def get_exportable_queryset(self, ids=None):
         client = self.request.user.client
 
-        qs = DocumentSelector.exportable(client)
+        base_qs = DocumentSelector.exportable(client)
+
+        qs = get_filtered_documents(self.request, base_qs=base_qs)
 
         if ids:
             qs = qs.filter(id__in=ids)
@@ -204,7 +196,9 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
     def get_exportable_queryset(self, ids=None):
         client = self.request.user.client
 
-        qs = DocumentSelector.exportable(client)
+        base_qs = DocumentSelector.exportable(client)
+
+        qs = get_filtered_documents(self.request, base_qs=base_qs)
 
         if ids:
             qs = qs.filter(id__in=ids)
