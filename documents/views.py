@@ -184,7 +184,7 @@ class DocumentExportView(LoginRequiredMixin, ListView):
         return qs
     
     def get(self, request):
-        qs = self.get_approved_queryset(request)
+        qs = self.get_exportable_queryset(request)
         return export_to_csv(qs)
     
     def post(self, request):
@@ -201,7 +201,7 @@ from django.db.models import Sum, Min, Max, Avg
 class DocumentExportPreviewView(LoginRequiredMixin, ListView):
     template_name = "public/documents/document_export_preview.html"
 
-    def get_approved_queryset(self, request, ids=None):
+    def get_exportable_queryset(self, request, ids=None):
         client = request.user.client
 
         qs = DocumentSelector.exportable(client)
@@ -212,7 +212,7 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
         return qs
 
     def get_queryset(self):
-        return self.get_approved_queryset(self.request)
+        return self.get_exportable_queryset(self.request)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
