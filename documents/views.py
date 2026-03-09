@@ -1,7 +1,7 @@
 from django.shortcuts import redirect, get_object_or_404
 from .models import Document
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView, DetailView, TemplateView
+from django.views.generic import View, ListView, DetailView, TemplateView
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q
@@ -171,7 +171,7 @@ class DashboardView(LoginRequiredMixin,TemplateView):
         return context
     
 from .utils import export_to_csv, export_to_excel
-class DocumentExportView(LoginRequiredMixin, ListView):
+class DocumentExportView(LoginRequiredMixin, View):
 
     def get_exportable_queryset(self, ids=None):
         client = self.request.user.client
@@ -184,17 +184,14 @@ class DocumentExportView(LoginRequiredMixin, ListView):
         return qs
     
     def get(self, request):
-        qs = self.get_exportable_queryset(request)
+        qs = self.get_exportable_queryset()
         return export_to_csv(qs)
     
     def post(self, request):
         ids = request.POST.getlist("ids")
         fmt = request.POST.get("format", "csv")
 
-        if ids:
-            qs = self.get_exportable_queryset(ids=ids)
-        else:
-            qs = self.get_exportable_queryset()
+        qs = self.get_exportable_queryset(ids=ids)
 
         if fmt == "xlsx":
             return export_to_excel(qs)

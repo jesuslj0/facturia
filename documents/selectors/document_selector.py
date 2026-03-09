@@ -82,8 +82,11 @@ class DocumentSelector:
     
     @staticmethod
     def exportable(client):
-        return DocumentSelector.for_client(client).filter(
-            is_archived=False,
-            status="approved",
-            document_type__in=["invoice", "corrected_invoice"]
+        return (
+            DocumentSelector.for_client(client).filter(
+                is_archived=False,
+                status="approved",
+                document_type__in=["invoice", "corrected_invoice"]
+            )
+            .order_by("issue_date")
         )
