@@ -19,21 +19,21 @@
         <div class="summary-item">
             <span class="label">Total base</span>
             <span class="value">
-                {{ summary.base_total|floatformat:2|spanish_currency }} €
+                {{ summary.base_total|spanish_currency }} €
             </span>
         </div>
 
         <div class="summary-item">
             <span class="label">Total IVA</span>
             <span class="value">
-                {{ summary.tax_total|floatformat:2|spanish_currency }} €
+                {{ summary.tax_total|spanish_currency }} €
             </span>
         </div>
 
         <div class="summary-item">
             <span class="label">Total acumulado</span>
             <span class="value">
-                {{ summary.grand_total|floatformat:2|spanish_currency }} €
+                {{ summary.grand_total|spanish_currency }} €
             </span>
         </div>
 
