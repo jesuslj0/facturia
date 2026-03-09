@@ -28,11 +28,11 @@ class DocumentSelector:
         doc_status = filters.get("doc_status")
 
         if doc_status == "archived":
-            qs = DocumentSelector.archived(client)
-        elif doc_status == "active":
-            qs = qs.filter(is_archived=False)
+            qs = qs.filter(is_archived=True)
         elif doc_status == "all":
             pass
+        else: 
+            qs = qs.filter(is_archived=False)
 
         if filters.get("query"):
             qs = qs.filter(

@@ -9,12 +9,12 @@
     color: var(--body-fg-color);
 }
 
-/* Export summary container */
+/* Export summary */
 .export-summary {
-    background: #ffffff;
-    border: 1px solid rgba(0,0,0,0.06);
+    background: var(--card-bg-color);
+    border: 1px solid var(--border-color);
     border-radius: 14px;
-    padding: 1.5rem 1.75rem;
+    padding: 1.6rem 1.8rem;
     margin-bottom: 1.5rem;
 }
 
@@ -22,33 +22,33 @@
 .export-summary h3 {
     font-size: 1.05rem;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--body-fg-color);
     margin-bottom: 1.2rem;
 }
 
-/* Grid layout */
+/* Grid */
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 1rem;
 }
 
-/* Each stat card */
+/* Cards */
 .summary-item {
-    background: #f9fafb;
-    border: 1px solid rgba(0,0,0,0.05);
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border-color);
     border-radius: 10px;
     padding: 0.9rem 1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.25rem;
     transition: all .15s ease;
 }
 
-/* subtle hover for SaaS feel */
+/* subtle hover */
 .summary-item:hover {
-    background: #ffffff;
-    border-color: rgba(0,0,0,0.08);
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.12);
 }
 
 /* Label */
@@ -56,35 +56,42 @@
     font-size: 0.72rem;
     font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: .04em;
-    color: #6b7280;
+    letter-spacing: .05em;
+    color: var(--muted-color);
 }
 
 /* Value */
 .summary-item .value {
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 600;
-    color: #111827;
+    color: var(--body-fg-color);
 }
 
-/* Large values (money) slightly stronger */
-.summary-item .value:has(+ .currency),
-.summary-item .value.currency {
+/* Numbers (money / totals) slightly emphasized */
+.summary-item .value strong,
+.summary-item.money .value {
+    color: var(--enfasis-color);
     font-weight: 700;
 }
 
-/* Responsive tightening */
+/* KPI highlight (optional class) */
+.summary-item.kpi {
+    border-color: var(--enfasis-color-dark);
+    background: rgba(56,189,248,0.05);
+}
+
+/* Responsive */
 @media (max-width: 640px) {
     .export-summary {
-        padding: 1.2rem;
+        padding: 1.3rem;
     }
 
     .summary-grid {
-        gap: 0.7rem;
+        gap: 0.8rem;
     }
 
     .summary-item {
-        padding: 0.7rem 0.8rem;
+        padding: 0.75rem 0.8rem;
     }
 
     .summary-item .value {
