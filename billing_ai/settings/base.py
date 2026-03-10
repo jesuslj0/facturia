@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'api',
     'clients',
     'documents',
+    'finance.apps.FinanceConfig',
 ]
 
 MIDDLEWARE = [
@@ -136,3 +137,5 @@ LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
 
 AUTH_USER_MODEL = "clients.CustomUser"
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
