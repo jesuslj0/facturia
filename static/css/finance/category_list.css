@@ -1,0 +1,108 @@
+.page-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-title i {
+  color: var(--enfasis-color);
+}
+
+/* TITULOS SECCION */
+
+.section-title {
+  margin-top: 28px;
+  margin-bottom: 14px;
+  font-size: 1.1rem;
+  color: var(--muted-color);
+  font-weight: 500;
+}
+
+/* GRID */
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+/* TARJETA */
+
+.category-card {
+  background: var(--card-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: 0.15s ease;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.category-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--enfasis-color);
+}
+
+/* CONTENIDO */
+
+.category-name {
+  font-size: 1rem;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.category-type {
+  font-size: 0.85rem;
+  color: var(--muted-color);
+}
+
+/* INDICADOR DE TIPO */
+
+.category-card.expense {
+  border-left: 4px solid #ef4444;
+}
+
+.category-card.income {
+  border-left: 4px solid #22c55e;
+}
+
+/* BOTON NUEVA CATEGORIA */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: 0.15s ease;
+    cursor: pointer;
+}
+
+.btn-primary {
+    text-decoration: none;
+}
+
+.btn i {
+    margin-right: 6px;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  color: var(--muted-color);
+  font-size: 0.9rem;
+  padding: 20px;
+  border: 1px dashed var(--border-color);
+  border-radius: 10px;
+  text-align: center;
+}

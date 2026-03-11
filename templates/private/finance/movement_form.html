@@ -2,19 +2,30 @@
 {% block title %}Crear movimiento - FacturIA{% endblock %}
 {% block styles %}
 {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/finance/movement_create.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/finance/movement_form.css' %}">
 {% endblock %}
 {% block content %}
-    <h1 class="page-title"><i class="fa-solid fa-coins"></i> Nuevo movimiento</h1>
-    <a href="{% url 'finance:movements' %}" class="btn btn-secondary">Volver</a>
+    <h1 class="page-title">
+        <i class="fa-solid fa-coins"></i> 
+        {% if object %}Editar movimiento{% else %}Nuevo movimiento
+        {% endif %}
+    </h1>
+    <a href="{% url 'finance:movements' %}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Volver</a>
     <div class="form-container">
         <form method="post">
             {% csrf_token %}
-            {{ form.as_p }}
+            {% for field in form %}
+            <p>
+                {{ field.label_tag }}
+                {{ field }}
+                {{ field.errors }}
+            </p>
+            {% endfor %}
             <button type="submit" class="btn btn-primary">Guardar</button>
+            {% if object %}
+            <a href="{% url 'finance:delete_movement' object.pk %}" class="btn btn-secondary btn-danger">Borrar</a>
+            {% endif %}
+            <a href="{% url 'finance:movements' %}" class="btn btn-secondary">Cancelar</a>
         </form>
     </div>
-    {% if object %}
-        <a href="{% url 'finance:delete_movement' object.pk %}" class="btn btn-secondary">Borrar</a>
-    {% endif %}
 {% endblock %}

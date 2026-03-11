@@ -1,0 +1,85 @@
+.page-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* TEXTO CONFIRMACION */
+
+.page-description {
+  color: var(--muted-color);
+  margin-bottom: 18px;
+  font-size: 0.95rem;
+}
+
+/* TARJETA DETALLES */
+
+.category-details, .movement-details {
+  margin: 16px 0 22px 0;
+  background: var(--card-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 18px 22px;
+  max-width: 420px;
+}
+
+/* LISTA */
+
+.category-details ul, .movement-details ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category-details li, .movement-details li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.92rem;
+}
+
+.category-details li:last-child, .movement-details li:last-child {
+  border-bottom: none;
+}
+
+.category-details strong, .movement-details strong {
+  display: inline-block;
+  color: var(--muted-color);
+  font-weight: 500;
+  margin-right: 6px;
+}
+
+/* BOTON DE BORRADO */
+
+.btn-danger {
+  margin-top: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.btn-danger:hover {
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
+  transition: color 0.15s ease, border 0.15s ease;
+}
+
+.btn-danger:not(:hover) {
+  transition: color 0.15s ease, border 0.15s ease;
+}
+
+.btn-secondary {
+  text-decoration: none;
+}
+
+/* OPCIONAL: BLOQUE DE ALERTA (mas visual para acciones destructivas) */
+
+.delete-warning {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  padding: 14px 16px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  font-size: 0.9rem;
+}

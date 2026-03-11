@@ -1,0 +1,106 @@
+/* CONTENEDORES */
+
+.movements-container {
+  margin-top: 20px;
+}
+
+.table-wrapper {
+  background: var(--card-bg-color);
+  border-radius: 14px;
+  padding: 22px;
+  border: 1px solid var(--border-color);
+  overflow-x: auto;
+}
+
+/* TITULO */
+
+.page-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-title i {
+  color: var(--enfasis-color);
+}
+
+/* BOTONES */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: 0.15s ease;
+  cursor: pointer;
+}
+
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.btn i {
+  margin-right: 6px;
+}
+
+/* TABLA */
+
+.movements-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.movements-table thead th {
+  text-align: left;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-color);
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.movements-table tbody td {
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.92rem;
+}
+
+.movements-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.movements-table tbody tr:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+/* IMPORTE */
+
+.amount {
+  font-weight: 600;
+  color: #22c55e;
+}
+
+/* ALINEACION */
+
+.text-end {
+  text-align: right;
+}
+
+/* CATEGORIAS */
+
+.categories-container {
+  margin-top: 22px;
+  display: flex;
+  gap: 10px;
+}

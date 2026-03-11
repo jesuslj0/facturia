@@ -9,7 +9,7 @@
 <h1 class="page-title"><i class="fa-solid fa-coins"></i> Tus movimientos</h1>
 <div class="movements-container">
     <div class="table-wrapper">
-        <a href="{% url 'finance:new_movement' %}" class="btn btn-primary">Nuevo movimiento</a>
+        <a href="{% url 'finance:new_movement' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nuevo movimiento</a>
         <table class="movements-table">
             <thead>
                 <tr>
@@ -21,21 +21,29 @@
                 </tr>
             </thead>
             <tbody>
-                {% for movement in movements %}
-                    <tr>
-                        <td>{{ movement.date|date:"d M Y" }}</td>
-                        <td>{{ movement.category.name }}</td>
-                        <td class="amount">{% if movement.amount %}{{ movement.amount|spanish_currency }}{% else %}—{% endif %} €</td>
-                        <td>{{ movement.description }}</td>
-                        <td class="text-end">
-                            <a href="{% url 'finance:edit_movement' movement.id %}" class="btn btn-sm btn-primary">
-                                Ver
-                            </a>
-                        </td>
-                    </tr>
-                {% endfor %}
+                {% if movements|length == 0 %}
+                    <tr><td colspan="5">No hay movimientos.</td></tr>
+                {% else %}
+                    {% for movement in movements %}
+                        <tr>
+                            <td>{{ movement.date|date:"d M Y" }}</td>
+                            <td>{{ movement.category.name }}</td>
+                            <td class="amount">{% if movement.amount %}{{ movement.amount|spanish_currency }}{% else %}—{% endif %} €</td>
+                            <td>{{ movement.description }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'finance:edit_movement' movement.id %}" class="btn btn-sm btn-primary">
+                                    Ver
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
             </tbody>
         </table>
     </div>
+</div>
+<div class="categories-container">
+    <a href="{% url 'finance:categories' %}" class="btn btn-primary"><i class="fa-solid fa-list"></i> Ver categorías</a>
+    <a href="{% url 'finance:new_category' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva categoría</a>
 </div>
 {% endblock %}

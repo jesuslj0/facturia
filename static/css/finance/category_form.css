@@ -1,0 +1,101 @@
+.page-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-title i {
+  color: var(--enfasis-color);
+}
+
+/* CONTENEDOR FORMULARIO */
+
+.form-container {
+  margin-top: 18px;
+  background: var(--card-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 26px;
+  max-width: 520px;
+}
+
+/* CAMPOS DEL FORM */
+
+.form-container form p {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+/* LABEL */
+
+.form-container label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted-color);
+}
+
+/* INPUTS */
+
+.form-control,
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  background: var(--body-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  color: var(--body-fg-color);
+  transition: border 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* FOCUS */
+
+.form-control:focus,
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--enfasis-color);
+  box-shadow: 0 0 0 2px rgba(56,189,248,0.15);
+}
+
+/* SELECT */
+
+.form-select {
+  appearance: none;
+}
+
+/* TEXTAREA */
+
+.form-textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
+/* ERRORES DJANGO */
+
+.errorlist {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0 0;
+  font-size: 0.8rem;
+  color: #f87171;
+}
+
+/* BOTON BORRAR */
+
+.btn-secondary {
+  margin-top: 12px;
+  text-decoration: none;
+}
+
+.form-actions {
+    margin-top: 10px;
+}

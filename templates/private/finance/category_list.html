@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Categorias - FacturIA{% endblock %}
+{% block styles %}
+{% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/finance/category_list.css' %}">
+{% endblock %}
+{% block content %}
+<h1 class="page-title"><i class="fa-solid fa-list"></i> Tus categorías</h1>
+
+<a href="{% url 'finance:new_category' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva categoría</a>
+
+<h2 class="section-title">Gastos</h2>
+<div class="category-grid">
+
+{% for category in expense_categories %}
+    <a href="{% url 'finance:edit_category' category.pk %}" class="category-card expense">
+        <div class="category-card-body">
+            <h3 class="category-name">{{ category.name }}</h3>
+            <p class="category-type">{{ category.get_type_display }}</p>
+        </div>
+    </a>
+{% empty %}
+    <p class="empty-state">No tienes categorías de gasto todavía.</p>
+{% endfor %}
+
+</div>
+
+
+<h2 class="section-title">Ingresos</h2>
+<div class="category-grid">
+
+{% for category in income_categories %}
+    <a href="{% url 'finance:edit_category' category.pk %}" class="category-card income">
+        <div class="category-card-body">
+            <h3 class="category-name">{{ category.name }}</h3>
+            <p class="category-type">{{ category.get_type_display }}</p>
+        </div>
+    </a>
+{% empty %}
+    <p class="empty-state">No tienes categorías de ingreso todavía.</p>
+{% endfor %}
+
+</div>
+
+{% endblock %}

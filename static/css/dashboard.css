@@ -30,10 +30,16 @@
   font-weight: 600;
   color: var(--body-fg-color);
   line-height: 1.2;
+  text-align: center;
+}
+
+.dashboard-header h1 i {
+  color: var(--enfasis-color);
+  font-size: 1.25rem;
 }
 
 .dashboard-header h1 .client-name{
-  color: var(--enfasis-color);
+  text-transform: uppercase;
   font-weight: 700;
 }
 

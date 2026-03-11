@@ -6,6 +6,10 @@
   color: var(--body-fg-color);
 }
 
+.page-title i {
+  color: var(--enfasis-color);
+}
+
 .page-title > .document-count {
   font-size: 0.85rem;
   color: var(--muted-color);

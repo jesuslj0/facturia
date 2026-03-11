@@ -1,9 +1,13 @@
 {% extends "base.html" %}
 {% load custom_filters %}
 {% block title %}Borrar movimiento - FacturIA{% endblock %}
+{% block styles %}
+{% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/finance/confirm_delete.css' %}">
+{% endblock %}
 {% block content %}
     <h1 class="page-title"><i class="fa-solid fa-trash-can"></i> Borrar movimiento</h1>
-    <p>¿Estas seguro de querer borrar este movimiento?</p>
+    <p class="page-description">¿Estas seguro de querer borrar este movimiento?</p>
     <div class="movement-details">
         <ul>
             <li><strong>Fecha:</strong> {{ object.date }}</li>
@@ -13,6 +17,10 @@
     </div>
     <form method="post">
         {% csrf_token %}
+        <div class="delete-warning">
+            <p>Esta accion no se puede deshacer.</p>
+        </div>
         <button type="submit" class="btn btn-danger">Confirmar borrado</button>
+        <a href="{% url 'finance:movements' %}" class="btn btn-secondary">Cancelar</a>
     </form>
 {% endblock %}

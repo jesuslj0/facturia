@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block title %}Borrar categoría - FacturIA{% endblock %}
+{% block styles %}
+{% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/finance/confirm_delete.css' %}">
+{% endblock %}
+{% block content %}
+    <h1 class="page-title"><i class="fa-solid fa-trash-can"></i> Borrar categoría</h1>
+    <p>¿Estas seguro de querer borrar esta categoría?</p>
+    <div class="category-details">
+        <ul>
+            <li><strong>Nombre:</strong> {{ object.name }}</li>
+            <li><strong>Tipo:</strong> {{ object.get_type_display }}</li>
+        </ul>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <div class="delete-warning">
+            <p>Esta accion no se puede deshacer.</p>
+        </div>
+        <button type="submit" class="btn btn-danger">Confirmar borrado</button>
+        <a href="{% url 'finance:categories' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+{% endblock %}
