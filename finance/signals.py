@@ -20,13 +20,9 @@ def create_default_categories(sender, instance, created, **kwargs):
     if not created:
         return
 
-    categories = [
+    for type_, name in DEFAULT_CATEGORIES:
         MovementCategory.objects.get_or_create(
-            client=instance,
-            name=name,
-            type=type_
+            client=instance, 
+            type=type_, 
+            name=name
         )
-        for type_, name in DEFAULT_CATEGORIES
-    ]
-
-    MovementCategory.objects.bulk_create(categories)

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block title %}Movimientos - FacturIA{% endblock %}
+{% block styles %}
+{% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/finance/movement_list.css' %}">
+{% endblock %}
+{% block content %}
+<h1 class="page-title"><i class="fa-solid fa-coins"></i> Tus movimientos</h1>
+<div class="movements-container">
+    <div class="table-wrapper">
+        <a href="{% url 'finance:new_movement' %}" class="btn btn-primary">Nuevo movimiento</a>
+        <table class="movements-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Categoria</th>
+                    <th>Importe</th>
+                    <th>Concepto</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for movement in movements %}
+                    <tr>
+                        <td>{{ movement.date|date:"d M Y" }}</td>
+                        <td>{{ movement.category.name }}</td>
+                        <td class="amount">{% if movement.amount %}{{ movement.amount|spanish_currency }}{% else %}—{% endif %} €</td>
+                        <td>{{ movement.description }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'finance:edit_movement' movement.id %}" class="btn btn-sm btn-primary">
+                                Ver
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

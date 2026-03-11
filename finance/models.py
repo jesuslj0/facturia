@@ -24,7 +24,7 @@ class FinancialMovement(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="movements")
     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name="created_movements")
     category = models.ForeignKey(MovementCategory, on_delete=models.PROTECT, related_name="movements")
-    description = models.CharField(max_length=255, blank=True)
+    description = models.CharField(max_length=255, blank=True, verbose_name="Concepto")
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     receipt = models.FileField(upload_to="finance/receipts/", blank=True, null=True)
     date = models.DateField(db_index=True)

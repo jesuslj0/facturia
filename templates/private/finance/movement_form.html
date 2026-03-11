@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Crear movimiento - FacturIA{% endblock %}
+{% block styles %}
+{% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/finance/movement_create.css' %}">
+{% endblock %}
+{% block content %}
+    <h1 class="page-title"><i class="fa-solid fa-coins"></i> Nuevo movimiento</h1>
+    <a href="{% url 'finance:movements' %}" class="btn btn-secondary">Volver</a>
+    <div class="form-container">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </form>
+    </div>
+    {% if object %}
+        <a href="{% url 'finance:delete_movement' object.pk %}" class="btn btn-secondary">Borrar</a>
+    {% endif %}
+{% endblock %}

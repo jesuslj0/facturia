@@ -15,7 +15,7 @@ from documents.models import Company
 User = get_user_model()
 
 class DocumentListView(LoginRequiredMixin, ListView): 
-    template_name = "public/documents/document_list.html"
+    template_name = "private/documents/document_list.html"
     context_object_name = "documents"
     paginate_by = 20
     
@@ -43,7 +43,7 @@ class DocumentListView(LoginRequiredMixin, ListView):
     
 
 class DocumentDetailView(LoginRequiredMixin, DetailView):
-    template_name = "public/documents/document_detail.html"
+    template_name = "private/documents/document_detail.html"
     context_object_name = "document"
 
     def get_queryset(self):
@@ -115,7 +115,7 @@ def unarchive_document(request, document):
     return redirect("documents:detail", pk=document.pk)
 
 class DashboardView(LoginRequiredMixin,TemplateView):
-    template_name="public/dashboard.html"
+    template_name="private/dashboard.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -170,7 +170,7 @@ class DocumentExportView(LoginRequiredMixin, View):
     
 from django.db.models import Sum, Min, Max, Avg
 class DocumentExportPreviewView(LoginRequiredMixin, ListView):
-    template_name = "public/documents/document_export_preview.html"
+    template_name = "private/documents/document_export_preview.html"
 
     def get_exportable_queryset(self, ids=None):
         client = self.request.user.client

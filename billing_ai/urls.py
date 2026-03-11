@@ -17,7 +17,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('documents/', include("documents.urls")),
-    path('dashboard/metrics/', MetricsDashboardView.as_view(), name='metrics'),
+    path('metrics/dashboard/', MetricsDashboardView.as_view(), name='metrics'),
+    path('finance/', include("finance.urls")),
 ]
 
 if settings.DEBUG:
@@ -27,30 +28,5 @@ urlpatterns += [
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
 
-from django.http import HttpResponse
-from django.core.management import call_command
-from io import StringIO
 
 
-def download_backup(request):
-    buffer = StringIO()
-
-    call_command(
-        "dumpdata",
-        "clients.Client",
-        "documents.Company",
-        "documents.Document",
-        indent=2,
-        stdout=buffer
-    )
-
-    response = HttpResponse(buffer.getvalue(), content_type="application/json")
-    response["Content-Disposition"] = 'attachment; filename="backup_docs.json"'
-
-    return response
-
-from django.urls import path
-
-urlpatterns += [
-    path("backup-docs/", download_backup),
-]

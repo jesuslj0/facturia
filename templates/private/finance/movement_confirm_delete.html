@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block title %}Borrar movimiento - FacturIA{% endblock %}
+{% block content %}
+    <h1 class="page-title"><i class="fa-solid fa-trash-can"></i> Borrar movimiento</h1>
+    <p>¿Estas seguro de querer borrar este movimiento?</p>
+    <div class="movement-details">
+        <ul>
+            <li><strong>Fecha:</strong> {{ object.date }}</li>
+            <li><strong>Concepto:</strong> {{ object.description }}</li>
+            <li><strong>Importe:</strong> {{ object.amount|spanish_currency }} €</li>
+        </ul>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Confirmar borrado</button>
+    </form>
+{% endblock %}
