@@ -1,25 +1,32 @@
-.page-title {
-  font-size: 1.2rem;
+.form-title {
+  font-size: 0.85rem;
   font-weight: 600;
-  margin-bottom: 18px;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.page-title i {
+.form-title i {
   color: var(--enfasis-color);
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  margin-top: 20px;
 }
 
 /* CONTENEDOR FORMULARIO */
 
 .form-container {
-  margin-top: 18px;
   background: var(--card-bg-color);
   border: 1px solid var(--border-color);
   border-radius: 14px;
   padding: 26px;
   max-width: 520px;
+  margin-bottom: 20px;
 }
 
 /* CAMPOS DEL FORM */
@@ -53,6 +60,7 @@
   font-size: 0.92rem;
   color: var(--body-fg-color);
   transition: border 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
 }
 
 /* FOCUS */
@@ -96,6 +104,14 @@
   text-decoration: none;
 }
 
+.btn-primary {
+  text-decoration: none;
+}
+
+.btn-sm {
+  font-size: 0.8rem;
+}
+
 .form-actions {
-    margin-top: 10px;
+  margin-top: 10px;
 }

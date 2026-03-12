@@ -23,6 +23,16 @@ class FinancialMovementCreateView(LoginRequiredMixin, CreateView):
     form_class = FinancialMovementForm
     success_url = "/finance/movements"
 
+    def get_initial(self):
+        initial = super().get_initial()
+        category_id = self.request.GET.get('category')
+        if category_id:
+            try:
+                initial['category'] = MovementCategory.objects.get(pk=category_id)
+            except MovementCategory.DoesNotExist:
+                pass
+        return initial
+
     def get_queryset(self):
         return FinancialMovement.objects.filter(
             client=self.request.user.client
@@ -90,6 +100,8 @@ class MovementCategoryListView(LoginRequiredMixin, ListView):
         categories = self.get_queryset()
         context["expense_categories"] = categories.filter(type="expense")
         context["income_categories"] = categories.filter(type="income")
+        context["investment_categories"] = categories.filter(type="investment")
+        context["loan_categories"] = categories.filter(type="loan")
         return context
 
 class MovementCategoryCreateView(LoginRequiredMixin, CreateView):
@@ -105,7 +117,8 @@ class MovementCategoryCreateView(LoginRequiredMixin, CreateView):
     
     def form_valid(self, form):
         form.instance.client = self.request.user.client
-        messages.success(self.request, f"Categoría {self.object.name} creada correctamente")
+        cat_name = form.instance.name
+        messages.success(self.request, f"Categoría {cat_name} creada correctamente")
         return super().form_valid(form)
 
 

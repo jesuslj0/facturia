@@ -9,4 +9,4 @@ class MovementCategoryAdmin(admin.ModelAdmin):
 
 @register(FinancialMovement)
 class FinancialMovementAdmin(admin.ModelAdmin):
-    list_display = ["client", "category", "description", "amount", "date", "created_at"]
+    list_display = ["client", "category", "movement_type", "description", "amount", "date", "created_at", "is_active"]

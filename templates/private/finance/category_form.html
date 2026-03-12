@@ -5,8 +5,16 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/finance/category_form.css' %}">
 {% endblock %}
 {% block content %}
-    <h1 class="page-title"><i class="fa-solid fa-list"></i> Nueva categoría</h1>
-    <a href="{% url 'finance:movements' %}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+    <a href="{% url 'finance:movements' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+    <div class="category-header">
+        {% if object %}
+            <i class="{{ object.icon }} category-icon" style="color: {{ object.color }}"></i>
+            <h3 class="category-name">{{ object.name }}</h3>
+        {% endif %}
+    </div>
+    <h1 class="form-title"><i class="fa-solid fa-list"></i> 
+        {% if object %}Editar categoría{% else %}Nueva categoría{% endif %}
+    </h1>
     <div class="form-container">
         <form method="post">
             {% csrf_token %}
@@ -19,11 +27,17 @@
             {% endfor %}
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Guardar</button>
-                <a href="{% url 'finance:categories' %}" class="btn btn-secondary">Cancelar</a>
                 {% if object %}
-                    <a href="{% url 'finance:delete_category' object.pk %}" class="btn btn-secondary">Borrar</a>
+                <a href="{% url 'finance:delete_category' object.pk %}" class="btn btn-secondary">Borrar</a>
                 {% endif %}
+                <a href="{% url 'finance:categories' %}" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
+    </div>
+    <div>
+        <a href="{% url 'finance:new_movement' %}?category={{ object.pk }}" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Crear movimiento 
+            {% if object %}de {{ object.name }}{% endif %}
+        </a>
     </div>
 {% endblock %}

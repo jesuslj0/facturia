@@ -26,7 +26,7 @@
 
 .dashboard-header h1 {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: var(--body-fg-color);
   line-height: 1.2;
@@ -39,7 +39,7 @@
 }
 
 .dashboard-header h1 .client-name{
-  text-transform: uppercase;
+  text-transform: capitalize;
   font-weight: 700;
 }
 

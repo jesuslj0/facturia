@@ -5,41 +5,105 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/finance/category_list.css' %}">
 {% endblock %}
 {% block content %}
-<h1 class="page-title"><i class="fa-solid fa-list"></i> Tus categorías</h1>
-
-<a href="{% url 'finance:new_category' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva categoría</a>
+<div class="page-header">
+    <h1 class="page-title"><i class="fa-solid fa-list"></i> Tus categorías</h1>
+    <a href="{% url 'finance:new_category' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Nueva categoría
+    </a>
+</div>
 
 <h2 class="section-title">Gastos</h2>
 <div class="category-grid">
-
-{% for category in expense_categories %}
-    <a href="{% url 'finance:edit_category' category.pk %}" class="category-card expense">
-        <div class="category-card-body">
-            <h3 class="category-name">{{ category.name }}</h3>
-            <p class="category-type">{{ category.get_type_display }}</p>
-        </div>
-    </a>
-{% empty %}
-    <p class="empty-state">No tienes categorías de gasto todavía.</p>
-{% endfor %}
-
+    {% for category in expense_categories %}
+        <a href="{% url 'finance:edit_category' category.pk %}" 
+        class="category-card income"
+        style="--color:{{ category.color }}"
+        >
+            <div class="category-card-body">
+                <i class="{{ category.icon }} category-icon" style="color: {{ category.color }}"></i>
+                <div>
+                    <h3 class="category-name">{{ category.name }}</h3>
+                    <span class="category-movements">{{ category.movements.count }} elementos</span>
+                </div>
+            </div>
+        </a>
+    {% empty %}
+        <p class="empty-state">No tienes categorías de gasto todavía.</p>
+    {% endfor %}
 </div>
-
 
 <h2 class="section-title">Ingresos</h2>
 <div class="category-grid">
-
-{% for category in income_categories %}
-    <a href="{% url 'finance:edit_category' category.pk %}" class="category-card income">
-        <div class="category-card-body">
-            <h3 class="category-name">{{ category.name }}</h3>
-            <p class="category-type">{{ category.get_type_display }}</p>
-        </div>
-    </a>
-{% empty %}
-    <p class="empty-state">No tienes categorías de ingreso todavía.</p>
-{% endfor %}
-
+    {% for category in income_categories %}
+        <a href="{% url 'finance:edit_category' category.pk %}" 
+        class="category-card income"
+        style="--color:{{ category.color }}"
+        >
+            <div class="category-card-body">
+                <i class="{{ category.icon }} category-icon" style="color: {{ category.color }}"></i>
+                <div>
+                    <h3 class="category-name">{{ category.name }}</h3>
+                    <span class="category-movements">{{ category.movements.count }} elementos</span>
+                </div>
+            </div>
+        </a>
+    {% empty %}
+        <p class="empty-state">No tienes categorías de ingreso todavía.</p>
+    {% endfor %}
 </div>
+
+<h2 class="section-title">Inversiones</h2>
+<div class="category-grid">
+    {% for category in investment_categories %}
+        <a href="{% url 'finance:edit_category' category.pk %}" 
+        class="category-card income"
+        style="--color:{{ category.color }}"
+        >
+            <div class="category-card-body">
+                <i class="{{ category.icon }} category-icon" style="color: {{ category.color }}"></i>
+                <div>
+                    <h3 class="category-name">{{ category.name }}</h3>
+                    <span class="category-movements">{{ category.movements.count }} elementos</span>
+                </div>
+            </div>
+        </a>
+    {% endfor %}
+</div>
+
+<h2 class="section-title">Pŕestamos</h2>
+<div class="category-grid">
+    {% for category in loan_categories %}
+        <a href="{% url 'finance:edit_category' category.pk %}" 
+        class="category-card income"
+        style="--color:{{ category.color }}"
+        >
+            <div class="category-card-body">
+                <i class="{{ category.icon }} category-icon" style="color: {{ category.color }}"></i>
+                <div>
+                    <h3 class="category-name">{{ category.name }}</h3>
+                    <span class="category-movements">{{ category.movements.count }} elementos</span>
+                </div>
+            </div>
+        </a>
+    {% endfor %}
+</div>
+
+{% endblock %}
+{% block scripts %}
+{{ block.super }}
+<script>
+    // Añadir border color y box-shadow suave con animación a las tarjetas según el category.name al hacer hover
+    const categoryCards = document.querySelectorAll('.category-card');
+    categoryCards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+
+            card.classList.add('hover');
+        });
+        card.addEventListener('mouseleave', () => {
+            card.classList.remove('hover');
+        });
+    });
+
+</script>
 
 {% endblock %}

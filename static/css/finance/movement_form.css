@@ -51,6 +51,7 @@
   font-size: 0.92rem;
   color: var(--body-fg-color);
   transition: border 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
 }
 
 /* TEXTAREA */
@@ -78,7 +79,7 @@
 }
 
 .form-textarea {
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,"Segoe UI", sans-serif;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,"Segoe UI", sans-serif;
 }
 
 /* PLACEHOLDER */
