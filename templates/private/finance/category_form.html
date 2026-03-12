@@ -5,7 +5,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/finance/category_form.css' %}">
 {% endblock %}
 {% block content %}
-    <a href="{% url 'finance:movements' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+    <a href="{% url 'finance:categories' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Volver</a>
     <div class="category-header">
         {% if object %}
             <i class="{{ object.icon }} category-icon" style="color: {{ object.color }}"></i>

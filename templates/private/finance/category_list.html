@@ -5,6 +5,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/finance/category_list.css' %}">
 {% endblock %}
 {% block content %}
+<a href="{% url 'finance:movements' %}" class="btn btn-primary btn-back"><i class="fa-solid fa-arrow-left"></i> Volver</a>
 <div class="page-header">
     <h1 class="page-title"><i class="fa-solid fa-list"></i> Tus categorías</h1>
     <a href="{% url 'finance:new_category' %}" class="btn btn-primary">
@@ -52,7 +53,7 @@
     {% endfor %}
 </div>
 
-<h2 class="section-title">Inversiones</h2>
+<h2 class="section-title">Inversión</h2>
 <div class="category-grid">
     {% for category in investment_categories %}
         <a href="{% url 'finance:edit_category' category.pk %}" 

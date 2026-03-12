@@ -112,6 +112,10 @@
   font-size: 0.8rem;
 }
 
+.btn i {
+  margin-right: 6px;
+}
+
 .form-actions {
   margin-top: 10px;
 }

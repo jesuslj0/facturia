@@ -88,7 +88,6 @@ class FinancialMovementDeleteView(LoginRequiredMixin, DeleteView):
 class MovementCategoryListView(LoginRequiredMixin, ListView):
     model = MovementCategory
     template_name = "private/finance/category_list.html"
-    context_object_name = "categories"
 
     def get_queryset(self):
         return MovementCategory.objects.filter(
@@ -108,7 +107,7 @@ class MovementCategoryCreateView(LoginRequiredMixin, CreateView):
     model = MovementCategory
     template_name = "private/finance/category_form.html"
     form_class = MovementCategoryForm
-    success_url = "/finance/movements"
+    success_url = reverse_lazy("finance:categories")
 
     def get_queryset(self):
         return MovementCategory.objects.filter(
