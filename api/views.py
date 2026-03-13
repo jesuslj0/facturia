@@ -105,9 +105,13 @@ def get_or_create_company(*, client, name: str, tax_id: str | None, is_provider:
 
 
 class DocumentIngestAPIView(APIView):
+    authentication_classes = []
     permission_classes = [HasApiKey]
 
     def post(self, request):
+        print("HEADERS:", request.headers)
+        print("META:", request.META.get("HTTP_X_API_KEY"))
+
         serializer = DocumentIngestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data

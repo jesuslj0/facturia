@@ -4,7 +4,7 @@ from .models import ApiKey
 
 class HasApiKey(BasePermission):
     def has_permission(self, request, view):
-        raw_key = request.headers.get("X-API-KEY")
+        raw_key = request.META.get("HTTP_X_API_KEY")
 
         if not raw_key:
             return False
