@@ -35,6 +35,17 @@ class FinancialMovement(models.Model):
         ("bizum", "Bizum"),
     ]
 
+    def payment_icon(self):
+        icons = {
+            "cash": "fa-money-bill-wave",
+            "transfer": "fa-building-columns",
+            "check": "fa-file-invoice-dollar",
+            "credit_card": "fa-credit-card",
+            "debit_card": "fa-credit-card",
+            "bizum": "fa-mobile-screen",
+        }
+        return icons.get(self.payment_method)
+
     @property
     def has_receipt(self):
         return bool(self.receipt)
@@ -52,7 +63,7 @@ class FinancialMovement(models.Model):
         super().save(*args, **kwargs)
 
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="movements")
-    movement_type = models.CharField(max_length=10, choices=[("expense", "Gasto"), ("income", "Ingreso")], default="expense", db_index=True)
+    movement_type = models.CharField(max_length=10, choices=[("expense", "Gasto"), ("income", "Ingreso")], db_index=True)
     created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name="created_movements")
     created_at = models.DateTimeField(auto_now_add=True)
     category = models.ForeignKey(MovementCategory, on_delete=models.PROTECT, related_name="movements")

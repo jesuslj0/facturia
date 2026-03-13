@@ -12,6 +12,13 @@
   overflow-x: auto;
 }
 
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
 /* TITULO */
 
 .page-title {
@@ -57,7 +64,6 @@
 .movements-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 16px;
 }
 
 .movements-table thead th {
@@ -71,7 +77,7 @@
 }
 
 .movements-table tbody td {
-  padding: 14px 10px;
+  padding: 12px 10px;
   border-bottom: 1px solid var(--border-color);
   font-size: 0.92rem;
 }
@@ -80,15 +86,73 @@
   transition: background 0.15s ease;
 }
 
-.movements-table tbody tr:hover {
-  background: rgba(255,255,255,0.03);
+.movement-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.category-icon {
+  margin-right: 10px;
+  opacity: 0.85;
 }
 
 /* IMPORTE */
 
 .amount {
   font-weight: 600;
-  color: #22c55e;
+}
+
+.amount.income {
+  color: var(--color-success);
+}
+
+.amount.expense {
+  color: var(--color-danger);
+}
+
+.badge-method{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+  padding:4px 8px;
+  border-radius:6px;
+  color:#d1d5db;
+  border:1px solid #3a3a3a;
+}
+
+.badge-method i{
+  font-size:11px;
+  opacity: .85;
+}
+
+.badge {
+  font-size: 12px;
+  padding: 4px 7px;
+  border-radius: 6px;
+}
+
+.badge-success {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.badge-warning {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.receipt-link {
+  color: #6b7280;
+}
+
+.receipt-link:hover {
+  color: #111;
+}
+
+.empty-row {
+  text-align: center;
+  padding: 40px;
+  color: #888;
 }
 
 /* ALINEACION */

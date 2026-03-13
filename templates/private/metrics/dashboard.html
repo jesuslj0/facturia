@@ -25,12 +25,12 @@
         Periodo seleccionado
       </h2>
       <small class="section-subtitle">
+        Documentos aprobados ·
         {% if period.is_current_month %}
           Este mes
         {% else %}
-          Rango seleccionado: {{ period.start_formatted }} - {{ period.end_formatted }}
+          Rango: {{ period.start_formatted }} - {{ period.end_formatted }}
         {% endif %}
-        
       </small>
     </div>
     <div class="date-filter">
@@ -60,24 +60,24 @@
     <div class="card">
       <h3>Ingresos <small>(sin IVA)</small></h3>
       <span class="kpi text-success">
-        {{ financials.income|spanish_currency }} €
+        {{ financials.documents.income|spanish_currency }} €
       </span>
     </div>
 
     <div class="card">
       <h3>Gastos <small>(sin IVA)</small></h3>
       <span class="kpi text-danger">
-        {{ financials.expense|spanish_currency }} €
+        {{ financials.documents.expense|spanish_currency }} €
       </span>
     </div>
 
     <div class="card">
       <h3>Beneficio</h3>
-      <span class="kpi {% if financials.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
-        {{ financials.profit|spanish_currency }} €
+      <span class="kpi {% if financials.documents.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+        {{ financials.documents.profit|spanish_currency }} €
       </span>
       <small class="kpi-info">
-        Margen {{ financials.profit_margin }} %
+        Margen {{ financials.documents.profit_margin }} %
       </small>
     </div>
 
@@ -106,24 +106,24 @@
     <div class="card">
       <h3>IVA repercutido</h3>
       <span class="kpi text-success">
-        {{ financials.vat.collected|spanish_currency }} €
+        {{ financials.documents.vat.collected|spanish_currency }} €
       </span>
     </div>
 
     <div class="card">
       <h3>IVA soportado</h3>
       <span class="kpi text-danger">
-        {{ financials.vat.paid|spanish_currency }} €
+        {{ financials.documents.vat.paid|spanish_currency }} €
       </span>
     </div>
 
     <div class="card">
       <h3>Saldo IVA</h3>
-      <span class="kpi {% if financials.vat.balance >= 0 %}text-danger{% else %}text-success{% endif %}">
-        {{ financials.vat.balance|spanish_currency }} €
+      <span class="kpi {% if financials.documents.vat.balance >= 0 %}text-danger{% else %}text-success{% endif %}">
+        {{ financials.documents.vat.balance|spanish_currency }} €
       </span>
       <small class="kpi-info">
-        {% if financials.vat.balance >= 0 %}
+        {% if financials.documents.vat.balance >= 0 %}
           A pagar
         {% else %}
           A compensar
@@ -131,6 +131,40 @@
       </small>
     </div>
 
+  </div>
+
+  <h2 class="section-title mt-4">
+    <i class="section-icon fa-solid fa-coins"></i> 
+    Finanzas
+  </h2>
+  <small class="section-subtitle">
+    Solo movimientos del periodo 
+  </small>
+
+  <div class="dashboard-cards">
+    <div class="card">
+      <h3>Ingresos</h3>
+      <span class="kpi text-success">
+        {{ financials.movements.income|spanish_currency }} €
+      </span>
+    </div>
+
+    <div class="card">
+      <h3>Gastos</h3>
+      <span class="kpi text-danger">
+        {{ financials.movements.expense|spanish_currency }} €
+      </span>
+    </div>
+
+    <div class="card">
+      <h3>Beneficio</h3>
+      <span class="kpi {% if financials.movements.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+        {{ financials.movements.profit|spanish_currency }} €
+      </span>
+      <small class="kpi-info">
+        Margen {{ financials.movements.profit_margin|floatformat:2 }} %
+      </small>
+    </div>
   </div>
     
   <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-file-invoice"></i> Facturación</h2>

@@ -9,34 +9,98 @@
 <h1 class="page-title"><i class="fa-solid fa-coins"></i> Tus movimientos</h1>
 <div class="movements-container">
     <div class="table-wrapper">
-        <a href="{% url 'finance:new_movement' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nuevo movimiento</a>
+        <div class="table-header">
+            <h3><i class="fa-solid fa-money-bill-wave"></i> Movimientos</h3>
+            <a href="{% url 'finance:new_movement' %}" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Nuevo movimiento
+            </a>
+        </div>
+
         <table class="movements-table">
             <thead>
                 <tr>
                     <th>Fecha</th>
-                    <th>Categoria</th>
-                    <th>Importe</th>
+                    <th>Categoría</th>
                     <th>Concepto</th>
+                    <th>Método</th>
+                    <th>Recibo</th>
+                    <th>Estado</th>
+                    <th class="text-end">Importe</th>
                     <th></th>
                 </tr>
             </thead>
+
             <tbody>
                 {% if movements|length == 0 %}
-                    <tr><td colspan="5">No hay movimientos.</td></tr>
+                    <tr>
+                        <td colspan="8" class="empty-row">
+                            <i class="fa-regular fa-folder-open"></i>
+                            No hay movimientos todavía
+                        </td>
+                    </tr>
                 {% else %}
+
                     {% for movement in movements %}
-                        <tr>
-                            <td>{{ movement.date|date:"d M Y" }}</td>
-                            <td>{{ movement.category.name }}</td>
-                            <td class="amount">{% if movement.amount %}{{ movement.amount|spanish_currency }}{% else %}—{% endif %} €</td>
-                            <td>{{ movement.description }}</td>
-                            <td class="text-end">
-                                <a href="{% url 'finance:edit_movement' movement.id %}" class="btn btn-sm btn-primary">
-                                    Ver
+                    <tr class="movement-row {{ movement.movement_type }}">
+
+                        <td class="date">
+                            {{ movement.date|date:"d/m/Y" }}
+                        </td>
+
+                        <td class="category">
+                            <i class="{{ movement.category.icon }} category-icon" style="color: {{ movement.category.color }}"></i>{{ movement.category.name }} 
+                        </td>
+
+                        <td class="description">
+                            {{ movement.description|default:"—" }}
+                        </td>
+
+                        <td class="payment-method">
+                            {% if movement.payment_method %}
+                                <span class="badge-method">
+                                    <i class="fa solid {{ movement.payment_icon }}"></i>
+                                    {{ movement.get_payment_method_display }}
+                                </span>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td class="receipt">
+                            {% if movement.has_receipt %}
+                                <a href="{{ movement.receipt.url }}" target="_blank" class="receipt-link">
+                                    <i class="fa-solid fa-paperclip"></i>
                                 </a>
-                            </td>
-                        </tr>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td class="status">
+                            {% if movement.is_reconciled %}
+                                <span class="badge badge-success">
+                                    <i class="fa-solid fa-check"></i>
+                                </span>
+                            {% else %}
+                                <span class="badge badge-warning">
+                                    <i class="fa-solid fa-clock"></i>
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="amount {% if movement.movement_type == 'income' %}income{% else %}expense{% endif %}">
+                            {{ movement.amount|spanish_currency }} €
+                        </td>
+
+                        <td class="text-end">
+                            <a href="{% url 'finance:edit_movement' movement.id %}" class="btn btn-sm btn-primary">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                        </td>
+
+                    </tr>
                     {% endfor %}
+
                 {% endif %}
             </tbody>
         </table>

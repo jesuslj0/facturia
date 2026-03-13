@@ -9,6 +9,7 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from documents.selectors.document_selector import DocumentSelector
 from babel.dates import format_date
+from finance.models import FinancialMovement
 
 User = get_user_model()
 
@@ -17,9 +18,14 @@ class MetricsService:
     @staticmethod
     def get_user_metrics(user, start=None, end=None):
         queryset = DocumentSelector.for_client(user.client)
+        movement_queryset = FinancialMovement.objects.filter(
+            client=user.client,
+            is_active=True,
+        )
 
         if start and end:
             queryset = queryset.filter(issue_date__range=[start, end])
+            movement_queryset = movement_queryset.filter(date__range=[start, end])
 
 
         # 1. Metricas de documentos
@@ -41,6 +47,18 @@ class MetricsService:
                 filter=Q(status="approved")
             ),
         )
+
+        # 2. Métricas de movimientos financieros
+        movement_totals = movement_queryset.aggregate(
+            total_movements=Count("id"),
+            income=Sum("amount", filter=Q(movement_type="income")),
+            expense=Sum("amount", filter=Q(movement_type="expense")),
+        )
+
+        movement_income = movement_totals["income"] or 0
+        movement_expense = movement_totals["expense"] or 0
+        movement_profit = movement_income - movement_expense
+        movement_profit_margin = (movement_profit / movement_income * 100) if movement_income else 0
 
         total_documents = totals["total_documents"] or 0
         approved = totals["approved_documents"] or 0
@@ -161,14 +179,22 @@ class MetricsService:
                 "confidence_average": round(confidence_avg, 2),
             },
             "financials": {
-                "income": float(base_income),
-                "expense": float(base_expense),
-                "profit": float(profit),
-                "profit_margin": round(float(profit_margin), 2),
-                "vat": {
-                    "collected": float(tax_income), # IVA cobrado
-                    "paid": float(tax_expense), # IVA pagado
-                    "balance": float(tax_income - tax_expense),
+                "documents": {
+                    "income": float(base_income),
+                    "expense": float(base_expense),
+                    "profit": float(profit),
+                    "profit_margin": float(profit_margin),
+                    "vat": {
+                        "collected": float(tax_income), # IVA cobrado
+                        "paid": float(tax_expense), # IVA pagado
+                        "balance": float(tax_income - tax_expense),
+                    }
+                },
+                "movements": {
+                    "income": float(movement_income),
+                    "expense": float(movement_expense),
+                    "profit": float(movement_profit),
+                    "profit_margin": float(movement_profit_margin),
                 }
             },
             "charts": {
