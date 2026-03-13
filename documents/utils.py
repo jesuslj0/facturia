@@ -98,19 +98,31 @@ def export_to_excel(qs):
 
 from decimal import Decimal, ROUND_HALF_UP
 
+def to_decimal(value):
+    if value is None:
+        return None
+    return Decimal(str(value))
+
+def round_decimal(value, places=2):
+    if value is None:
+        return None
+    quantizer = Decimal("1." + "0"*places)
+    return to_decimal(value).quantize(quantizer, rounding=ROUND_HALF_UP)
+
 def normalize_tax(base, tax_amount, tax_percentage, total):
+    base = round_decimal(base, 2)
+    tax_amount = round_decimal(tax_amount, 2)
+    tax_percentage = round_decimal(tax_percentage, 2)
+    total = round_decimal(total, 2)
+
     if base and tax_percentage and not tax_amount:
-        tax_amount = (base * tax_percentage / 100).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+        tax_amount = round_decimal(base * tax_percentage / 100, 2)
 
     if base and tax_amount and not tax_percentage:
-        tax_percentage = (tax_amount / base * 100).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+        tax_percentage = round_decimal(tax_amount / base * 100, 2)
 
     if base and tax_amount and not total:
-        total = base + tax_amount
+        total = round_decimal(base + tax_amount, 2)
 
     return {
         "base": base,
@@ -119,7 +131,6 @@ def normalize_tax(base, tax_amount, tax_percentage, total):
         "total": total,
     }
 
-from decimal import Decimal
 import re
 
 def parse_decimal(value):
