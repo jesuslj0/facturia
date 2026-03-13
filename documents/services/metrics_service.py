@@ -55,6 +55,7 @@ class MetricsService:
             expense=Sum("amount", filter=Q(movement_type="expense")),
         )
 
+        movement_count = movement_totals["total_movements"] or 0
         movement_income = movement_totals["income"] or 0
         movement_expense = movement_totals["expense"] or 0
         movement_profit = movement_income - movement_expense
@@ -125,6 +126,13 @@ class MetricsService:
         profit = base_income - base_expense
         profit_margin = (profit / base_income * 100) if base_income > 0 else 0    
 
+        # Margen combinado
+        combined_profit_margin = (
+            (profit + movement_profit) / (base_income + movement_income) * 100
+            if base_income + movement_income > 0
+            else 0
+        )
+
         # Datos mensuales (dentro del rango)
         trunc_func, date_format_str = get_granularity(start, end)
 
@@ -191,10 +199,17 @@ class MetricsService:
                     }
                 },
                 "movements": {
+                    "count": movement_count,
                     "income": float(movement_income),
                     "expense": float(movement_expense),
                     "profit": float(movement_profit),
                     "profit_margin": float(movement_profit_margin),
+                },
+                "combined": {
+                    "income": float(base_income + movement_income),
+                    "expense": float(base_expense + movement_expense),
+                    "profit": float(profit + movement_profit),
+                    "profit_margin": float(combined_profit_margin),
                 }
             },
             "charts": {
