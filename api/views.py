@@ -6,7 +6,7 @@ from .permissions import HasApiKey
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status as rst_status
-from documents.utils import normalize_tax
+from documents.utils import normalize_tax, round_decimal  
 from rest_framework.exceptions import ValidationError
 
 def get_review_level(confidence: dict, document_type):
@@ -173,7 +173,7 @@ class DocumentIngestAPIView(APIView):
             status=status,
             review_level=review_level,
             is_auto_approved=is_auto_approved,
-            confidence_global=confidence_global,
+            confidence_global=round_decimal(confidence_global, 4),
             flow=flow
         )
 
