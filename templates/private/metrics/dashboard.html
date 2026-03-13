@@ -25,7 +25,6 @@
         Periodo seleccionado
       </h2>
       <small class="section-subtitle">
-        Documentos aprobados ·
         {% if period.is_current_month %}
           Este mes
         {% else %}
@@ -55,35 +54,79 @@
     </div>
   </div>
 
+  <h2 class="section-title mt-4">
+    <i class="section-icon fa-solid fa-file-invoice"></i>
+    Resumen de facturación
+  </h2>
+  <small class="section-subtitle">
+    Facturas y Movimientos
+  </small>
+
+  <div class="dashboard-cards summary-cards">
+
+    <div class="card total-income">
+      <h3><i class="fa-solid fa-arrow-up"></i> Ingresos totales</h3>
+      <span class="kpi text-success">
+        {{ financials.combined.income|spanish_currency }} €
+      </span>
+    </div>
+
+    <div class="card total-expense">
+      <h3><i class="fa-solid fa-arrow-down"></i> Gastos totales</h3>
+      <span class="kpi text-danger">
+        {{ financials.combined.expense|spanish_currency }} €
+      </span>
+    </div>
+
+    <div class="card total-profit">
+      <h3><i class="fa-solid fa-dollar-sign"></i> Beneficio total</h3>
+      <span class="kpi {% if financials.combined.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+        {{ financials.combined.profit|spanish_currency }} €
+      </span>
+      <small class="kpi-info">
+        Margen {{ financials.combined.profit_margin|floatformat:2 }} %
+      </small>
+    </div>
+
+  </div>
+
+  <h2 class="section-title mt-4">
+    <i class="section-icon fa-solid fa-file-invoice"></i>
+    Resumen de documentos
+  </h2>
+  <small class="section-subtitle">
+    Facturas aprobadas · Abonos descontados
+  </small>
+
   <div class="dashboard-cards">
     
     <div class="card">
-      <h3>Ingresos <small>(sin IVA)</small></h3>
+      <h3><i class="fa-solid fa-arrow-up"></i> Ingresos <small>(sin IVA)</small></h3>
       <span class="kpi text-success">
         {{ financials.documents.income|spanish_currency }} €
       </span>
     </div>
 
     <div class="card">
-      <h3>Gastos <small>(sin IVA)</small></h3>
+      <h3><i class="fa-solid fa-arrow-down"></i> Gastos <small>(sin IVA)</small></h3>
       <span class="kpi text-danger">
         {{ financials.documents.expense|spanish_currency }} €
       </span>
     </div>
 
     <div class="card">
-      <h3>Beneficio</h3>
+      <h3><i class="fa-solid fa-dollar-sign"></i> Beneficio</h3>
       <span class="kpi {% if financials.documents.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
         {{ financials.documents.profit|spanish_currency }} €
       </span>
       <small class="kpi-info">
-        Margen {{ financials.documents.profit_margin }} %
+        Margen {{ financials.documents.profit_margin|floatformat:2 }} %
       </small>
     </div>
 
     <div class="card">
       <a href="{% url 'documents:list' %}?date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
-        <h3>Documentos</h3>
+        <h3><i class="fa-regular fa-file-lines"></i> Documentos</h3>
         <span class="kpi">
           {{ documents.total }}
         </span>
@@ -143,27 +186,36 @@
 
   <div class="dashboard-cards">
     <div class="card">
-      <h3>Ingresos</h3>
+      <h3><i class="fa-solid fa-arrow-up"></i> Ingresos</h3>
       <span class="kpi text-success">
         {{ financials.movements.income|spanish_currency }} €
       </span>
     </div>
 
     <div class="card">
-      <h3>Gastos</h3>
+      <h3><i class="fa-solid fa-arrow-down"></i> Gastos</h3>
       <span class="kpi text-danger">
         {{ financials.movements.expense|spanish_currency }} €
       </span>
     </div>
 
     <div class="card">
-      <h3>Beneficio</h3>
+      <h3><i class="fa-solid fa-dollar-sign"></i> Beneficio</h3>
       <span class="kpi {% if financials.movements.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
         {{ financials.movements.profit|spanish_currency }} €
       </span>
       <small class="kpi-info">
         Margen {{ financials.movements.profit_margin|floatformat:2 }} %
       </small>
+    </div>
+
+    <div class="card">
+      <a href="{% url 'finance:movements' %}?date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
+        <h3><i class="fa-solid fa-wallet"></i> Movimientos</h3>
+        <span class="kpi">
+          {{ financials.movements.count }}
+        </span>
+      </a>
     </div>
   </div>
     
