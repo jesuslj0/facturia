@@ -42,7 +42,7 @@ class FinancialMovementForm(ModelForm):
                 client=client
             ).order_by("type", "name")
             self.fields['category'].queryset = categories
-            self.fields['category'].label_from_instance = lambda obj: f"{obj.name} ({obj.get_type_display()}"
+            self.fields['category'].label_from_instance = lambda obj: f"{obj.name} ({obj.get_type_display()})"
         else:
             self.fields['category'].queryset = MovementCategory.objects.none()
 
