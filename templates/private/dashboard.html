@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Inicio - FacturIA{% endblock %}
 {% load static %}
+{% load custom_filters %}
 {% block styles %}<link rel="stylesheet" href="{% static "css/dashboard.css" %}" />{% endblock %}
 {% block content %}
 <div class="container dashboard home">
@@ -30,6 +31,89 @@
         <h3>Revisión obligatoria</h3>
         <span class="kpi text-danger">{% if required_review_count %}{{ required_review_count }}{% else %}0{% endif %}</span>
       </a>
+    </div>
+  </div>
+
+  <!-- Resumen financiero -->
+  <div class="card mt-4 finance-summary">
+    <div class="section-header">
+      <h2 style="margin: 0px">Resumen financiero mensual</h2>
+      <a href="{% url 'finance:movements' %}" class="link-inline">Ver movimientos</a>
+    </div>
+    <p class="text-muted period-label">Periodo: {{ finance_period_label }}</p>
+
+    <div class="dashboard-cards finance-cards">
+      <div class="card">
+        <a href="{% url 'finance:movements' %}">
+          <h3>Ingresos</h3>
+          <span class="kpi text-success">{{ finance_income_total|spanish_currency }} €</span>
+        </a>
+      </div>
+      <div class="card">
+        <a href="{% url 'finance:movements' %}">
+          <h3>Gastos</h3>
+          <span class="kpi text-danger">{{ finance_expense_total|spanish_currency }} €</span>
+        </a>
+      </div>
+      <div class="card">
+        <a href="{% url 'finance:movements' %}">
+          <h3>Balance</h3>
+          <span class="kpi {% if finance_balance < 0 %}text-danger{% else %}text-success{% endif %}">
+            {{ finance_balance|spanish_currency }} €
+          </span>
+        </a>
+      </div>
+      <div class="card">
+        <a href="{% url 'finance:movements' %}">
+          <h3>Sin conciliar</h3>
+          <span class="kpi text-warning">{{ unreconciled_movements_count }}</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Categoría</th>
+            <th>Concepto</th>
+            <th>Importe</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if recent_movements %}
+            {% for movement in recent_movements %}
+              <tr>
+                <td>{{ movement.date|date:"d/m/Y" }}</td>
+                <td>{{ movement.category.name }}</td>
+                <td>{{ movement.description|default:"—" }}</td>
+                <td class="amount {% if movement.movement_type == 'income' %}text-success{% else %}text-danger{% endif %}">
+                  {{ movement.amount|spanish_currency }} €
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="4">No hay movimientos financieros este mes.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="top-categories">
+      <h3>Top gastos por categoría</h3>
+      {% if top_expense_categories %}
+        <ul>
+          {% for item in top_expense_categories %}
+            <li>
+              <span>{{ item.category__name }}</span>
+              <strong>{{ item.total|spanish_currency }} €</strong>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">Sin gastos registrados en el periodo actual.</p>
+      {% endif %}
     </div>
   </div>
 
