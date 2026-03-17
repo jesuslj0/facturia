@@ -127,6 +127,22 @@ select.editable-field {
   max-width: 110px;
 }
 
+#review-form .form-errors > ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  color: var(--color-danger);
+}
+
+.form-errors > ul > li > .field-label {
+  font-weight: 600;
+  margin-right: 0.3rem;
+}
+
+.form-errors > ul > li > .error-message {
+  font-size: 0.8rem;
+}
+
 /* Acciones */
 .data-form .actions {
   display: flex;

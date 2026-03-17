@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load custom_filters %}
-{% block title %}Ver documento - FacturIA{% endblock %}
+{% block title %}Rectificar documento - FacturIA{% endblock %}
 {% block styles %}
 {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'css/documents/document_detail.css' %}">
@@ -52,232 +52,90 @@
     <div class="data-form">
         <form method="post" id="review-form">
             {% csrf_token %}
-            <div class="data">
-                <!-- Datos para el modal -->
-                <div id="doc-data" hidden
-                    data-name="{{ document.original_name }}"
-                    data-type="{{ document.get_document_type_display }}"
-                    data-total-amount="{{ document.total_amount }}"
-                >
+            {% if form.errors %}
+                <div class="form-errors">
+                    <ul>
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li>
+                                    <span class="field-label">{{ field.label }}:</span> 
+                                    <span class="error-message">{{ error }}</span>
+                                </li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
                 </div>
-    
-                <!-- Proveedor -->
-                <div class="field">
-                    <span class="label">Proveedor</span>
-                    <span class="value">{{ document.company.name }}</span>
-                    {% comment %} {% if document.is_editable %}
-                        <input type="text" name="company_name" value="{{ document.company.name }}" class="editable-field">
-                    {% else %}
-                        <span class="value">{{ document.company.name }}</span>
-                    {% endif %} {% endcomment %}
-                </div>
-    
-                <!-- CIF/NIF -->
-                {% comment %} <div class="field">
-                    <span class="label">CIF/NIF</span>
-                    {% if document.is_editable %}
-                        <input type="text" name="company_tax_id" value="{{ document.company.tax_id }}" class="editable-field">
-                    {% else %}
-                        <span class="value">{{ document.company.tax_id }}</span>
-                    {% endif %}
-                </div> {% endcomment %}
+            {% endif %}
 
-                <!-- Compra o Venta-->
-                <div class="field">
-                    <span class="label">Flujo</span>
-                    {% if document.is_editable %}
-                        <select name="flow" class="editable-field">
-                            <option value="in" {% if document.flow == "in" %}selected{% endif %}>Venta</option>
-                            <option value="out" {% if document.flow == "out" %}selected{% endif %}>Compra</option>
-                        </select>
-                    {% else %}
-                        <span class="value">{{ document.get_flow_display }}</span>
-                    {% endif %}
-                </div>
+            <!-- Proveedor -->
+            <div class="field">
+                <span class="label">Proveedor</span>
+                <select name="company" class="editable-field">
+                    {% for company in companies %}
+                        <option value="{{ company.id }}" {% if company.id == form.company.value %}selected{% endif %}>
+                            {{ company.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
 
-                <!-- Numero factura-->
-                <div class="field">
-                    <span class="label">N° Documento</span>
-                    {% if document.is_editable %}
-                        <input type="text" name="document_number" value="{{ document.document_number }}" class="editable-field">
-                    {% else %}
-                        <span class="value">{{ document.document_number }}</span>
-                    {% endif %}
-                </div>
-    
-                <!-- Fecha -->
-                <div class="field">
-                    <span class="label">Fecha</span>
-                    {% if document.is_editable %}
-                        <input type="date" name="issue_date" value="{{ document.issue_date|date:'Y-m-d' }}" class="editable-field">
-                    {% else %}
-                        <span class="value">{{ document.issue_date|date:"d/m/Y" }}</span>
-                    {% endif %}
-                </div>
-    
-                <!-- Base -->
-                <div class="field">
-                    <span class="label">Base</span>
-                    {% if document.is_editable %}
-                        <input type="text" inputmode="decimal" step="0.01" name="base_amount" value="{{ document.base_amount }}" class="editable-field">
-                    {% else %}
-                        <span class="value">{% if document.base_amount %}{{ document.base_amount }} €{% else %}-{% endif %}</span>
-                    {% endif %}
-                </div>
-    
-                <!-- Cálculo IVA -->
-                <div class="field">
-                    {% if document.is_editable %}
-                    <span class="label">% / Total IVA</span>
-                    <div class="iva-fields">
-                        <input type="text" inputmode="decimal" step="0.01" name="tax_percentage" value="{{ document.tax_percentage|floatformat:2 }}" class="editable-field decimal-field" placeholder="IVA %"><span>%</span>
-                        <input type="text" inputmode="decimal" step="0.01" name="tax_amount" value="{{ document.tax_amount|floatformat:2 }}" class="editable-field decimal-field" placeholder="IVA €"><span>€</span>
-                    </div>
-                    {% else %}
-                    <span class="label">Cálculo IVA</span>
-                    <span class="value">
-                            {% if document.base_amount and document.tax_percentage and document.tax_amount %}
-                                {{ document.base_amount|floatformat:2 }} × {{ document.tax_percentage|floatformat:2 }}% = {{ document.tax_amount|floatformat:2 }} €
-                            {% else %}
-                                -
-                            {% endif %}
-                        </span>
-                    {% endif %}
-                </div>
-    
-                <!-- Total -->
-                <div class="field">
-                    <span class="label">Total</span>
-                    {% if document.is_editable %}
-                        <input type="text" inputmode="decimal" step="0.01" name="total_amount" value="{{ document.total_amount }}" class="editable-field decimal-field">
-                    {% else %}
-                        <span class="value">{% if document.total_amount %}{{ document.total_amount }} €{% else %}-{% endif %}</span>
-                    {% endif %}
+            <!-- Flujo -->
+            <div class="field">
+                <span class="label">Flujo</span>
+                <select name="flow" class="editable-field">
+                    <option value="in" {% if form.flow.value == "in" %}selected{% endif %}>Venta</option>
+                    <option value="out" {% if form.flow.value == "out" %}selected{% endif %}>Compra</option>
+                </select>
+            </div>
+
+            <!-- Número de documento -->
+            <div class="field">
+                <span class="label">N° Documento</span>
+                <input type="text" name="document_number" value="{{ form.document_number.value }}" class="editable-field">
+            </div>
+
+            <!-- Fecha -->
+            <div class="field">
+                <span class="label">Fecha</span>
+                <input type="date" name="issue_date" value="{{ form.issue_date.value|date:"Y-m-d" }}" class="editable-field">
+            </div>
+
+            <!-- Base -->
+            <div class="field">
+                <span class="label">Base</span>
+                <input type="text" inputmode="decimal" step="0.01" name="base_amount" value="{{ form.base_amount.value }}" class="editable-field decimal-field">
+            </div>
+
+            <!-- IVA -->
+            <div class="field">
+                <span class="label">% / Total IVA</span>
+                <div class="iva-fields">
+                    <input type="text" inputmode="decimal" step="0.01" name="tax_percentage" value="{{ form.tax_percentage.value }}" class="editable-field decimal-field"> %
+                    <input type="text" inputmode="decimal" step="0.01" name="tax_amount" value="{{ form.tax_amount.value }}" class="editable-field decimal-field"> €
                 </div>
             </div>
-            <!-- Acciones -->
+
+            <!-- Total -->
+            <div class="field">
+                <span class="label">Total</span>
+                <input type="text" inputmode="decimal" step="0.01" name="total_amount" value="{{ form.total_amount.value }}" class="editable-field decimal-field">
+            </div>
+
+            <!-- Motivo de rectificación -->
+            <div class="field">
+                <span class="label">Motivo de rectificación</span>
+                <input type="text" 
+                    name="rectification_reason" 
+                    class="editable-field"
+                    placeholder="Anote su motivo">
+                </input>
+            </div>
+
+            <!-- Botón -->
             <div class="actions">
-                <!-- Guardar, Aprobar o Rechazar (pendientes) -->
-                {% if document.status == "pending" %}
-                    <button type="submit" name="action" value="save" class="btn btn-save">
-                        Guardar <i class="fa-solid fa-floppy-disk"></i>
-                    </button>
-                    <button type="button" class="btn btn-approve confirm-action" data-action="approve">
-                        Aprobar <i class="fa-solid fa-check"></i>
-                    </button>
-                    <button type="button" class="btn btn-reject confirm-action" data-action="reject">
-                        Rechazar <i class="fa-solid fa-xmark"></i>
-                    </button>
-                {% endif %}
-
-                <!-- Archivar documentos aprobados o rechazados -->
-                {% if not document.is_archived and document.status == "approved" or document.status == "rejected" %}
-                    <button type="button" class="btn btn-archive confirm-action" data-action="archive">
-                        Archivar <i class="fa-solid fa-archive"></i>
-                    </button>
-                {% endif %}
-
-                <!-- Rectificar documentos que no estén archivados y no hayan sido rectificados -->
-                {% if not document.is_archived %}
-                    <button type="button" class="btn btn-rectify confirm-action" data-action="rectify">
-                        Rectificar <i class="fa-solid fa-pen-to-square"></i>
-                    </button>
-                {% endif %}
-
-                <!-- Desarchivar -->
-                {% if document.is_archived %}
-                    <button type="button" class="btn btn-unarchive confirm-action" data-action="unarchive">
-                        Desarchivar <i class="fa-solid fa-archive"></i>
-                    </button>
-                {% endif %}
-            </div>
-            
-            <div class="document-info">
-                <span class="label">Estado del documento</span>
-                <span class="content">{{ document.status_message }}</span>
-                {% if document.rejection_reason %}
-                    <span class="content reason">
-                        Motivo: {{ document.rejection_reason }}
-                    </span>
-                {% endif %}
-                <div class="separator"></div>
-            </div>
-            <div class="separator"></div>
-
-            <!-- Nivel de revisión -->
-            <div class="review-level">
-                <span class="label">Nivel de revisión</span>
-
-                <span class="badge review
-                    {% if document.review_level == 'required' %}required
-                    {% elif document.review_level == 'recommended' %}recommended
-                    {% elif document.review_level == 'auto' %}auto
-                    {% elif document.review_level == 'manual' %}manual
-                    {% endif %}">
-
-                    {% if document.review_level == "required" %}
-                        Revisión obligatoria
-                    {% elif document.review_level == "recommended" %}
-                        Revisión recomendada
-                    {% elif document.review_level == "auto" %}
-                        Aprobado automáticamente
-                    {% elif document.review_level == "manual" %}
-                        Revisado manualmente
-                    {% endif %}
-
-                </span>
-
-                <small class="description">
-                    {% if document.review_level == "required" %}
-                        El sistema detectó inconsistencias que requieren validación humana.
-                    {% elif document.review_level == "recommended" %}
-                        Se recomienda validar los datos antes de continuar.
-                    {% elif document.review_level == "auto" %}
-                        El documento cumple los criterios de validación automática.
-                    {% elif document.review_level == "manual" %}
-                        Los datos fueron corregidos o verificados manualmente.
-                    {% endif %}
-                </small>
-            </div>
-
-
-            <!-- Confianza OCR -->
-            <div class="ocr-confidence">
-                <span class="label">Confianza OCR</span>
-
-                <div class="confidence-score">
-                    <span class="confidence-value 
-                        {% if document.ocr_confidence == 'high' %}high
-                        {% elif document.ocr_confidence == 'medium' %}medium
-                        {% elif document.ocr_confidence == 'low' %}low
-                        {% endif %}">
-                        
-                        {{ document.confidence_global|to_percent|floatformat:0 }}%
-                    </span>
-                </div>
-
-                <div class="confidence-bar">
-                    <div class="confidence-fill 
-                        {% if document.ocr_confidence == 'high' %}high
-                        {% elif document.ocr_confidence == 'medium' %}medium
-                        {% elif document.ocr_confidence == 'low' %}low
-                        {% endif %}"
-                        style="width: {{ document.confidence_global|to_percent }}%;">
-                    </div>
-                </div>
-
-                <small class="description">
-                    {% if document.ocr_confidence == "high" %}
-                        Datos extraídos con alta consistencia.
-                    {% elif document.ocr_confidence == "medium" %}
-                        Posibles pequeñas inconsistencias detectadas.
-                    {% elif document.ocr_confidence == "low" %}
-                        Se recomienda revisión manual.
-                    {% endif %}
-                </small>
-            </div>
-
-        </div>
+                <button type="submit" class="btn btn-save">
+                    Guardar rectificación <i class="fa-solid fa-floppy-disk"></i>
+                </button>
             </div>
         </form>
 
@@ -323,7 +181,7 @@
 {% endblock %}
 {% block scripts %}
 {{ block.super }}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
     <script>
     document.addEventListener("DOMContentLoaded", function () {
         
@@ -661,101 +519,53 @@
 
     });
     </script>
+    
     <script>
     document.addEventListener("DOMContentLoaded", function () {
         const modal = document.getElementById("confirm-modal");
         const confirmBtn = document.getElementById("modal-confirm");
-        const form = document.getElementById("modal-form");
         const modalReason = document.getElementById("modal-reason");
-        
-        let currentAction = null;
-        
+
         document.querySelectorAll(".confirm-action").forEach(btn => {
-        btn.addEventListener("click", function () {
-            currentAction = this.dataset.action;
+            btn.addEventListener("click", function () {
+                const docData = document.getElementById("doc-data");
+                const docName = docData.dataset.name;
+                const docType = docData.dataset.type;
+                const docTotalAmount = docData.dataset.totalAmount;
 
-            const docData = document.getElementById("doc-data");
-            const docName = docData.dataset.name;
-            const docType = docData.dataset.type;
-            const docTotalAmount = docData.dataset.totalAmount;
-
-
-            const docDataContent = `
-                <div class="modal-doc-summary">
-                    <strong>${docName}</strong>
-                    <div class="meta">
-                    ${docType} · ${docTotalAmount} €
+                // Contenido del documento en el modal
+                const docDataContent = `
+                    <div class="modal-doc-summary">
+                        <strong>${docName}</strong>
+                        <div class="meta">
+                            ${docType} · ${docTotalAmount} €
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
 
+                // Elementos del modal
+                const icon = document.querySelector(".modal-icon i");
+                const docInfo = document.getElementById("modal-doc-info");
+                const title = document.getElementById("modal-title");
+                const text = document.getElementById("modal-text");
 
-            const icon = document.querySelector(".modal-icon i");
-            const docInfo = document.getElementById("modal-doc-info");
-            const title = document.getElementById("modal-title");
-            const text = document.getElementById("modal-text");
-            const confirmBtn = document.getElementById("modal-confirm");
+                // Poner contenido
+                docInfo.innerHTML = docDataContent;
+                icon.className = "fa-solid fa-pen-to-square";
+                icon.style.color = "var(--color-warning)";
+                title.textContent = "Confirmar rectificación";
+                text.textContent = "El documento será rectificado y podrá ser editado de nuevo.";
 
-            // 👉 Siempre mostrar info del documento
-            docInfo.innerHTML = docDataContent;
+                confirmBtn.textContent = "Rectificar";
+                confirmBtn.style.color = "var(--color-warning)";
 
-            switch (currentAction) {
-                case "approve":
-                    icon.className = "fa-solid fa-circle-check";
-                    icon.style.color = "var(--color-success)";
-                    title.textContent = "Confirmar aprobación";
-                    text.textContent = "El documento se marcará como aprobado.";
-                    confirmBtn.textContent = "Aprobar";
-                    confirmBtn.style.color = "var(--color-success)";
-                    modalReason.classList.add("hidden");
-                    modalReason.value = "";
-                    break;
-                case "reject":
-                    icon.className = "fa-solid fa-circle-xmark";
-                    icon.style.color = "var(--color-danger)";
-                    title.textContent = "Confirmar rechazo";
-                    text.textContent = "El documento será rechazado definitivamente.";
-                    confirmBtn.textContent = "Rechazar";
-                    confirmBtn.style.color = "var(--color-danger)";   
-                
-                    modalReason.classList.remove("hidden");
-                    modalReason.placeholder = "Motivo del rechazo (opcional)";
-                    break;
-                case "archive":
-                    icon.className = "fa-solid fa-box-archive";
-                    icon.style.color = "var(--color-warning)";
-                    title.textContent = "Confirmar archivo";
-                    text.textContent = "El documento será archivado.";
-                    confirmBtn.textContent = "Archivar";
-                    confirmBtn.style.color = "var(--color-warning)";
-                    modalReason.classList.add("hidden");
-                    modalReason.value = "";
-                    break;
-                case "unarchive":
-                    icon.className = "fa-solid fa-box-archive";
-                    icon.style.color = "var(--color-warning)";
-                    title.textContent = "Confirmar desarchivo";
-                    text.textContent = "El documento volverá a estar activo.";
-                    confirmBtn.textContent = "Desarchivar";
-                    confirmBtn.style.color = "var(--color-warning)";
-                    modalReason.classList.add("hidden");
-                    modalReason.value = "";
-                    break;
-                case "rectify":
-                    icon.className = "fa-solid fa-pen-to-square";
-                    icon.style.color = "var(--color-warning)";
-                    title.textContent = "Crear rectificación";
-                    text.textContent = "Podrá crear una nueva versión de este documento. Los datos originales se conservarán.";
-                    confirmBtn.textContent = "Rectificar";
-                    confirmBtn.style.color = "var(--color-warning)";
-                    modalReason.classList.add("hidden");
-                    modalReason.value = "";
-                    break;
-                default:
-                    break;
-            }
+                // No necesitamos motivo en este modal
+                modalReason.classList.add("hidden");
+                modalReason.value = "";
 
-            modal.classList.add("open");
+                // Abrir modal
+                modal.classList.add("open");
+            });
         });
     });
 
@@ -783,7 +593,16 @@
         modal.classList.remove("open");
         }
     });
-
+    </script>
+    <script>
+    document.getElementById("review-form").addEventListener("submit", function(e){
+        const decimals = ["base_amount", "tax_amount", "tax_percentage", "total_amount"];
+        decimals.forEach(name => {
+            const field = this.querySelector(`[name="${name}"]`);
+            if(field && field.value){
+                field.value = field.value.replace(",", "."); // cambia coma por punto
+            }
+        });
     });
     </script>
 

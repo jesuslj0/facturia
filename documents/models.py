@@ -137,30 +137,42 @@ class Document(models.Model):
 
     @property 
     def is_editable(self):
-        return self.status in ["pending"]
-
-    client = models.ForeignKey(
-        Client, on_delete=models.CASCADE, 
-        related_name="documents"
-    )
-    company = models.ForeignKey(
-        Company, on_delete=models.SET_NULL, 
-        related_name="documents",
-        null=True
-    )
+        return self.status == "pending" and not self.is_archived
+    
+    @property
+    def has_rectifications(self):
+        return self.parent_document 
 
     @property
     def status_message(self):
+        if self.has_rectifications:
+            if self.rectified_by and self.rectified_at:
+                return f"Rectificación hecha por {self.rectified_by} el {self.rectified_at.strftime('%d-%m-%Y')}"
+            return "Documento rectificado"
+        
         if self.is_archived:
-            return f"Documento archivado  por {self.archived_by} el {self.archived_at.strftime('%d-%m-%Y')}"
+            if self.archived_by and self.archived_at:
+                return f"Documento archivado por {self.archived_by} el {self.archived_at.strftime('%d-%m-%Y')}"
+            return "Documento archivado"
+        
         if self.status == "rejected":
-            return f"El documento ha sido rechazado por {self.rejected_by} el {self.rejected_at.strftime('%d-%m-%Y')}"
+            if self.rejected_by and self.rejected_at:
+                return f"Documento rechazado por {self.rejected_by} el {self.rejected_at.strftime('%d-%m-%Y')}"
+            return "Documento rechazado"
+        
         if self.approved_at:
-            return f"Documento aprobado por {self.approved_by} el {self.approved_at.strftime('%d-%m-%Y')}"
+            if self.approved_by:
+                return f"Documento aprobado por {self.approved_by} el {self.approved_at.strftime('%d-%m-%Y')}"
+            return "Documento aprobado"
+        
         if self.is_auto_approved:
             return "Documento aprobado automáticamente"
+        
         if self.edited_at:
-            return f"Documento editado y guardado manualmente por {self.reviewed_by} el {self.edited_at.strftime('%d-%m-%Y')}"
+            if self.reviewed_by:
+                return f"Documento editado y guardado manualmente por {self.reviewed_by} el {self.edited_at.strftime('%d-%m-%Y')}"
+            return "Documento editado manualmente"
+        
         return "Documento pendiente de revisión"
     
     @property
@@ -174,6 +186,115 @@ class Document(models.Model):
             return self.OCR_CONFIDENCE_CHOICES[1][0]
         return self.OCR_CONFIDENCE_CHOICES[0][0]
             
+
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, 
+        related_name="documents"
+    )
+    company = models.ForeignKey(
+        Company, on_delete=models.SET_NULL, 
+        related_name="documents",
+        null=True
+    )
+    external_id = models.CharField(max_length=255, null=True, blank=True)
+    original_name = models.CharField(max_length=255)
+    file = models.FileField(upload_to="documents/")
+    document_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    document_number = models.CharField(max_length=255, null=True, blank=True)
+    confidence = models.JSONField(default=dict)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    review_level = models.CharField(max_length=20, choices=REVIEW_LEVEL_CHOICES, default='required')
+    issue_date = models.DateField(null=True, blank=True)
+    base_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tax_percentage = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_source = models.CharField(max_length=10, choices=TOTAL_SOURCE_CHOICES, default="unknown")
+    created_at = models.DateTimeField(auto_now_add=True)
+    edited_at = models.DateTimeField(blank=True, null=True)
+    approved_at = models.DateTimeField(blank=True, null=True)
+    approved_by = models.ForeignKey(
+        User,
+        related_name="approved_documents",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT
+    )
+    flow = models.CharField(max_length=20, choices=FLOW_CHOICES, default="in", db_index=True)
+    flow_source = models.CharField(max_length=20, choices=FLOW_SOURCE_CHOICES, default="auto")
+    is_auto_approved = models.BooleanField(default=False, db_index=True)
+    review_started_at = models.DateTimeField(blank=True, null=True, db_index=True)
+    reviewed_by = models.ForeignKey(
+        User,
+        related_name="reviewed_documents",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT
+    )
+    rejection_reason = models.CharField(max_length=255, null=True, blank=True)
+    rejected_at = models.DateTimeField(blank=True, null=True)
+    rejected_by = models.ForeignKey(
+        User, 
+        related_name="rejected_documents",
+        null=True, 
+        blank=True,
+        on_delete=models.PROTECT
+
+    )
+    is_archived = models.BooleanField(default=False, db_index=True)
+    archived_at = models.DateTimeField(blank=True, null=True)
+    archived_by = models.ForeignKey(
+        User, 
+        related_name="archived_documents",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT
+    )
+    confidence_global = models.DecimalField(max_digits=5, decimal_places=4, null=True, blank=True, db_index=True)
+
+    rectified_at = models.DateTimeField(blank=True, null=True)
+    rectified_by = models.ForeignKey(
+        User,
+        related_name="rectified_documents",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT
+    )
+    rectification_reason = models.CharField(max_length=255, null=True, blank=True)
+
+    parent_document = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="child_documents"
+    )
+    version = models.PositiveIntegerField(default=1, db_index=True)
+    is_current = models.BooleanField(default=True, db_index=True)
+
+    orc_snapshot = models.JSONField(default=dict, blank=True)
+    amount_snapshot = models.JSONField(default=dict, blank=True)
+
+    objects = ActiveDocumentManager() #Queryset Documentos activos
+    all_objects = models.Manager() #Queryset Documentos archivados y activos
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["client", "status"]),
+            models.Index(fields=["client", "review_level"]),
+            models.Index(fields=["client", "created_at"]),
+            models.Index(fields=["client", "company"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["client", "external_id"],
+                name="unique_external_id_per_client",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.document_number or self.original_name} ({self.flow})"
     
     def save(self, *args, **kwargs):
         if self.company and self.company.client != self.client:
@@ -249,82 +370,44 @@ class Document(models.Model):
             ]
         )
 
+    def create_rectification(self, user, reason=None, **kwargs):
+        self.is_current = False
+        self.save(update_fields=["is_current"])
 
-    external_id = models.CharField(max_length=255, null=True, blank=True)
-    original_name = models.CharField(max_length=255)
-    file = models.FileField(upload_to="documents/")
-    document_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    document_number = models.CharField(max_length=255, null=True, blank=True)
-    confidence = models.JSONField(default=dict)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
-    review_level = models.CharField(max_length=20, choices=REVIEW_LEVEL_CHOICES, default='required')
-    issue_date = models.DateField(null=True, blank=True)
-    base_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    tax_percentage = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    total_source = models.CharField(max_length=10, choices=TOTAL_SOURCE_CHOICES, default="unknown")
-    created_at = models.DateTimeField(auto_now_add=True)
-    edited_at = models.DateTimeField(blank=True, null=True)
-    approved_at = models.DateTimeField(blank=True, null=True)
-    approved_by = models.ForeignKey(
-        User,
-        related_name="approved_documents",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT
-    )
-    flow = models.CharField(max_length=20, choices=FLOW_CHOICES, default="in", db_index=True)
-    flow_source = models.CharField(max_length=20, choices=FLOW_SOURCE_CHOICES, default="auto")
-    is_auto_approved = models.BooleanField(default=False, db_index=True)
-    review_started_at = models.DateTimeField(blank=True, null=True, db_index=True)
-    reviewed_by = models.ForeignKey(
-        User,
-        related_name="reviewed_documents",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT
-    )
-    rejection_reason = models.CharField(max_length=255, null=True, blank=True)
-    rejected_at = models.DateTimeField(blank=True, null=True)
-    rejected_by = models.ForeignKey(
-        User, 
-        related_name="rejected_documents",
-        null=True, 
-        blank=True,
-        on_delete=models.PROTECT
+        amount_snapshot = {
+            "company_id": self.company_id,
+            "base_amount": float(self.base_amount or 0),
+            "tax_amount": float(self.tax_amount or 0),
+            "total_amount": float(self.total_amount or 0),
+        }
+        new_external_id = f"{self.external_id}-rect-{self.version + 1}" if self.external_id else None
 
-    )
-    is_archived = models.BooleanField(default=False, db_index=True)
-    archived_at = models.DateTimeField(blank=True, null=True)
-    archived_by = models.ForeignKey(
-        User, 
-        related_name="archived_documents",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT
-    )
-    confidence_global = models.DecimalField(max_digits=5, decimal_places=4, null=True, blank=True, db_index=True)
-
-    objects = ActiveDocumentManager() #Queryset Documentos activos
-    all_objects = models.Manager() #Queryset Documentos archivados y activos
-
-    class Meta:
-        ordering = ["-created_at"]
-        indexes = [
-            models.Index(fields=["client", "status"]),
-            models.Index(fields=["client", "review_level"]),
-            models.Index(fields=["client", "created_at"]),
-            models.Index(fields=["client", "company"]),
-        ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["client", "external_id"],
-                name="unique_external_id_per_client",
-            ),
-        ]
-
-    def __str__(self):
-        return f"{self.document_number or self.original_name} ({self.flow})"
-    
-
+        new_doc = Document.objects.create(
+            client=self.client,
+            company=kwargs.get("company", self.company),
+            external_id=new_external_id,
+            original_name=self.original_name,
+            file=self.file,
+            document_type=self.document_type,
+            document_number=kwargs.get("document_number", self.document_number),
+            confidence=self.confidence,
+            confidence_global=self.confidence_global,
+            status="pending",
+            review_level=self.review_level,
+            issue_date=kwargs.get("issue_date", self.issue_date),
+            base_amount=kwargs.get("base_amount", self.base_amount),
+            tax_amount=kwargs.get("tax_amount", self.tax_amount),
+            tax_percentage=kwargs.get("tax_percentage", self.tax_percentage),
+            total_amount=kwargs.get("total_amount", self.total_amount),
+            total_source=self.total_source,
+            flow=kwargs.get("flow", self.flow),
+            flow_source=self.flow_source,
+            is_auto_approved=False,
+            parent_document=self,
+            version=self.version + 1,
+            rectified_by=user,
+            rectified_at=timezone.now(),
+            rectification_reason=reason,
+            amount_snapshot=amount_snapshot,
+        )
+        return new_doc

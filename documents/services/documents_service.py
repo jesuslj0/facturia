@@ -32,6 +32,11 @@ class DocumentService:
 
     @staticmethod
     @transaction.atomic
+    def rectify(document: Document, user=None, reason=None, form_data=None):
+        return document.create_rectification(user=user, reason=reason, **(form_data or {}))
+
+    @staticmethod
+    @transaction.atomic
     def update_from_form(document: Document, user, data: dict):
 
         try:

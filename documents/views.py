@@ -1,7 +1,7 @@
 from django.shortcuts import redirect, get_object_or_404
 from .models import Document
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import View, ListView, DetailView, TemplateView
+from django.views.generic import View, ListView, DetailView, TemplateView, FormView
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q
@@ -11,6 +11,7 @@ from .services import DocumentService
 from django.contrib.auth import get_user_model
 from .filters.document_filters import get_filtered_documents
 from documents.models import Company
+from .forms import DocumentRectificationForm
 
 User = get_user_model()
 
@@ -74,6 +75,9 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         # --- Desarchivar ---
         if action == "unarchive" and self.object.is_archived:
             return unarchive_document(request, self.object)
+        
+        if action == "rectify" and self.object.status in ["approved", "rejected"] and not self.object.is_archived:
+            return redirect("documents:rectify", pk=self.object.pk)
 
         # Si no hay acción reconocida, redirigir
         messages.warning(request, "Acción no reconocida.")
@@ -273,4 +277,46 @@ class MetricsDashboardView(LoginRequiredMixin, TemplateView):
         }
         context["historical_metrics"] = historical_metrics
 
+        return context
+
+class DocumentRectifyView(LoginRequiredMixin, FormView):
+    template_name = "private/documents/document_rectify.html"
+    form_class = DocumentRectificationForm
+
+    def dispatch(self, request, *args, **kwargs):
+        self.document = get_object_or_404(Document, pk=kwargs.get("pk"))
+
+        if self.document.status not in ["approved", "rejected"] or self.document.is_archived:
+            messages.warning(request, "Este documento no puede ser rectificado.")
+            return redirect("documents:detail", pk=self.document.pk)
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_initial(self):
+        initial = {
+            "base_amount": self.document.base_amount,
+            "tax_amount": self.document.tax_amount,
+            "tax_percentage": self.document.tax_percentage,
+            "total_amount": self.document.total_amount,
+            "issue_date": self.document.issue_date,
+            "document_number": self.document.document_number,
+            "company": self.document.company,
+        }
+        return initial
+
+    def form_valid(self, form):
+        new_doc = DocumentService.rectify(
+            document=self.document,
+            user=self.request.user,
+            reason=form.cleaned_data["rectification_reason"],
+            form_data=form.cleaned_data
+        )
+        messages.success(self.request, f"Documento rectificado (v{new_doc.version})")
+        return redirect("documents:detail", pk=new_doc.pk)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["companies"] = Company.objects.filter(client=self.request.user.client).order_by("name")
+        context["document"] = self.document
+        context["is_rectification"] = True
         return context
