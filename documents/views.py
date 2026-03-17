@@ -4,6 +4,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import View, ListView, DetailView, TemplateView, FormView
 from django.contrib import messages
 from django.utils import timezone
+from django.db.models.functions import Coalesce
+from django.db.models import DecimalField
+from finance.models import FinancialMovement
 from django.db.models import Q
 from datetime import datetime
 from .selectors.document_selector import DocumentSelector
@@ -128,17 +131,50 @@ class DashboardView(LoginRequiredMixin,TemplateView):
         client = client if client else None
 
         qs = DocumentSelector.pending(client)
+        today = timezone.now().date()
+        month_start = today.replace(day=1)
+
+        movement_qs = FinancialMovement.objects.filter(
+            client=client,
+            date__gte=month_start,
+            date__lte=today,
+            is_active=True,
+        )
 
         pending_count = qs.count()
         required_count = qs.filter(review_level="required").count() or 0
         recommended_count = qs.filter(review_level="recommended").count() or 0
+
+        income_total = movement_qs.filter(movement_type="income").aggregate(
+            total=Coalesce(Sum("amount"), 0, output_field=DecimalField(max_digits=12, decimal_places=2))
+        )["total"]
+        expense_total = movement_qs.filter(movement_type="expense").aggregate(
+            total=Coalesce(Sum("amount"), 0, output_field=DecimalField(max_digits=12, decimal_places=2))
+        )["total"]
+        balance = income_total - expense_total
+
+        unreconciled_count = movement_qs.filter(is_reconciled=False).count()
+
+        top_expense_categories = (
+            movement_qs.filter(movement_type="expense")
+            .values("category__name")
+            .annotate(total=Sum("amount"))
+            .order_by("-total")[:3]
+        )
 
         context = {
             "pending_documents": qs.order_by("-created_at")[:10],
             "pending_count": pending_count,
             "required_review_count": required_count,
             "recommended_review_count": recommended_count,
-            "client": client
+            "client": client,
+            "finance_period_label": f"{month_start.strftime('%d/%m/%Y')} - {today.strftime('%d/%m/%Y')}",
+            "finance_income_total": income_total,
+            "finance_expense_total": expense_total,
+            "finance_balance": balance,
+            "unreconciled_movements_count": unreconciled_count,
+            "recent_movements": movement_qs.select_related("category")[:5],
+            "top_expense_categories": top_expense_categories,
         }
 
         return context
@@ -278,6 +314,7 @@ class MetricsDashboardView(LoginRequiredMixin, TemplateView):
         context["historical_metrics"] = historical_metrics
 
         return context
+
 
 class DocumentRectifyView(LoginRequiredMixin, FormView):
     template_name = "private/documents/document_rectify.html"

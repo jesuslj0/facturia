@@ -130,6 +130,11 @@
   color: var(--color-warning);
 }
 
+.kpi.text-success,
+.text-success {
+  color: var(--color-success);
+}
+
 /* =========================
    Card genérica (tabla)
 ========================= */
@@ -139,6 +144,56 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 1.25rem 0.75rem;
+}
+
+.dashboard .finance-summary {
+  margin-bottom: 1.5rem;
+}
+
+.dashboard .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1.5rem 0.75rem;
+}
+
+.dashboard .link-inline {
+  font-size: 0.85rem;
+  color: var(--enfasis-color);
+  text-decoration: none;
+}
+
+.dashboard .period-label {
+  padding-top: 0;
+}
+
+.dashboard .finance-cards {
+  margin: 0 0 1rem;
+  padding: 0 0.75rem;
+}
+
+.dashboard .top-categories {
+  padding: 1rem 1.5rem 0;
+}
+
+.dashboard .top-categories h3 {
+  font-size: 0.85rem;
+  margin: 0 0 0.75rem;
+  color: #cbd5f5;
+}
+
+.dashboard .top-categories ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard .top-categories li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .dashboard .card.mt-4 h2 {
