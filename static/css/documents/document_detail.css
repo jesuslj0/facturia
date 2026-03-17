@@ -304,6 +304,9 @@ select.editable-field {
   align-items: center;
   margin-bottom: 0.4rem;
   padding: 0.75rem;
+  z-index: 100;
+  position: relative;
+  background: rgba(0, 0, 0, 0.85);
 }
 
 .pdf-header h3 {
