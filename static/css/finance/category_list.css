@@ -92,16 +92,6 @@
   color: var(--muted-color);
 }
 
-/* BOTON NUEVA CATEGORIA */
-
-.btn-primary {
-  text-decoration: none;
-}
-
-.btn i {
-  margin-right: 6px;
-}
-
 .empty-state {
   grid-column: 1 / -1;
   color: var(--muted-color);

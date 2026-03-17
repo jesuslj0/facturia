@@ -68,10 +68,6 @@
   transition: color 0.15s ease, border 0.15s ease;
 }
 
-.btn-secondary {
-  text-decoration: none;
-}
-
 /* OPCIONAL: BLOQUE DE ALERTA (mas visual para acciones destructivas) */
 
 .delete-warning {

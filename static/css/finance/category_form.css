@@ -97,25 +97,6 @@
   color: #f87171;
 }
 
-/* BOTON BORRAR */
-
-.btn-secondary {
-  margin-top: 12px;
-  text-decoration: none;
-}
-
-.btn-primary {
-  text-decoration: none;
-}
-
-.btn-sm {
-  font-size: 0.8rem;
-}
-
-.btn i {
-  margin-right: 6px;
-}
-
 .form-actions {
   margin-top: 10px;
 }

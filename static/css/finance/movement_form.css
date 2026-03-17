@@ -94,23 +94,6 @@
   color: #64748b;
 }
 
-/* BOTONES SECUNDARIOS */
-
-.btn-secondary {
-  background: var(--card-bg-color);
-  border: 1px solid var(--border-color);
-  color: var(--body-fg-color);
-  text-decoration: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-  font-size: 0.8rem;
-}
-
-.btn-secondary:hover {
-  background: rgba(255,255,255,0.05);
-}
-
 .btn-back i {
   margin-right: 6px;
 }

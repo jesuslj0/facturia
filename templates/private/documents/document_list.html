@@ -79,7 +79,7 @@
     </select>
     
     <div class="buttons">
-      <button type="submit" class="btn-primary">Filtrar <i class="fa-solid fa-filter"></i></button>
+      <button type="submit" class="btn btn-primary">Filtrar <i class="fa-solid fa-filter"></i></button>
       {% if request.GET %}
       <a href="?" class="btn-clear">Limpiar</a>
       {% endif %}
@@ -89,8 +89,8 @@
 </div>
 <div class="export-bar">
   <div class="export-buttons">
-    <a href="{% url 'documents:export' %}?{{ request.GET.urlencode }}" class="btn-primary">Exportar CSV <i class="fa-solid fa-download"></i></a>
-    <a href="{% url 'documents:export_preview' %}?{{ request.GET.urlencode }}" class="btn-secondary">Vista previa <i class="fa-regular fa-eye"></i></a>
+    <a href="{% url 'documents:export' %}?{{ request.GET.urlencode }}" class="btn btn-primary">Exportar CSV <i class="fa-solid fa-download"></i></a>
+    <a href="{% url 'documents:export_preview' %}?{{ request.GET.urlencode }}" class="btn btn-secondary">Vista previa <i class="fa-regular fa-eye"></i></a>
   </div>
 
     {% if is_paginated %}

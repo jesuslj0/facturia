@@ -34,31 +34,6 @@
   color: var(--enfasis-color);
 }
 
-/* BOTONES */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 9px 16px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-decoration: none;
-  transition: 0.15s ease;
-  cursor: pointer;
-}
-
-
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 0.8rem;
-}
-
-.btn i {
-  margin-right: 6px;
-}
-
 /* TABLA */
 
 .movements-table {
