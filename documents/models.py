@@ -382,6 +382,8 @@ class Document(models.Model):
         }
         new_external_id = f"{self.external_id}-rect-{self.version + 1}" if self.external_id else None
 
+        parent = self.parent_document or self
+
         new_doc = Document.objects.create(
             client=self.client,
             company=kwargs.get("company", self.company),
@@ -403,7 +405,7 @@ class Document(models.Model):
             flow=kwargs.get("flow", self.flow),
             flow_source=self.flow_source,
             is_auto_approved=False,
-            parent_document=self,
+            parent_document=parent,
             version=self.version + 1,
             rectified_by=user,
             rectified_at=timezone.now(),

@@ -12,7 +12,23 @@
     <!-- Panel PDF -->
     <div class="pdf">
         <div class="pdf-header">
-            <h3>{{ document.original_name }}</h3>
+            <h3>{{ document.original_name }} 
+                {% if document.parent_document %}
+                    <span class="badge rectified">Rectificación v{{ document.version }}
+                        {% if document.is_current %}
+                            (actual)
+                        {% endif %}
+                    </span>
+                {% else %}
+                    <span class="badge original">Documento original
+                        {% if document.is_current %}
+                            (actual)
+                        {% else %}
+                            (v{{ document.version }})
+                        {% endif %}
+                    </span>
+                {% endif %}
+            </h3>
             
             <div class="pdf-badges">
                 <span class="badge type">{{ document.get_document_type_display }}</span>
@@ -65,11 +81,6 @@
                 <div class="field">
                     <span class="label">Proveedor</span>
                     <span class="value">{{ document.company.name }}</span>
-                    {% comment %} {% if document.is_editable %}
-                        <input type="text" name="company_name" value="{{ document.company.name }}" class="editable-field">
-                    {% else %}
-                        <span class="value">{{ document.company.name }}</span>
-                    {% endif %} {% endcomment %}
                 </div>
     
                 <!-- CIF/NIF -->
@@ -178,7 +189,7 @@
                 {% endif %}
 
                 <!-- Rectificar documentos que no estén archivados y no hayan sido rectificados -->
-                {% if not document.is_archived %}
+                {% if not document.is_archived and not document.status == "pending" %}
                     <button type="button" class="btn btn-rectify confirm-action" data-action="rectify">
                         Rectificar <i class="fa-solid fa-pen-to-square"></i>
                     </button>
@@ -306,11 +317,11 @@
                         ></textarea>
                     </div>
 
-                    <button type="button" id="modal-confirm" class="btn btn-primary">
+                    <button type="button" id="modal-confirm" class="btn">
                         Confirmar
                     </button>
 
-                    <button type="button" class="btn btn-light" data-close>
+                    <button type="button" class="btn" data-close>
                         Cancelar
                     </button>
 
@@ -319,6 +330,37 @@
         </form>
         
     </div>
+
+    <div class="document-versions">
+        <h3><i class="fa-solid fa-history"></i> Historial</h3>
+        {% if not has_versions %}
+            <p>No hay rectificaciones de este documento</p>
+        {% endif %}
+        {% if has_previous_versions %}
+            <h4>Versiones anteriores</h4>
+            <ul>
+                {% for v in previous_versions %}
+                <li>
+                    <a href="{% url 'documents:detail' v.pk %}">v{{ v.version }} - {{ v.created_at|date:"d/m/Y" }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if has_next_versions %}
+        <h4>Versiones posteriores</h4>
+        <ul>
+            {% for v in next_versions %}
+            <li>
+                <a href="{% url 'documents:detail' v.pk %}">v{{ v.version }} - {{ v.created_at|date:"d/m/Y" }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+    </div>
+
+
 </div>
 {% endblock %}
 {% block scripts %}

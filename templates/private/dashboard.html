@@ -37,7 +37,7 @@
   <!-- Resumen financiero -->
   <div class="card mt-4 finance-summary">
     <div class="section-header">
-      <h2 style="margin: 0px">Resumen financiero mensual</h2>
+      <h2><i class="fa-solid fa-chart-line"></i> Resumen financiero mensual</h2>
       <a href="{% url 'finance:movements' %}" class="link-inline">Ver movimientos</a>
     </div>
     <p class="text-muted period-label">Periodo: {{ finance_period_label }}</p>
@@ -106,7 +106,7 @@
         <ul>
           {% for item in top_expense_categories %}
             <li>
-              <span>{{ item.category__name }}</span>
+              <span>{{ item.category__name }} <i class="{{ item.category__icon }} category-icon"></i></span>
               <strong>{{ item.total|spanish_currency }} €</strong>
             </li>
           {% endfor %}

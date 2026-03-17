@@ -541,3 +541,89 @@ select.editable-field {
 #modal-reason.hidden {
   display: none;
 }
+
+.document-lineage {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.document-lineage a {
+  text-decoration: none;
+  color: var(--enfasis-color);
+}
+
+.document-lineage span {
+  color: var(--muted-color);
+}
+
+.document-lineage a:hover {
+  text-decoration: underline;
+}
+
+.document-versions {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.document-versions h3 {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--body-fg-color);
+}
+
+.document-versions h4  {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted-color);
+}
+
+.document-versions ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.document-versions li {
+  background: var(--card-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+}
+
+.document-versions li a {
+  text-decoration: none;
+  color: var(--body-fg-color);
+}
+
+.document-versions li:hover {
+  background: var(--enfasis-color);
+  border-color: var(--enfasis-color);
+}
+
+.badge.rectifying {
+  background: #1e293b;
+  color: #cbd5f5;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.badge.rectifying .spinner {
+  animation: rotate 1s linear infinite;
+}

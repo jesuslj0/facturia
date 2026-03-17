@@ -85,6 +85,31 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         # Si no hay acción reconocida, redirigir
         messages.warning(request, "Acción no reconocida.")
         return redirect("documents:detail", pk=self.object.pk)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        document = self.object
+
+        root = document.parent_document or document
+
+        all_versions = (
+            Document.objects
+            .filter(Q(parent_document=root) | Q(pk=root.pk))
+            .exclude(pk=document.pk)
+            .order_by("version")  # ascendente para facilidad
+        )
+
+        previous_versions = all_versions.filter(version__lt=document.version).order_by("-version")
+        next_versions = all_versions.filter(version__gt=document.version).order_by("version")
+
+        context["previous_versions"] = previous_versions
+        context["next_versions"] = next_versions
+        context["has_previous_versions"] = previous_versions.exists()
+        context["has_next_versions"] = next_versions.exists()
+        context["root_document"] = root
+        context["has_versions"] = previous_versions.exists() or next_versions.exists()
+
+        return context
 
 
 def approve_document(request, document):
@@ -157,7 +182,7 @@ class DashboardView(LoginRequiredMixin,TemplateView):
 
         top_expense_categories = (
             movement_qs.filter(movement_type="expense")
-            .values("category__name")
+            .values("category__name", "category__icon")
             .annotate(total=Sum("amount"))
             .order_by("-total")[:3]
         )
@@ -335,7 +360,7 @@ class DocumentRectifyView(LoginRequiredMixin, FormView):
             "tax_amount": self.document.tax_amount,
             "tax_percentage": self.document.tax_percentage,
             "total_amount": self.document.total_amount,
-            "issue_date": self.document.issue_date,
+            "issue_date": self.document.issue_date.strftime("%Y-%m-%d"),
             "document_number": self.document.document_number,
             "company": self.document.company,
         }

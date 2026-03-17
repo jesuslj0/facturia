@@ -12,7 +12,7 @@
     <!-- Panel PDF -->
     <div class="pdf">
         <div class="pdf-header">
-            <h3>{{ document.original_name }}</h3>
+            <h3>{{ document.original_name }} <span class="badge rectifying"><i class="fa-solid fa-spinner spinner"></i> Creando rectificación</span></h3>
             
             <div class="pdf-badges">
                 <span class="badge type">{{ document.get_document_type_display }}</span>
@@ -97,7 +97,7 @@
             <!-- Fecha -->
             <div class="field">
                 <span class="label">Fecha</span>
-                <input type="date" name="issue_date" value="{{ form.issue_date.value|date:"Y-m-d" }}" class="editable-field">
+                <input type="date" name="issue_date" value="{{ form.issue_date.value }}" class="editable-field">
             </div>
 
             <!-- Base -->

@@ -158,6 +158,12 @@
   padding: 0 1.5rem 0.75rem;
 }
 
+.dashboard .section-header > h2 {
+  padding: 0px;
+  margin: 0px;
+  font-size: 1.2rem;
+}
+
 .dashboard .link-inline {
   font-size: 0.85rem;
   color: var(--enfasis-color);
@@ -171,6 +177,7 @@
 .dashboard .finance-cards {
   margin: 0 0 1rem;
   padding: 0 0.75rem;
+  margin-bottom: 1.5rem;
 }
 
 .dashboard .top-categories {
@@ -180,7 +187,7 @@
 .dashboard .top-categories h3 {
   font-size: 0.85rem;
   margin: 0 0 0.75rem;
-  color: #cbd5f5;
+  color: var(--body-fg-color);
 }
 
 .dashboard .top-categories ul {
@@ -194,6 +201,12 @@
   justify-content: space-between;
   padding: 0.45rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .top-categories .category-icon {
+  margin-right: 0.5rem;
+  font-size: 0.85rem;
+  filter: brightness(0.8);
 }
 
 .dashboard .card.mt-4 h2 {
