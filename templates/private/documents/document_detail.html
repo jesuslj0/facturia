@@ -211,6 +211,11 @@
                         Motivo: {{ document.rejection_reason }}
                     </span>
                 {% endif %}
+                {% if document.rectification_reason %}
+                    <span class="content reason">
+                        Motivo: {{ document.rectification_reason }}
+                    </span>
+                {% endif %}
                 <div class="separator"></div>
             </div>
             <div class="separator"></div>

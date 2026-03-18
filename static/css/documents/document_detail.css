@@ -595,22 +595,30 @@ select.editable-field {
 }
 
 .document-versions li {
+  margin-bottom: 0.5rem;
+}
+
+.document-versions li a {
   background: var(--card-bg-color);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
   cursor: pointer;
   transition: background 0.2s, border 0.2s;
-}
-
-.document-versions li a {
   text-decoration: none;
   color: var(--body-fg-color);
 }
 
-.document-versions li:hover {
+.document-versions li a:hover {
   background: var(--enfasis-color);
   border-color: var(--enfasis-color);
+}
+
+.document-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
 }
 
 .badge.rectifying {
@@ -629,4 +637,9 @@ select.editable-field {
 
 .badge.rectifying .spinner {
   animation: rotate 1s linear infinite;
+}
+
+.reason {
+  color: var(--muted-color);
+  font-size: 0.85rem;
 }
