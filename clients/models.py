@@ -43,7 +43,7 @@ class CustomUser(AbstractUser):
         return self.has_role("owner")
     def clean(self):
         super().clean()
-        if self.client is None:
+        if not self.client_id:
             raise ValidationError("User must have a client assigned.")
         
 from django.db.models.signals import m2m_changed

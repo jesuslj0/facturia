@@ -7,28 +7,30 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing_ai.settings.base")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 
 import django
+import pytest
 from django.conf import settings
+from django.core.management import call_command
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client as DjangoClient
+from django.test import RequestFactory
+from django.test.utils import override_settings
+from django.utils import timezone
+from rest_framework.test import APIClient
+from django.apps import apps
+from django.db.models.signals import post_save
 
 django.setup()
 settings.ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
 
-import pytest
-from django.contrib.auth import get_user_model
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.utils import timezone
-from django.core.management import call_command
-from django.test import Client as DjangoClient
-from django.test import RequestFactory
-from rest_framework.test import APIClient
 
-from api.models import ApiKey
-from clients.models import Client, Role
-from documents.models import Company, Document
-from finance.models import FinancialMovement, MovementCategory
-from finance.signals import create_default_categories
-from django.db.models.signals import post_save
+@pytest.fixture(autouse=True)
+def _test_settings():
+    with override_settings(ALLOWED_HOSTS=["testserver", "localhost", "127.0.0.1"]):
+        client_model = apps.get_model("clients", "Client")
+        from finance.signals import create_default_categories
 
-post_save.disconnect(create_default_categories, sender=Client)
+        post_save.disconnect(create_default_categories, sender=client_model)
+        yield
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -53,26 +55,32 @@ def rf():
 
 @pytest.fixture
 def client_entity(db):
+    Client = apps.get_model("clients", "Client")
     return Client.objects.create(name="ACME", tax_id="ES12345678")
 
 
 @pytest.fixture
 def other_client_entity(db):
+    Client = apps.get_model("clients", "Client")
     return Client.objects.create(name="Other Corp", tax_id="ES87654321")
 
 
 @pytest.fixture
 def role_owner(db, client_entity):
+    Role = apps.get_model("clients", "Role")
     return Role.objects.create(client=client_entity, name="Owner", code="owner")
 
 
 @pytest.fixture
 def role_reviewer(db, client_entity):
+    Role = apps.get_model("clients", "Role")
     return Role.objects.create(client=client_entity, name="Reviewer", code="reviewer")
 
 
 @pytest.fixture
 def user(db, client_entity, role_owner):
+    from django.contrib.auth import get_user_model
+
     User = get_user_model()
     instance = User.objects.create_user(
         username=f"owner-{uuid4().hex[:8]}",
@@ -86,6 +94,8 @@ def user(db, client_entity, role_owner):
 
 @pytest.fixture
 def other_user(db, other_client_entity):
+    from django.contrib.auth import get_user_model
+
     User = get_user_model()
     return User.objects.create_user(
         username=f"other-{uuid4().hex[:8]}",
@@ -97,6 +107,7 @@ def other_user(db, other_client_entity):
 
 @pytest.fixture
 def company(db, client_entity):
+    Company = apps.get_model("documents", "Company")
     company, _ = Company.objects.get_or_create(
         client=client_entity,
         tax_id="B12345678",
@@ -107,6 +118,7 @@ def company(db, client_entity):
 
 @pytest.fixture
 def customer_company(db, client_entity):
+    Company = apps.get_model("documents", "Company")
     company, _ = Company.objects.get_or_create(
         client=client_entity,
         tax_id="C87654321",
@@ -122,6 +134,7 @@ def document_file():
 
 @pytest.fixture
 def document(db, client_entity, company, document_file):
+    Document = apps.get_model("documents", "Document")
     return Document.all_objects.create(
         client=client_entity,
         company=company,
@@ -157,6 +170,7 @@ def approved_document(db, document, user):
 
 @pytest.fixture
 def movement_category(db, client_entity):
+    MovementCategory = apps.get_model("finance", "MovementCategory")
     return MovementCategory.objects.create(
         client=client_entity,
         name="Ventas",
@@ -168,6 +182,7 @@ def movement_category(db, client_entity):
 
 @pytest.fixture
 def expense_category(db, client_entity):
+    MovementCategory = apps.get_model("finance", "MovementCategory")
     return MovementCategory.objects.create(
         client=client_entity,
         name="Compras Custom",
@@ -179,6 +194,7 @@ def expense_category(db, client_entity):
 
 @pytest.fixture
 def financial_movement(db, client_entity, user, movement_category):
+    FinancialMovement = apps.get_model("finance", "FinancialMovement")
     return FinancialMovement.objects.create(
         client=client_entity,
         movement_type="income",
@@ -196,6 +212,7 @@ def financial_movement(db, client_entity, user, movement_category):
 
 @pytest.fixture
 def api_key(db, client_entity):
+    ApiKey = apps.get_model("api", "ApiKey")
     from django.contrib.auth.hashers import make_password
 
     secret = "test-secret-value"

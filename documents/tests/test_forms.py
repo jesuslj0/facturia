@@ -7,7 +7,7 @@ from documents.forms import DocumentRectificationForm
 
 @pytest.mark.django_db
 class TestDocumentRectificationForm:
-    def test_form_currently_rejects_decimal_strings_with_comma(self, company):
+    def test_form_accepts_decimal_strings_with_comma(self, company):
         form = DocumentRectificationForm(
             data={
                 "base_amount": "100,50",
@@ -21,8 +21,11 @@ class TestDocumentRectificationForm:
             }
         )
 
-        assert form.is_valid() is False
-        assert "base_amount" in form.errors
+        assert form.is_valid() is True
+        assert form.cleaned_data["base_amount"] == Decimal("100.50")
+        assert form.cleaned_data["tax_amount"] == Decimal("21.11")
+        assert form.cleaned_data["tax_percentage"] == Decimal("21.00")
+        assert form.cleaned_data["total_amount"] == Decimal("121.61")
 
     def test_form_accepts_standard_decimal_strings(self, company):
         form = DocumentRectificationForm(
