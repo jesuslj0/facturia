@@ -1,5 +1,8 @@
 from rest_framework import serializers
+
 from documents.models import Document
+from documents.selectors.document_selector import DocumentSelector
+
 
 class DocumentIngestSerializer(serializers.ModelSerializer):
     # Archivo y datos básicos
@@ -25,7 +28,9 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
     confidence = serializers.JSONField(default=dict)
 
     def validate_external_id(self, value):
-        if Document.objects.filter(external_id=value).exists():
+        client = self.context.get("client")
+        qs = DocumentSelector.with_versions(client) if client else Document.all_objects.all()
+        if qs.filter(external_id=value).exists():
             raise serializers.ValidationError("Document already ingested")
         return value
 
@@ -49,15 +54,10 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
         ]
 
 
-
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = "__all__"
-
-
-from rest_framework import serializers
-from documents.models import Document
 
 
 class DocumentListSerializer(serializers.ModelSerializer):

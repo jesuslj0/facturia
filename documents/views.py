@@ -7,7 +7,6 @@ from django.utils import timezone
 from django.db.models.functions import Coalesce
 from django.db.models import DecimalField
 from finance.models import FinancialMovement
-from django.db.models import Q
 from datetime import datetime
 from .selectors.document_selector import DocumentSelector
 from .services import DocumentService
@@ -93,10 +92,8 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         root = document.parent_document or document
 
         all_versions = (
-            Document.objects
-            .filter(Q(parent_document=root) | Q(pk=root.pk))
+            DocumentSelector.version_history(document)
             .exclude(pk=document.pk)
-            .order_by("version")  # ascendente para facilidad
         )
 
         previous_versions = all_versions.filter(version__lt=document.version).order_by("-version")
@@ -346,7 +343,10 @@ class DocumentRectifyView(LoginRequiredMixin, FormView):
     form_class = DocumentRectificationForm
 
     def dispatch(self, request, *args, **kwargs):
-        self.document = get_object_or_404(Document, pk=kwargs.get("pk"))
+        self.document = get_object_or_404(
+            DocumentSelector.detail_queryset(request.user.client),
+            pk=kwargs.get("pk")
+        )
 
         if self.document.status not in ["approved", "rejected"] or self.document.is_archived:
             messages.warning(request, "Este documento no puede ser rectificado.")
