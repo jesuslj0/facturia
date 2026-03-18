@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import pytest
 
+from documents.models import Document
 from documents.services.documents_service import DocumentService
 from documents.services.metrics_service import MetricsService
 
@@ -76,7 +77,9 @@ class TestMetricsService:
         self,
         user,
         approved_document,
-        document,
+        client_entity,
+        company,
+        document_file,
         financial_movement,
         expense_category,
     ):
@@ -88,9 +91,26 @@ class TestMetricsService:
         approved_document.is_auto_approved = True
         approved_document.save()
 
-        document.status = "rejected"
-        document.review_level = "required"
-        document.save()
+        Document.all_objects.create(
+            client=client_entity,
+            company=company,
+            external_id="doc-002",
+            original_name="invoice-2.pdf",
+            file=document_file,
+            document_type="invoice",
+            document_number="INV-002",
+            confidence={"confianza_extraccion": 0.70},
+            status="rejected",
+            review_level="required",
+            issue_date=date(2026, 3, 12),
+            base_amount=Decimal("80.00"),
+            tax_amount=Decimal("16.80"),
+            tax_percentage=Decimal("21.00"),
+            total_amount=Decimal("96.80"),
+            confidence_global=Decimal("0.7000"),
+            flow="out",
+            is_current=True,
+        )
 
         from finance.models import FinancialMovement
         FinancialMovement.objects.create(

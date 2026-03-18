@@ -2,7 +2,6 @@ from datetime import timedelta
 
 import pytest
 from django.contrib.auth.hashers import make_password
-from django.db import IntegrityError
 from django.utils import timezone
 
 from api.models import ApiKey
@@ -43,6 +42,27 @@ class TestApiKeyModel:
 
         assert api_key.check_secret(secret) is False
 
-    def test_create_key_currently_fails_with_client_instance_assignment(self, client_entity):
-        with pytest.raises(IntegrityError):
-            ApiKey.create_key(client=client_entity, name="Broken helper", environment="test")
+    def test_create_key_generates_unique_prefix_and_returns_raw_key(self, client_entity, monkeypatch):
+        prefixes = iter(["sk_test_collision", "sk_test_unique"])
+        secrets_generated = iter(["secret-one", "secret-two"])
+
+        ApiKey.objects.create(
+            client=client_entity,
+            name="Existing key",
+            prefix="sk_test_collision",
+            key_hash=make_password("existing-secret"),
+            environment="test",
+        )
+
+        monkeypatch.setattr(ApiKey, "_generate_prefix", staticmethod(lambda environment: next(prefixes)))
+        monkeypatch.setattr("api.models.secrets.token_urlsafe", lambda length: next(secrets_generated))
+
+        api_key, raw_key = ApiKey.create_key(
+            client=client_entity,
+            name="Working helper",
+            environment="test",
+        )
+
+        assert api_key.prefix == "sk_test_unique"
+        assert raw_key == "sk_test_unique.secret-one"
+        assert api_key.check_secret("secret-one") is True

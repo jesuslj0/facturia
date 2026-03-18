@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 import secrets
 from django.conf import settings
 from clients.models import Client
@@ -42,6 +42,9 @@ class ApiKey(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["prefix"], name="unique_api_key_prefix"),
+        ]
         indexes = [
             models.Index(fields=["prefix", "is_active"]),
         ]
@@ -51,22 +54,28 @@ class ApiKey(models.Model):
         if scopes is None:
             scopes = []
 
-        prefix = cls._generate_prefix(environment)
-        secret = secrets.token_urlsafe(32)
+        for _ in range(10):
+            prefix = cls._generate_prefix(environment)
+            if cls.objects.filter(prefix=prefix).exists():
+                continue
 
-        raw_key = f"{prefix}.{secret}"
+            secret = secrets.token_urlsafe(32)
+            raw_key = f"{prefix}.{secret}"
 
-        obj = cls.objects.create(
-            name=name,
-            client=client,
-            prefix=prefix,
-            key_hash=make_password(secret),
-            environment=environment,
-            scopes=scopes,
-            expires_at=expires_at,
-        )
+            with transaction.atomic():
+                obj = cls.objects.create(
+                    name=name,
+                    client=client,
+                    prefix=prefix,
+                    key_hash=make_password(secret),
+                    environment=environment,
+                    scopes=scopes,
+                    expires_at=expires_at,
+                )
 
-        return obj, raw_key  # Mostrar SOLO una vez
+            return obj, raw_key  # Mostrar SOLO una vez
+
+        raise RuntimeError("Unable to generate a unique API key prefix.")
 
     def check_secret(self, secret):
         if not self.is_active:

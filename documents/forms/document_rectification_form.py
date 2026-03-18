@@ -1,7 +1,20 @@
 from django import forms
 from documents.models import Document, Company
 
+class CommaDecimalField(forms.DecimalField):
+    def to_python(self, value):
+        if isinstance(value, str):
+            value = value.strip()
+            if "," in value:
+                value = value.replace(".", "").replace(",", ".")
+        return super().to_python(value)
+
+
 class DocumentRectificationForm(forms.ModelForm):
+    base_amount = CommaDecimalField(required=False, max_digits=10, decimal_places=2)
+    tax_amount = CommaDecimalField(required=False, max_digits=10, decimal_places=2)
+    tax_percentage = CommaDecimalField(required=False, max_digits=10, decimal_places=2)
+    total_amount = CommaDecimalField(required=False, max_digits=10, decimal_places=2)
     rectification_reason = forms.CharField(required=True, label="Motivo de la rectificación")
     company = forms.ModelChoiceField(
         queryset=Company.objects.all(),
@@ -16,24 +29,3 @@ class DocumentRectificationForm(forms.ModelForm):
             "base_amount", "tax_amount", "tax_percentage", "total_amount",
             "issue_date", "document_number", "company", "rectification_reason"
         ]
-
-    def clean_base_amount(self):
-        val = self.cleaned_data["base_amount"]
-        if isinstance(val, str):
-            val = val.replace(",", ".")
-        return val
-    def clean_tax_amount(self):
-        val = self.cleaned_data["tax_amount"]
-        if isinstance(val, str):
-            val = val.replace(",", ".")
-        return val
-    def clean_tax_percentage(self):
-        val = self.cleaned_data["tax_percentage"]
-        if isinstance(val, str):
-            val = val.replace(",", ".")
-        return val
-    def clean_total_amount(self):
-        val = self.cleaned_data["total_amount"]
-        if isinstance(val, str):
-            val = val.replace(",", ".")
-        return val
