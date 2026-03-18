@@ -1,6 +1,6 @@
 import pytest
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 
 from clients.models import Role
 
@@ -10,7 +10,7 @@ class TestClientModels:
     def test_custom_user_requires_client(self):
         user = get_user_model()(username="missing-client")
 
-        with pytest.raises(ObjectDoesNotExist):
+        with pytest.raises(ValidationError, match="User must have a client assigned"):
             user.clean()
 
     def test_user_role_helpers(self, client_entity, role_owner, role_reviewer):
