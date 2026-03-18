@@ -1,5 +1,6 @@
 from .serializers import DocumentIngestSerializer, DocumentSerializer, DocumentListSerializer
 from documents.models import Document, Company
+from documents.selectors.document_selector import DocumentSelector
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
 from .permissions import HasApiKey
@@ -112,7 +113,10 @@ class DocumentIngestAPIView(APIView):
         print("HEADERS:", request.headers)
         print("META:", request.META.get("HTTP_X_API_KEY"))
 
-        serializer = DocumentIngestSerializer(data=request.data)
+        serializer = DocumentIngestSerializer(
+            data=request.data,
+            context={"client": request.client},
+        )
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
@@ -190,7 +194,7 @@ class DocumentListAPIView(ListAPIView):
 
     def get_queryset(self):
         return (
-            Document.objects.filter(client__clientuser__user=self.request.user)
+            DocumentSelector.for_client(self.request.user.client)
             .order_by("-created_at")
         )
 
