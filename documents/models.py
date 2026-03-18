@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import Q
+from django.db import models, transaction
 from clients.models import Client
 import os
 from django.utils import timezone
@@ -379,50 +380,60 @@ class Document(models.Model):
     def create_rectification(self, user, reason=None, **kwargs):
         parent = self.parent_document or self
 
-        Document.objects.filter(
-            parent_document=parent
-        ).update(is_current=False)
+        if parent.parent_document_id is not None:
+            parent = parent.parent_document
 
-        self.is_current = False
-        self.save(update_fields=["is_current"])
+        with transaction.atomic():
+            Document.all_objects.filter(
+                models.Q(pk=parent.pk) | models.Q(parent_document=parent)
+            ).update(is_current=False)
 
-        amount_snapshot = {
-            "company_id": self.company_id,
-            "base_amount": float(self.base_amount or 0),
-            "tax_amount": float(self.tax_amount or 0),
-            "total_amount": float(self.total_amount or 0),
-        }
+            if self.parent_document_id is None and self.pk != parent.pk:
+                self.parent_document = parent
+                self.save(update_fields=["parent_document"])
 
-        new_external_id = f"{self.external_id}-rect-{self.version + 1}" if self.external_id else None
+            amount_snapshot = {
+                "company_id": self.company_id,
+                "base_amount": float(self.base_amount or 0),
+                "tax_amount": float(self.tax_amount or 0),
+                "total_amount": float(self.total_amount or 0),
+            }
+            latest_version = (
+                Document.all_objects.filter(
+                    models.Q(pk=parent.pk) | models.Q(parent_document=parent)
+                ).aggregate(max_version=models.Max("version"))["max_version"]
+                or parent.version
+            )
+            new_external_id = f"{self.external_id}-rect-{latest_version + 1}" if self.external_id else None
 
+            new_doc = Document.objects.create(
+                client=self.client,
+                company=kwargs.get("company", self.company),
+                external_id=new_external_id,
+                original_name=self.original_name,
+                file=self.file,
+                document_type=self.document_type,
+                document_number=kwargs.get("document_number", self.document_number),
+                confidence=self.confidence,
+                confidence_global=self.confidence_global,
+                status="pending",
+                review_level=self.review_level,
+                issue_date=kwargs.get("issue_date", self.issue_date),
+                base_amount=kwargs.get("base_amount", self.base_amount),
+                tax_amount=kwargs.get("tax_amount", self.tax_amount),
+                tax_percentage=kwargs.get("tax_percentage", self.tax_percentage),
+                total_amount=kwargs.get("total_amount", self.total_amount),
+                total_source=self.total_source,
+                flow=kwargs.get("flow", self.flow),
+                flow_source=self.flow_source,
+                is_auto_approved=False,
+                parent_document=parent,
+                version=latest_version + 1,
+                is_current=True,
+                rectified_by=user,
+                rectified_at=timezone.now(),
+                rectification_reason=reason,
+                amount_snapshot=amount_snapshot,
+            )
 
-        new_doc = Document.objects.create(
-            is_current=True,
-            client=self.client,
-            company=kwargs.get("company", self.company),
-            external_id=new_external_id,
-            original_name=self.original_name,
-            file=self.file,
-            document_type=self.document_type,
-            document_number=kwargs.get("document_number", self.document_number),
-            confidence=self.confidence,
-            confidence_global=self.confidence_global,
-            status="pending",
-            review_level=self.review_level,
-            issue_date=kwargs.get("issue_date", self.issue_date),
-            base_amount=kwargs.get("base_amount", self.base_amount),
-            tax_amount=kwargs.get("tax_amount", self.tax_amount),
-            tax_percentage=kwargs.get("tax_percentage", self.tax_percentage),
-            total_amount=kwargs.get("total_amount", self.total_amount),
-            total_source=self.total_source,
-            flow=kwargs.get("flow", self.flow),
-            flow_source=self.flow_source,
-            is_auto_approved=False,
-            parent_document=parent,
-            version=self.version + 1,
-            rectified_by=user,
-            rectified_at=timezone.now(),
-            rectification_reason=reason,
-            amount_snapshot=amount_snapshot,
-        )
         return new_doc

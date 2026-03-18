@@ -1,22 +1,27 @@
-from ..models import Document, Company
+from ..models import Document
 from django.db.models import Q
+
 
 class DocumentSelector:
     @staticmethod
     def for_client(client):
         return Document.all_objects.filter(client=client, is_current=True)
+<<<<<<< HEAD
+=======
+
+    @staticmethod
+    def with_versions(client):
+        return Document.all_objects.filter(client=client)
+>>>>>>> bb4814561c14ba8fb4acd429e801401ed2796687
 
     @staticmethod
     def archived(client):
-        return Document.all_objects.filter(
-            client=client,
-            is_archived=True
-        )
-    
+        return DocumentSelector.for_client(client).filter(is_archived=True)
+
     @staticmethod
     def pending(client):
         return DocumentSelector.for_client(client).filter(status="pending")
-    
+
     @staticmethod
     def approved(client):
         return DocumentSelector.for_client(client).filter(status="approved")
@@ -24,19 +29,20 @@ class DocumentSelector:
     @staticmethod
     def filtered(client, filters: dict, base_qs=None):
         qs = base_qs if base_qs is not None else DocumentSelector.for_client(client)
-        
+
         doc_status = filters.get("doc_status")
 
         if doc_status == "archived":
             qs = qs.filter(is_archived=True)
         elif doc_status == "all":
             pass
-        else: 
+        else:
             qs = qs.filter(is_archived=False)
 
         if filters.get("query"):
             qs = qs.filter(
-                Q(original_name__icontains=filters["query"]) | Q(company__name__icontains=filters["query"])
+                Q(original_name__icontains=filters["query"])
+                | Q(company__name__icontains=filters["query"])
             )
 
         if filters.get("company"):
@@ -49,7 +55,7 @@ class DocumentSelector:
             qs = qs.filter(review_level=filters["review_level"])
 
         if filters.get("date_from"):
-            qs = qs.filter(issue_date__gte=filters["date_from"], )
+            qs = qs.filter(issue_date__gte=filters["date_from"])
 
         if filters.get("date_to"):
             qs = qs.filter(issue_date__lte=filters["date_to"])
@@ -61,27 +67,37 @@ class DocumentSelector:
             qs = qs.filter(flow=filters["flow"])
 
         return qs
-    
+
     @staticmethod
     def detail_queryset(client):
         return (
-            DocumentSelector.for_client(client)
+            DocumentSelector.with_versions(client)
             .select_related(
-                "company", 
-                "approved_by", 
+                "company",
+                "approved_by",
                 "rejected_by",
                 "reviewed_by",
-                "archived_by"
+                "archived_by",
             )
         )
-    
+
+    @staticmethod
+    def version_history(document):
+        root = document.parent_document or document
+        return (
+            DocumentSelector.with_versions(document.client)
+            .filter(Q(parent_document=root) | Q(pk=root.pk))
+            .order_by("version")
+        )
+
     @staticmethod
     def exportable(client):
         return (
-            DocumentSelector.for_client(client).filter(
+            DocumentSelector.for_client(client)
+            .filter(
                 is_archived=False,
                 status="approved",
-                document_type__in=["invoice", "corrected_invoice"]
+                document_type__in=["invoice", "corrected_invoice"],
             )
             .order_by("issue_date")
         )
