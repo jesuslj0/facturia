@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { margin: 0; }
+        .invoice-page { page-break-after: always; }
+        .invoice-page:last-child { page-break-after: auto; }
+    </style>
+</head>
+<body>
+    {% for invoice in invoices %}
+        <div class="invoice-page">{% include "private/documents/invoice_pdf.html" with invoice=invoice %}</div>
+    {% endfor %}
+</body>
+</html>

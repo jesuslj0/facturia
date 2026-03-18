@@ -16,3 +16,6 @@ pytest==9.0.2
 python-dotenv==1.2.1
 sqlparse==0.5.5
 whitenoise==6.11.0
+pytest==8.4.2
+pytest-django==4.11.1
+weasyprint==62.3
