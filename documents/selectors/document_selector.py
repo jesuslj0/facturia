@@ -6,13 +6,10 @@ class DocumentSelector:
     @staticmethod
     def for_client(client):
         return Document.all_objects.filter(client=client, is_current=True)
-<<<<<<< HEAD
-=======
 
     @staticmethod
     def with_versions(client):
         return Document.all_objects.filter(client=client)
->>>>>>> bb4814561c14ba8fb4acd429e801401ed2796687
 
     @staticmethod
     def archived(client):
