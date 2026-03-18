@@ -4,7 +4,7 @@ from django.db.models import Q
 class DocumentSelector:
     @staticmethod
     def for_client(client):
-        return Document.all_objects.filter(client=client)
+        return Document.all_objects.filter(client=client, is_current=True)
 
     @staticmethod
     def archived(client):

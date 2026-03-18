@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from clients.models import Client
 import os
 from django.utils import timezone
@@ -291,6 +292,11 @@ class Document(models.Model):
                 fields=["client", "external_id"],
                 name="unique_external_id_per_client",
             ),
+            models.UniqueConstraint(
+                fields=["parent_document"],
+                condition=Q(is_current=True),
+                name="unique_current_version_per_document"
+            )
         ]
 
     def __str__(self):
@@ -371,6 +377,12 @@ class Document(models.Model):
         )
 
     def create_rectification(self, user, reason=None, **kwargs):
+        parent = self.parent_document or self
+
+        Document.objects.filter(
+            parent_document=parent
+        ).update(is_current=False)
+
         self.is_current = False
         self.save(update_fields=["is_current"])
 
@@ -380,11 +392,12 @@ class Document(models.Model):
             "tax_amount": float(self.tax_amount or 0),
             "total_amount": float(self.total_amount or 0),
         }
+
         new_external_id = f"{self.external_id}-rect-{self.version + 1}" if self.external_id else None
 
-        parent = self.parent_document or self
 
         new_doc = Document.objects.create(
+            is_current=True,
             client=self.client,
             company=kwargs.get("company", self.company),
             external_id=new_external_id,
