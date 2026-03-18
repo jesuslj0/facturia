@@ -56,6 +56,23 @@ class TestDocumentViews:
         assert response.context["providers_count"] == 1
         assert response.context["summary"]["grand_total"] == Decimal("121")
 
+    def test_document_export_preview_accepts_pdf_format(self, auth_client, approved_document):
+        response = auth_client.get(reverse("documents:export_preview"), {"format": "pdf"})
+
+        assert response.status_code == 200
+        assert response.context["selected_format"] == "pdf"
+        assert response.context["pdf_preview_documents"] == [approved_document]
+
+    @patch("documents.utils.render_pdf_from_html", return_value=b"%PDF-1.4 test")
+    def test_document_export_returns_pdf_for_selected_invoice(self, render_pdf_mock, auth_client, approved_document):
+        response = auth_client.post(reverse("documents:export"), data={"format": "pdf", "ids": [approved_document.id]})
+
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/pdf"
+        assert response["Content-Disposition"] == f'attachment; filename="invoice_{approved_document.id}.pdf"'
+        assert response.content.startswith(b"%PDF-1.4")
+        render_pdf_mock.assert_called_once()
+
     def test_document_rectify_view_redirects_non_rectifiable_document(self, auth_client, document):
         response = auth_client.get(reverse("documents:rectify", kwargs={"pk": document.pk}), follow=True)
 

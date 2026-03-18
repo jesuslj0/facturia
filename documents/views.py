@@ -201,7 +201,7 @@ class DashboardView(LoginRequiredMixin,TemplateView):
 
         return context
     
-from .utils import export_to_csv, export_to_excel
+from .utils import export_invoices_to_pdf, export_to_csv, export_to_excel
 class DocumentExportView(LoginRequiredMixin, View):
 
     def get_exportable_queryset(self, ids=None):
@@ -226,6 +226,8 @@ class DocumentExportView(LoginRequiredMixin, View):
 
         qs = self.get_exportable_queryset(ids=ids)
 
+        if fmt == "pdf":
+            return export_invoices_to_pdf(qs, base_url=request.build_absolute_uri("/"))
         if fmt == "xlsx":
             return export_to_excel(qs)
         return export_to_csv(qs)
@@ -255,8 +257,13 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
 
         qs = self.get_queryset()
 
+        selected_format = self.request.GET.get("format", "xlsx")
+
         context["documents_count"] = qs.count()
         context["providers_count"] = qs.values("company").distinct().count()
+        context["selected_format"] = selected_format
+        context["selected_ids"] = self.request.GET.getlist("ids")
+        context["pdf_preview_documents"] = list(qs[:3]) if selected_format == "pdf" else []
 
         summary = qs.aggregate(
             base_total=Sum("base_amount"),

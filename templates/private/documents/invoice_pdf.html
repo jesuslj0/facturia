@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { size: A4; margin: 24mm 18mm; }
+        body { font-family: Arial, sans-serif; color: #1f2937; font-size: 12px; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 24px; }
+        .title { font-size: 24px; font-weight: bold; margin: 0; }
+        .muted { color: #6b7280; }
+        .card { border: 1px solid #d1d5db; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { border-bottom: 1px solid #e5e7eb; padding: 8px 0; text-align: left; }
+        th:last-child, td:last-child { text-align: right; }
+        .totals { width: 40%; margin-left: auto; margin-top: 20px; }
+        .totals td { padding: 6px 0; }
+        .totals .grand td { font-weight: bold; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <p class="title">{{ invoice.get_document_type_display }}</p>
+            <p class="muted">N.º {{ invoice.document_number|default:"-" }}</p>
+        </div>
+        <div>
+            <p><strong>Fecha:</strong> {{ invoice.issue_date|date:"d/m/Y" }}</p>
+            <p><strong>Estado:</strong> {{ invoice.get_status_display }}</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <p><strong>Proveedor:</strong> {{ invoice.company.name|default:"-" }}</p>
+        <p><strong>NIF:</strong> {{ invoice.company.tax_id|default:"-" }}</p>
+        <p><strong>Archivo original:</strong> {{ invoice.original_name }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Concepto</th>
+                <th>Importe</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Base imponible</td>
+                <td>{{ invoice.base_amount|default:"-" }} €</td>
+            </tr>
+            <tr>
+                <td>IVA ({{ invoice.tax_percentage|default:"-" }}%)</td>
+                <td>{{ invoice.tax_amount|default:"-" }} €</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table class="totals">
+        <tr>
+            <td>Total</td>
+            <td>{{ invoice.total_amount|default:"-" }} €</td>
+        </tr>
+        <tr class="grand">
+            <td>Total factura</td>
+            <td>{{ invoice.total_amount|default:"-" }} €</td>
+        </tr>
+    </table>
+</body>
+</html>
