@@ -31,16 +31,6 @@ from django.db.models.signals import post_save
 post_save.disconnect(create_default_categories, sender=Client)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def _migrate_test_database():
-    call_command("migrate", run_syncdb=True, verbosity=0)
-
-
-@pytest.fixture
-def db():
-    call_command("flush", verbosity=0, interactive=False, inhibit_post_migrate=True)
-
-
 @pytest.fixture
 def client():
     return DjangoClient()

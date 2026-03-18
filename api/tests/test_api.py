@@ -3,6 +3,8 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
+pytestmark = pytest.mark.django_db
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework import status

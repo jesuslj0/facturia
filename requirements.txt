@@ -1,16 +1,18 @@
 asgiref==3.11.0
 babel==2.18.0
-# Django==6.0.3
+Django==6.0.3
 django-debug-toolbar==6.2.0
 djangorestframework==3.16.1
 dotenv==0.9.9
 et_xmlfile==2.0.0
 gunicorn==25.0.3
+iniconfig==2.3.0
 openpyxl==3.1.5
 packaging==26.0
+pluggy==1.6.0
 psycopg2-binary==2.9.11
+Pygments==2.19.2
+pytest==9.0.2
 python-dotenv==1.2.1
 sqlparse==0.5.5
 whitenoise==6.11.0
-pytest==8.4.2
-pytest-django==4.11.1

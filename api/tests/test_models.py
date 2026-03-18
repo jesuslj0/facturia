@@ -1,6 +1,8 @@
 from datetime import timedelta
 
 import pytest
+pytestmark = pytest.mark.django_db
+
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError
 from django.utils import timezone
