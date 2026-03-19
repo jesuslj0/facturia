@@ -28,7 +28,7 @@ COPY requirements.txt .
 
 # Instalar deps de Python, WeasyPrint actualizado y cffi
 RUN pip install --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir cffi weasyprint tinycss2 pyphen \
+    && pip install --no-cache-dir  "cffi>=1.15" "tinycss2>=1.2" "pyphen>=0.13" "weasyprint==59.0" \
     && pip install --no-cache-dir -r requirements.txt
 
 # Copiar el código de la app
