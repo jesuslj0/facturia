@@ -21,3 +21,16 @@ def get_filtered_documents(request, base_qs=None):
         base_qs = DocumentSelector.for_client(client)
 
     return DocumentSelector.filtered(client, filters, base_qs=base_qs)
+
+
+def get_exportable_documents(base_qs=None):
+    if base_qs is None:
+        raise ValueError("base_qs is required")
+    else: 
+        qs = base_qs.filter(
+            is_archived=False,
+            status="approved",
+            document_type__in=["invoice", "corrected_invoice"],
+        )
+
+    return qs

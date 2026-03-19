@@ -8,7 +8,11 @@
 {% endblock %}
 {% block content %}
 <h1 class="page-title">Previsualización de exportación</h1>
-<h2 class="page-subtitle">Solo facturas aprobadas</h2>
+<h2 class="page-subtitle">Solo facturas aprobadas  
+    {% if non_exportable_count > 0 %}
+        · {{ non_exportable_count }} documentos no cumplen los requisitos de exportación
+    {% endif %}
+</h2>
 <div class="export-summary">
     <h3>Resumen de exportación</h3>
     <div class="summary-grid">

@@ -11,7 +11,7 @@ from datetime import datetime
 from .selectors.document_selector import DocumentSelector
 from .services import DocumentService
 from django.contrib.auth import get_user_model
-from .filters.document_filters import get_filtered_documents
+from .filters.document_filters import get_filtered_documents, get_exportable_documents
 from documents.models import Company
 from .forms import DocumentRectificationForm
 
@@ -251,14 +251,19 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
     def get_exportable_queryset(self, ids=None):
         client = self.request.user.client
 
-        base_qs = DocumentSelector.exportable(client)
+        base_qs = DocumentSelector.for_client(client)
 
         qs = get_filtered_documents(self.request, base_qs=base_qs)
 
         if ids:
             qs = qs.filter(id__in=ids)
 
-        return qs
+        exportable_qs = get_exportable_documents(base_qs=qs)
+        non_exportable_qs = qs.exclude(id__in=exportable_qs.values_list("id", flat=True))
+
+        self.non_exportable_count = non_exportable_qs.count()
+
+        return exportable_qs
 
     def get_queryset(self):
         ids = self.request.GET.getlist("ids")
@@ -289,9 +294,10 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
             avg_confidence=Avg("confidence_global"),
         )
 
-        context["summary"] = summary
         summary["min_date"] = format_date(summary["min_date"], format="d MMMM y", locale="es")
         summary["max_date"] = format_date(summary["max_date"], format="d MMMM y", locale="es")
+        context["summary"] = summary
+        context["non_exportable_count"] = self.non_exportable_count
 
         return context
     
@@ -300,10 +306,12 @@ class DocumentPDFPreviewView(LoginRequiredMixin, View):
         ids = request.GET.getlist("ids")
         client = request.user.client
 
-        qs = DocumentSelector.exportable(client)
+        qs = DocumentSelector.for_client(client)
         qs = get_filtered_documents(request, base_qs=qs)
         if ids:
             qs = qs.filter(id__in=ids)
+
+        qs = get_exportable_documents(base_qs=qs)
 
         pdf_context = build_pdf_context(qs, request)
 

@@ -86,15 +86,3 @@ class DocumentSelector:
             .filter(Q(parent_document=root) | Q(pk=root.pk))
             .order_by("version")
         )
-
-    @staticmethod
-    def exportable(client):
-        return (
-            DocumentSelector.for_client(client)
-            .filter(
-                is_archived=False,
-                status="approved",
-                document_type__in=["invoice", "corrected_invoice"],
-            )
-            .order_by("issue_date")
-        )
