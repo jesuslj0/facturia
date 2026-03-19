@@ -19,14 +19,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     libglib2.0-0 \
     libglib2.0-dev \
+    python3-dev \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-
-# Copiar e instalar dependencias de Python
+# Copiar requirements primero (capa cacheable)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar código de la app
+# Instalar deps de Python, WeasyPrint actualizado y cffi
+RUN pip install --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir cffi weasyprint tinycss2 pyphen \
+    && pip install --no-cache-dir -r requirements.txt
+
+# Copiar el código de la app
 COPY . .
 
 # Crear carpeta para staticfiles
