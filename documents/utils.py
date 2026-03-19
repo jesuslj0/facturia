@@ -102,9 +102,7 @@ def export_to_excel(qs):
 
 def render_pdf_from_html(html, *, base_url=None):
     from weasyprint import HTML
-
     return HTML(string=html, base_url=base_url).write_pdf()
-
 
 def export_invoice_pdf(invoice, *, base_url=None):
     html = render_to_string(
@@ -121,7 +119,9 @@ def export_invoices_to_pdf(qs, *, base_url=None, inline=False,**context):
     )
     pdf_bytes = render_pdf_from_html(html, base_url=base_url)
 
-    filename = "facturas.pdg" if len(context["invoices"]) != 1 else f"factura_{context['invoices'][0].document_number}.pdf"
+    invoices = context.get("invoices", [])
+
+    filename = "facturas.pdf" if len(invoices) != 1 else f"factura_{invoices[0].document_number}.pdf"
 
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
     disposition = "inline" if inline else "attachment"
