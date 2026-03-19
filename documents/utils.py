@@ -100,8 +100,8 @@ def export_to_excel(qs):
     wb.save(response)
     return response
 
+from weasyprint import HTML
 def render_pdf_from_html(html, *, base_url=None):
-    from weasyprint import HTML
     return HTML(string=html, base_url=base_url).write_pdf()
 
 def export_invoice_pdf(invoice, *, base_url=None):
