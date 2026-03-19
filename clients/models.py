@@ -8,7 +8,8 @@ class Client(models.Model):
     tax_id = models.CharField(max_length=50, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    logo = models.ImageField(upload_to='clients/logos/', blank=True, null=True)
+    primary_color = models.CharField(max_length=7, default="#2563eb")
     def __str__(self):
         return self.name
 

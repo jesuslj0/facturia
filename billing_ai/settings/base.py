@@ -139,3 +139,5 @@ LOGOUT_REDIRECT_URL = "login"
 AUTH_USER_MODEL = "clients.CustomUser"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+X_FRAME_OPTIONS = "SAMEORIGIN"

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 25px 20px;
+
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 10px;
+                color: #6b7280;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 11px;
+            color: #111827;
+        }
+
+        .pdf-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            font-size: 12px;
+            color: currentColor;
+            border-bottom: 2px solid currentColor;
+
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .logo {
+            height: 28px;
+            width: auto;
+            margin-right: 8px; 
+            flex-shrink: 0;   
+        }
+
+        .client-name {
+            font-weight: bold;
+            font-size: 14px;
+            color: var(--primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .title {
+            font-size: 13px;
+            color: #6b7280;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+
+        h1 {
+            margin: 0 0 12px 0;
+            font-size: 18px;
+        }
+
+        .meta {
+            margin-bottom: 15px;
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            background: var(--primary);
+            color: var(--body-fg-color);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 0.03em;
+            border-bottom: 2px solid #e5e7eb;
+            padding: 8px 6px;
+        }
+
+        tbody td {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 6px;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        tfoot {
+            boder-top: 2px solid var(--primary);
+            font-weight: bold;
+        }
+
+        tfoot td {
+            border-top: 2px solid #111827;
+            padding: 8px 6px;
+            font-weight: bold;
+            background: #f9fafb;
+        }
+
+        .amount {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .muted {
+            color: #6b7280;
+        }
+
+        tr {
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+<body style="--primary: {{ client.primary_color|default:'#0a7bb0' }}">
+    <div class="pdf-header" style="color: {{ client.primary_color|default:'#0a7bb0' }}">
+        <div class="brand">
+            {% if client.logo %}
+                <img src="{{ client.logo.url }}" alt="Logo" class="logo">
+            {% endif %}
+            <span class="client-name">{{ client.name }}</span>
+        </div>
+        <div class="title">Listado de facturas</div>
+    </div>
+
+    <h1>Listado de facturas</h1>
+
+    <div class="meta">
+        Total documentos: {{ totals.count }}<br>
+        Fecha generación: {{ date|date:"d/m/Y H:i" }}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Fecha</th>
+                <th>Nombre</th>
+                <th>Empresa</th>
+                <th class="amount">Base (€)</th>
+                <th class="amount">IVA (€)</th>
+                <th class="amount">Total (€)</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for invoice in invoices %}
+            <tr>
+                <td>{{ invoice.document_number }}</td>
+                <td>{{ invoice.issue_date|date:"d/m/Y" }}</td>
+                <td class="muted">{{ invoice.original_name }}</td>
+                <td>{{ invoice.company.name|default:"-" }}</td>
+
+                <td class="amount">
+                    {{ invoice.base_amount|default:0|floatformat:2 }}
+                </td>
+
+                <td class="amount">
+                    {{ invoice.tax_amount|default:0|floatformat:2 }}
+                </td>
+
+                <td class="amount">
+                    <strong>{{ invoice.total_amount|default:0|floatformat:2 }}</strong>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+        <tfoot>
+            <tr>
+                <td colspan="4">Totales</td>
+
+                <td class="amount">
+                    {{ totals.base_total|default:0|floatformat:2 }} €
+                </td>
+
+                <td class="amount">
+                    {{ totals.tax_total|default:0|floatformat:2 }} €
+                </td>
+
+                <td class="amount">
+                    {{ totals.total|default:0|floatformat:2 }} €
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+</body>
+</html>

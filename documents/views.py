@@ -5,7 +5,7 @@ from django.views.generic import View, ListView, DetailView, TemplateView, FormV
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models.functions import Coalesce
-from django.db.models import DecimalField
+from django.db.models import DecimalField, Sum, Count
 from finance.models import FinancialMovement
 from datetime import datetime
 from .selectors.document_selector import DocumentSelector
@@ -201,7 +201,7 @@ class DashboardView(LoginRequiredMixin,TemplateView):
 
         return context
     
-from .utils import export_invoices_to_pdf, export_to_csv, export_to_excel
+from .utils import export_invoices_to_pdf, export_to_csv, export_to_excel, build_pdf_context
 class DocumentExportView(LoginRequiredMixin, View):
 
     def get_exportable_queryset(self, ids=None):
@@ -227,10 +227,22 @@ class DocumentExportView(LoginRequiredMixin, View):
         qs = self.get_exportable_queryset(ids=ids)
 
         if fmt == "pdf":
-            return export_invoices_to_pdf(qs, base_url=request.build_absolute_uri("/"))
+            context = build_pdf_context(qs, request)
+
+            return export_invoices_to_pdf(
+                qs, 
+                base_url=request.build_absolute_uri("/"),
+                **context,
+            )
+        
         if fmt == "xlsx":
             return export_to_excel(qs)
         return export_to_csv(qs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+    
     
 from django.db.models import Sum, Min, Max, Avg
 class DocumentExportPreviewView(LoginRequiredMixin, ListView):
@@ -261,9 +273,12 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
 
         context["documents_count"] = qs.count()
         context["providers_count"] = qs.values("company").distinct().count()
+        
         context["selected_format"] = selected_format
         context["selected_ids"] = self.request.GET.getlist("ids")
-        context["pdf_preview_documents"] = list(qs[:3]) if selected_format == "pdf" else []
+
+        if selected_format == "pdf":
+            context["pdf_context"] = build_pdf_context(qs, self.request)
 
         summary = qs.aggregate(
             base_total=Sum("base_amount"),
@@ -279,6 +294,25 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
         summary["max_date"] = format_date(summary["max_date"], format="d MMMM y", locale="es")
 
         return context
+    
+class DocumentPDFPreviewView(LoginRequiredMixin, View):
+    def get(self, request):
+        ids = request.GET.getlist("ids")
+        client = request.user.client
+
+        qs = DocumentSelector.exportable(client)
+        qs = get_filtered_documents(request, base_qs=qs)
+        if ids:
+            qs = qs.filter(id__in=ids)
+
+        pdf_context = build_pdf_context(qs, request)
+
+        return export_invoices_to_pdf(
+            request,
+            base_url=request.build_absolute_uri("/"),
+            **pdf_context,
+            inline=True,
+        )
 
 from .services import MetricsService
 from babel.dates import format_date

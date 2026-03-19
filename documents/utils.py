@@ -100,7 +100,6 @@ def export_to_excel(qs):
     wb.save(response)
     return response
 
-
 def render_pdf_from_html(html, *, base_url=None):
     from weasyprint import HTML
 
@@ -115,25 +114,39 @@ def export_invoice_pdf(invoice, *, base_url=None):
     return render_pdf_from_html(html, base_url=base_url)
 
 
-def export_invoices_to_pdf(qs, *, base_url=None):
-    invoices = list(qs)
+def export_invoices_to_pdf(qs, *, base_url=None, inline=False,**context):
     html = render_to_string(
-        "private/documents/document_export_pdf.html",
-        {"invoices": invoices},
+        "private/documents/invoice_list_pdf.html",
+        context,
     )
     pdf_bytes = render_pdf_from_html(html, base_url=base_url)
 
-    if not invoices:
-        filename = "invoices.pdf"
-    elif len(invoices) == 1:
-        filename = f"invoice_{invoices[0].id}.pdf"
-    else:
-        filename = "invoices.pdf"
+    filename = "facturas.pdg" if len(context["invoices"]) != 1 else f"factura_{context['invoices'][0].document_number}.pdf"
 
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    disposition = "inline" if inline else "attachment"
+    response["Content-Disposition"] = f'{disposition}; filename="{filename}"'
     return response
 
+from django.utils import timezone
+from django.db.models import Sum, Count
+
+def build_pdf_context(qs, request):
+    return {
+        "invoices": qs,
+        "client": request.user.client,
+        "date": timezone.now(),
+        "totals": qs.aggregate(
+            base_total=Sum("base_amount"),
+            tax_total=Sum("tax_amount"),
+            total=Sum("total_amount"),
+            count=Count("id"),
+        )
+    }
+
+from django.shortcuts import render
+def render_pdf_preview(request, context):
+    return render(request, "private/documents/invoice_list_pdf.html", context)
 
 def to_decimal(value):
     if value is None:

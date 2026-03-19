@@ -43,50 +43,32 @@
     </div>
 </div>
 
-<form method="get" class="export-bar" action="{% url 'documents:export_preview' %}">
-    {% for selected_id in selected_ids %}
-        <input type="hidden" name="ids" value="{{ selected_id }}">
-    {% endfor %}
+<form method="post" class="export-bar" action="{% url 'documents:export' %}">
+    {% csrf_token %}
+    <div id="selected-ids-container">
+        {% for selected_id in selected_ids %}
+            <input type="hidden" name="ids" value="{{ selected_id }}">
+        {% endfor %}
+    </div>
     <label for="format">Formato:</label>
-    <select name="format" id="format" onchange="this.form.submit()">
-        <option value="xlsx" {% if selected_format == 'xlsx' %}selected{% endif %}>Excel (XLSX)</option>
-        <option value="csv" {% if selected_format == 'csv' %}selected{% endif %}>CSV</option>
-        <option value="pdf" {% if selected_format == 'pdf' %}selected{% endif %}>PDF</option>
+    <select name="format" id="format">
+        <option value="xlsx" {% if selected_format == "xlsx" %}selected{% endif %}>Excel (XLSX)</option>
+        <option value="csv" {% if selected_format == "csv" %}selected{% endif %}>CSV</option>
+        <option value="pdf" {% if selected_format == "pdf" %}selected{% endif %}>PDF</option>
     </select>
+    <button type="submit" class="btn btn-primary">Confirmar exportación <i class="fa-solid fa-download"></i></button>
 </form>
 
 {% if selected_format == "pdf" %}
-<div class="export-summary">
     <h3>Vista previa PDF</h3>
-    {% if pdf_preview_documents %}
-        <div class="summary-grid">
-            {% for doc in pdf_preview_documents %}
-                <div class="summary-item">
-                    <span class="label">{{ doc.document_number|default:"Sin número" }}</span>
-                    <span class="value">{{ doc.company.name|default:"-" }}</span>
-                    <span class="label">{{ doc.issue_date|date:"d/m/Y" }}</span>
-                    <span class="value">{{ doc.total_amount|floatformat:2 }} €</span>
-                </div>
-            {% endfor %}
-        </div>
-        <p class="page-subtitle">El PDF se generará con una página por factura seleccionada.</p>
-    {% else %}
-        <p>No hay facturas seleccionadas para generar el PDF.</p>
-    {% endif %}
-</div>
+    <iframe
+        class="pdf-preview"
+        style="width:100%; height:600px; border:1px solid #ccc;"
+        src="{% url 'documents:pdf_preview' %}?format={{ selected_format }}{% for id in selected_ids %}&ids={{ id }}{% endfor %}">
+    </iframe>
 {% endif %}
 
-<form method="post" action="{% url 'documents:export' %}">
-    {% csrf_token %}
-    <div class="export-bar">
-        <label for="confirm-format">Formato:</label>
-        <select name="format" id="confirm-format">
-            <option value="xlsx" {% if selected_format == 'xlsx' %}selected{% endif %}>Excel (XLSX)</option>
-            <option value="csv" {% if selected_format == 'csv' %}selected{% endif %}>CSV</option>
-            <option value="pdf" {% if selected_format == 'pdf' %}selected{% endif %}>PDF</option>
-        </select>
-        <button type="submit" class="btn btn-primary">Confirmar exportación <i class="fa-solid fa-download"></i></button>
-    </div>
+<div class="table-container">
     <div class="table-wrapper">
       <table class="table">
         <thead>
@@ -119,31 +101,99 @@
         </tbody>
       </table>
     </div>
-</form>
+</div>
 {% endblock %}
 
 {% block scripts %}
-  {{ block.super }}
-    <script>
-        const selectAll = document.getElementById("select-all");
-        const checkboxes = document.querySelectorAll(".row-checkbox");
-        const summaryDocsCount = document.getElementById("documents-count");
+{{ block.super }}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const formatSelect = document.getElementById("format");
+    const iframe = document.querySelector("iframe.pdf-preview");
 
-        if (selectAll) {
-            selectAll.checked = [...checkboxes].every(c => c.checked);
-            selectAll.addEventListener("change", () => {
-                checkboxes.forEach(cb => cb.checked = selectAll.checked);
-                summaryDocsCount.textContent = [...checkboxes].filter(c => c.checked).length;
-            });
-        }
+    function updatePDFPreview() {
 
-        checkboxes.forEach(cb => {
-            cb.addEventListener("change", () => {
-                if (selectAll) {
-                    selectAll.checked = [...checkboxes].every(c => c.checked);
-                }
-                summaryDocsCount.textContent = [...checkboxes].filter(c => c.checked).length;
-            });
+        const params = new URLSearchParams(window.location.search);
+        const format = formatSelect.value;
+
+        params.delete("ids");
+
+        const ids = document.querySelectorAll("input[name='ids']");
+        ids.forEach(input => {
+            if (input.checked) {
+                params.append("ids", input.value);
+            }
         });
-    </script>
+
+        params.set("format", format);
+
+        // Actualizar URL del navegador sin recargar
+        const newUrl = window.location.pathname + '?' + params.toString();
+        window.history.replaceState(null, "", newUrl);
+
+        if (iframe) {
+            iframe.src = "{% url 'documents:pdf_preview' %}" + '?' + params.toString();
+            iframe.style.display = format === "pdf" ? "block" : "none";
+        }
+    }
+
+    // Disparar al cambiar el select
+    formatSelect.addEventListener("change", updatePDFPreview);
+
+    // Inicializar al cargar la página
+    updatePDFPreview();
+
+    const selectedFormat = "{{ selected_format }}";
+    if (selectedFormat === "pdf") {
+        const formatSelect = document.getElementById("format");
+        formatSelect.value = "pdf"; 
+        updatePDFPreview();           
+    }
+    const selectAll = document.getElementById("select-all");
+    const checkboxes = document.querySelectorAll(".row-checkbox");
+    const summaryDocsCount = document.getElementById("documents-count");
+    const idsContainer = document.getElementById("selected-ids-container"); // contenedor de inputs ocultos
+    
+    function updateSelectedIDs() {
+        // Limpiar los inputs antiguos
+        idsContainer.innerHTML = "";
+    
+        // Crear inputs ocultos para cada checkbox seleccionado
+        checkboxes.forEach(cb => {
+            if (cb.checked) {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = "ids";
+                input.value = cb.value;
+                idsContainer.appendChild(input);
+            }
+        });
+    
+        // Actualiza la URL y el iframe según el formato
+        updatePDFPreview();
+    }
+    
+    // Inicialización de "select all"
+    if (selectAll) {
+        selectAll.checked = [...checkboxes].every(c => c.checked);
+        selectAll.addEventListener("change", () => {
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            summaryDocsCount.textContent = [...checkboxes].filter(c => c.checked).length;
+            updateSelectedIDs();
+        });
+    }
+    
+    // Cada checkbox individual
+    checkboxes.forEach(cb => {
+        cb.addEventListener("change", () => {
+            if (selectAll) {
+                selectAll.checked = [...checkboxes].every(c => c.checked);
+            }
+            summaryDocsCount.textContent = [...checkboxes].filter(c => c.checked).length;
+            updateSelectedIDs();
+        });
+    });
+});
+
+</script>
 {% endblock %}

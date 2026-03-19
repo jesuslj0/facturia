@@ -19,3 +19,10 @@ def to_percent(value):
     if value is None:
         return 0
     return "{:.2f}".format(value * 100)
+
+@register.filter
+def sum_attr(queryset, attr):
+    total = 0
+    for obj in queryset:
+        total += getattr(obj, attr, 0) or 0
+    return total 
