@@ -19,11 +19,9 @@ RUN apt-get update && apt-get install -y \
     libffi-dev \
     libglib2.0-0 \
     libglib2.0-dev \
-    libgobject-2.0-0 \
-    libgobject-2.0-dev \
     libpangocairo-1.0-0 \
-    libpangocairo-1.0-dev \
     && rm -rf /var/lib/apt/lists/*
+
 # Copiar e instalar dependencias de Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
