@@ -207,12 +207,14 @@ class DocumentExportView(LoginRequiredMixin, View):
     def get_exportable_queryset(self, ids=None):
         client = self.request.user.client
 
-        base_qs = DocumentSelector.exportable(client)
+        base_qs = DocumentSelector.for_client(client)
 
         qs = get_filtered_documents(self.request, base_qs=base_qs)
 
         if ids:
             qs = qs.filter(id__in=ids)
+        
+        qs = get_exportable_documents(qs)
 
         return qs
     
