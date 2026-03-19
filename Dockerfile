@@ -19,6 +19,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     libglib2.0-0 \
     libglib2.0-dev \
+<<<<<<< HEAD
+=======
+    libpangocairo-1.0-0 \
+>>>>>>> 300a5c0aa5a8a747131a232a1a81eb6e23e9b07b
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar e instalar dependencias de Python
