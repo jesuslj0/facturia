@@ -19,6 +19,11 @@
   margin-bottom: 15px;
 }
 
+.table-header .results {
+  font-size: 0.9rem;
+  color: var(--muted-color);
+}
+
 /* TITULO */
 
 .page-title {
@@ -142,4 +147,76 @@
   margin-top: 22px;
   display: flex;
   gap: 10px;
+}
+
+.filters-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+  justify-content:first baseline;
+}
+
+.search-bar {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg-color);
+  color: var(--body-fg-color);
+}
+
+.filters-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top-right {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 10px;
+}
+
+.date-filter {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg-color);
+  color: var(--body-fg-color);
+}
+
+.bottom-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.category-filter, .method-filter {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg-color);
+  color: var(--body-fg-color);
+  max-width: 120px;
+  margin-left: 10px;
+}
+
+.bottom-right { 
+  justify-content: end;
+}
+
+.amount-filter {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg-color);
+  color: var(--body-fg-color);
+  max-width: 90px;
+}
+
+label {
+  font-size: 0.85rem;
+  color: var(--muted-color);
+  cursor: pointer;
 }

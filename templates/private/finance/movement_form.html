@@ -15,6 +15,19 @@
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {% for field in form %}
+            {% if field.name == "receipt" %}
+                {% if form.instance.receipt %}
+                <details id="receipt-preview">
+                    <summary>
+                        <span class="receipt-preview-text"><i class="fa-solid fa-chevron-down"></i> Ver recibo</span>
+                    </summary>
+                    <div class="receipt-preview-container {% if form.instance.receipt %}show{% endif %}">
+                        <span class="receipt-name">{{ form.instance.receipt_name }}</span>
+                        <img src="{{ form.instance.receipt.url }}" alt="Receipt" class="receipt-preview-img">
+                    </div>
+                </details>
+                {% endif %}
+            {% endif %}
             <p>
                 {{ field.label_tag }}
                 {{ field }}
@@ -28,4 +41,24 @@
             <a href="{% url 'finance:movements' %}" class="btn btn-secondary">Cancelar</a>
         </form>
     </div>
+{% endblock %}
+{% block scripts %}
+{{ block.super }}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const receiptDetails = document.getElementById("receipt-preview");
+
+        receiptDetails.addEventListener("toggle", function () {
+            const receiptPreviewText = document.querySelector(".receipt-preview-text");
+
+            if (receiptDetails.open) {
+                receiptPreviewText.innerHTML = "<i class='fa-solid fa-chevron-up'></i> Ocultar recibo";
+                receiptDetails.classList.toggle("open");
+            } else {
+                receiptPreviewText.innerHTML = "<i class='fa-solid fa-chevron-down'></i> Ver recibo";
+                receiptDetails.classList.toggle("open");
+            }
+        });
+    });
+</script>
 {% endblock %}

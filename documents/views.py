@@ -44,6 +44,7 @@ class DocumentListView(LoginRequiredMixin, ListView):
         context["querystring"] = querydict.urlencode()
         return context
     
+    
 
 class DocumentDetailView(LoginRequiredMixin, DetailView):
     template_name = "private/documents/document_detail.html"

@@ -103,3 +103,41 @@
   font-size: 0.8rem;
   color: #f87171;
 }
+
+.receipt-preview-container {
+  margin-top: 18px;
+  background: var(--card-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 12px;
+  max-width: 640px;
+}
+
+.receipt-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted-color);
+}
+
+.receipt-preview-img {
+  width: 100%;
+  max-height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  margin-top: 12px;
+}
+
+.receipt-preview-text i {
+  font-size: 0.8rem;
+  color: var(--muted-color)
+}
+
+summary {
+  cursor: pointer;
+}
+
+summary::marker {
+  content: none;
+}
+

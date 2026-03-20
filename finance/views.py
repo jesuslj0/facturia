@@ -5,6 +5,7 @@ from .forms import FinancialMovementForm, MovementCategoryForm
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import HttpResponseRedirect
+from .filters import get_filtered_movements
 
 class FinancialMovementListView(LoginRequiredMixin, ListView):
     model = FinancialMovement
@@ -12,9 +13,20 @@ class FinancialMovementListView(LoginRequiredMixin, ListView):
     context_object_name = "movements"
 
     def get_queryset(self):
-        return FinancialMovement.objects.filter(
+        return get_filtered_movements(
+            self.request,
+            base_qs=FinancialMovement.objects.filter(
+                client=self.request.user.client
+            )
+        )
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["categories"] = MovementCategory.objects.filter(
             client=self.request.user.client
         )
+        context["payment_methods"] = FinancialMovement.PAYMENT_CHOICES
+        return context
 
 
 class FinancialMovementCreateView(LoginRequiredMixin, CreateView):

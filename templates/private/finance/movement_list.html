@@ -8,9 +8,72 @@
 {% block content %}
 <h1 class="page-title"><i class="fa-solid fa-coins"></i> Tus movimientos</h1>
 <div class="movements-container">
+    <form method="get" class="filters-bar">
+        <div class="search-bar-container">
+            <input type="text" name="q" placeholder="Concepto o categoría" value="{{ request.GET.q }}" class="search-bar">
+            <input type="submit" value="Buscar" class="btn btn-primary">
+        </div>
+        <div class="filters-container top-right">
+            <label for="start">Desde</label>
+            <input type="date" name="start" value="{{ request.GET.start }}" class="date-filter">
+            <label for="end">Hasta</label>
+            <input type="date" name="end" value="{{ request.GET.end }}" class="date-filter">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            {% if request.GET %}
+                <a href="{% url 'finance:movements' %}" class="btn btn-secondary">Limpiar</a>
+            {% endif %}
+        </div>
+        <div class="filters-container bottom-left">
+            <div>
+                <label for="category">Categoría</label>
+                <select name="category" class="category-filter">
+                    <option value="">Todas</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if request.GET.category == category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="method">Método de pago</label>
+                <select name="method" class="method-filter">
+                    <option value="">Todos</option>
+                    {% for id, name in payment_methods %}
+                        <option value="{{ id }}" {% if request.GET.method == id %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="filters-container bottom-right">
+            <div style="display: flex;">
+                <label for="is_conciled">Conciliados</label>
+                <input type="checkbox" name="is_conciled" id="is_conciled" {% if request.GET.is_conciled %}checked{% endif %}>
+            </div>
+            <div>
+                <label for="has_receipt">Con recibo</label>
+                <input type="checkbox" name="has_receipt" id="has_receipt" {% if request.GET.has_receipt %}checked{% endif %}>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label for="min_amount">Importe mín.</label>
+                <input type="number" decimals+="2" step="0.10" name="min_amount" id="min_amount" value="{{ request.GET.min_amount }}" placeholder="0.00€" class="amount-filter">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label for="max_amount">Importe máx.</label>
+                <input type="number" decimals="2" step="0.10" name="max_amount" id="max_amount" value="{{ request.GET.max_amount }}" placeholder="0.00€" class="amount-filter">
+            </div>
+        </div>
+    </form>
     <div class="table-wrapper">
         <div class="table-header">
-            <h3><i class="fa-solid fa-money-bill-wave"></i> Movimientos</h3>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <h3><i class="fa-solid fa-money-bill-wave"></i> Movimientos</h3>
+                <span class="results">
+                    {% if request.GET %}
+                        ({{ movements|length }} {% if movements|length == 1 %}resultado{% else %}resultados{% endif %})
+                    {% endif%}
+                </span>
+            </div>
             <a href="{% url 'finance:new_movement' %}" class="btn btn-primary">
                 <i class="fa-solid fa-plus"></i> Nuevo movimiento
             </a>
@@ -77,7 +140,7 @@
                         </td>
 
                         <td class="status">
-                            {% if movement.is_reconciled %}
+                            {% if movement.is_conciled %}
                                 <span class="badge badge-success">
                                     <i class="fa-solid fa-check"></i>
                                 </span>

@@ -5,7 +5,7 @@ from django import forms
 class FinancialMovementForm(ModelForm):
     class Meta:
         model = FinancialMovement
-        fields = ['category', 'amount', 'date', 'description', 'receipt', 'payment_method', 'is_recurrent', 'is_active', 'is_reconciled']
+        fields = ['category', 'amount', 'date', 'description', 'receipt', 'payment_method', 'is_recurrent', 'is_active', 'is_conciled']
 
         labels = {
             "category": "Categoría",
@@ -16,7 +16,7 @@ class FinancialMovementForm(ModelForm):
             "payment_method": "Metodo de pago",
             "is_recurrent": "Movimiento recurrente",
             "is_active": "Movimiento activo",
-            "is_reconciled": "Movimiento reconciliado",
+            "is_conciled": "Movimiento conciliado",
         }
 
         widgets = {
@@ -31,7 +31,7 @@ class FinancialMovementForm(ModelForm):
             "payment_method": forms.Select(attrs={"class": "form-select"}),
             "is_recurrent": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
             "is_active": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
-            "is_reconciled": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+            "is_conciled": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
         }
 
     def __init__(self, *args, client=None, **kwargs):
