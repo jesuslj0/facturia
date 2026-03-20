@@ -8,7 +8,7 @@ def get_filtered_movements(request, base_qs=None):
         "end": request.GET.get("end"),
         "category": request.GET.get("category"),
         "method": request.GET.get("method"),
-        "is_conciled": request.GET.get("is_conciled"),
+        "is_reconciled": request.GET.get("is_reconciled"),
         "has_receipt": request.GET.get("has_receipt"),
         "min_amount": request.GET.get("min_amount"),
         "max_amount": request.GET.get("max_amount"),
@@ -34,8 +34,8 @@ def get_filtered_movements(request, base_qs=None):
         base_qs = base_qs.filter(category=filters["category"])
     if filters.get("method"):
         base_qs = base_qs.filter(payment_method=filters["method"])
-    if filters.get("is_conciled"):
-        base_qs = base_qs.filter(is_conciled=True)
+    if filters.get("is_reconciled"):
+        base_qs = base_qs.filter(is_reconciled=True)
     if filters.get("has_receipt"):
         base_qs = base_qs.exclude(receipt_name__isnull=True)
     if filters.get("min_amount"):

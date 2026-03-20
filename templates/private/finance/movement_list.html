@@ -47,8 +47,8 @@
         </div>
         <div class="filters-container bottom-right">
             <div style="display: flex;">
-                <label for="is_conciled">Conciliados</label>
-                <input type="checkbox" name="is_conciled" id="is_conciled" {% if request.GET.is_conciled %}checked{% endif %}>
+                <label for="is_reconciled">Conciliados</label>
+                <input type="checkbox" name="is_reconciled" id="is_reconciled" {% if request.GET.is_reconciled %}checked{% endif %}>
             </div>
             <div>
                 <label for="has_receipt">Con recibo</label>
@@ -140,7 +140,7 @@
                         </td>
 
                         <td class="status">
-                            {% if movement.is_conciled %}
+                            {% if movement.is_reconciled %}
                                 <span class="badge badge-success">
                                     <i class="fa-solid fa-check"></i>
                                 </span>

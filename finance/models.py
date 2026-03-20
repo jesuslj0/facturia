@@ -72,7 +72,7 @@ class FinancialMovement(models.Model):
     receipt = models.FileField(upload_to="finance/receipts/", blank=True, null=True,verbose_name="Recibo")
     receipt_name = models.CharField(max_length=255, blank=True, null=True)
     payment_method = models.CharField(max_length=20, blank=True, null=True, choices=PAYMENT_CHOICES)
-    is_conciled = models.BooleanField(default=False)
+    is_reconciled = models.BooleanField(default=False)
     is_recurrent = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     date = models.DateField(db_index=True)
