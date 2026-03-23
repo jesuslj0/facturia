@@ -61,7 +61,9 @@ class TestDocumentViews:
 
         assert response.status_code == 200
         assert response.context["selected_format"] == "pdf"
-        assert response.context["pdf_preview_documents"] == [approved_document]
+        # When format=pdf, view adds pdf_context with "invoices" key
+        assert "pdf_context" in response.context
+        assert approved_document in list(response.context["pdf_context"]["invoices"])
 
     @patch("documents.utils.render_pdf_from_html", return_value=b"%PDF-1.4 test")
     def test_document_export_returns_pdf_for_selected_invoice(self, render_pdf_mock, auth_client, approved_document):
@@ -69,7 +71,9 @@ class TestDocumentViews:
 
         assert response.status_code == 200
         assert response["Content-Type"] == "application/pdf"
-        assert response["Content-Disposition"] == f'attachment; filename="invoice_{approved_document.id}.pdf"'
+        # Single document: filename uses document_number; multiple: "facturas.pdf"
+        expected_filename = f'attachment; filename="factura_{approved_document.document_number}.pdf"'
+        assert response["Content-Disposition"] == expected_filename
         assert response.content.startswith(b"%PDF-1.4")
         render_pdf_mock.assert_called_once()
 

@@ -81,6 +81,8 @@ class TestDocumentSelector:
         assert list(qs) == [approved_document]
 
     def test_version_history_and_exportable(self, client_entity, company, approved_document):
+        from documents.filters.document_filters import get_exportable_documents
+
         rectified = approved_document.create_rectification(
             user=approved_document.approved_by,
             reason="Fix",
@@ -92,7 +94,7 @@ class TestDocumentSelector:
         rectified.save(update_fields=["status", "review_level"])
 
         history = list(DocumentSelector.version_history(rectified))
-        exportable = list(DocumentSelector.exportable(client_entity))
+        exportable = list(get_exportable_documents(DocumentSelector.for_client(client_entity)))
 
         assert history == [approved_document, rectified]
         assert exportable == [rectified]
