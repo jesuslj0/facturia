@@ -52,3 +52,7 @@ wheels
 *.sqlite
 *.sqlite3
 
+# Claude Code:
+.claude/agent-memory/
+.claude/settings.local.json
+
