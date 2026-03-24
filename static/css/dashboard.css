@@ -43,6 +43,11 @@
   font-weight: 700;
 }
 
+.client-name > a {
+  color: var(--enfasis-color);
+  text-decoration: none;
+}
+
 .dashboard-header p {
   margin: 0;
   font-size: 0.75rem;

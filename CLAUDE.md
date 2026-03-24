@@ -137,8 +137,14 @@ El `entrypoint.sh` ejecuta: `collectstatic` → `migrate` → `gunicorn`.
 
 ## Agentes Disponibles
 
+- Subagentes en .claude/agents
 Ver `AGENTS.md` para el agente `django-architect-agent`, especializado en:
 - Refactorización y mejoras de arquitectura Django
 - Generación de tests unitarios e integración
 - Revisión de JS/CSS
 - Propuestas iterativas sin ejecutar cambios directamente
+
+## SKILLS
+
+Carga y usa todas las skills definidas en SKILLS.md.
+Cuando una tarea necesita el skill trigger, ejecutar esa skill en lugar de razonar desde 0.

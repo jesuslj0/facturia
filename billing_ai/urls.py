@@ -19,6 +19,7 @@ urlpatterns = [
     path('documents/', include("documents.urls")),
     path('metrics/dashboard/', MetricsDashboardView.as_view(), name='metrics'),
     path('finance/', include("finance.urls")),
+    path('clients/', include("clients.urls")),
 ]
 
 if settings.DEBUG:

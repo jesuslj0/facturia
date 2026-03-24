@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}Perfil del cliente - FacturIA{% endblock %}
+
+{% block styles %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/clients/client_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="fa-solid fa-house-user"></i> {{ client.name }}</h1>
+  <a href="{% url 'dashboard' %}" class="btn btn-back">
+    <i class="fa-solid fa-arrow-left"></i> Volver
+  </a>
+</div>
+
+<div class="client-layout">
+
+  <!-- Info general -->
+  <div class="client-card">
+    <h2><i class="fa-solid fa-circle-info"></i> Información del cliente</h2>
+    <div class="info-grid">
+
+      <div class="info-field">
+        <span class="info-label">Nombre</span>
+        <span class="info-value">{{ client.name }}</span>
+      </div>
+
+      <div class="info-field">
+        <span class="info-label">CIF / NIF</span>
+        {% if client.tax_id %}
+          <span class="info-value">{{ client.tax_id }}</span>
+        {% else %}
+          <span class="info-value muted">No especificado</span>
+        {% endif %}
+      </div>
+
+      <div class="info-field">
+        <span class="info-label">Estado</span>
+        {% if client.is_active %}
+          <span class="status-badge active">
+            <i class="fa-solid fa-circle-check"></i> Activo
+          </span>
+        {% else %}
+          <span class="status-badge inactive">
+            <i class="fa-solid fa-circle-xmark"></i> Inactivo
+          </span>
+        {% endif %}
+      </div>
+
+      <div class="info-field">
+        <span class="info-label">Miembro desde</span>
+        <span class="info-value">{{ client.created_at|date:"d/m/Y" }}</span>
+      </div>
+
+      <div class="info-field">
+        <span class="info-label">Color principal</span>
+        <div class="color-preview-row">
+          <div class="color-swatch" style="background-color: {{ client.primary_color }};"></div>
+          <span class="info-value" style="font-family: monospace;">{{ client.primary_color }}</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Formulario de edición -->
+  <div class="client-card">
+    <h2><i class="fa-solid fa-pen-to-square"></i> Personalización</h2>
+
+    <form method="post" enctype="multipart/form-data" id="profile-form">
+      {% csrf_token %}
+
+      <!-- Logo -->
+      <div class="form-group">
+        <label class="form-label">{{ form.logo.label }}</label>
+
+        <div class="logo-preview" id="logo-preview-container">
+          {% if client.logo %}
+            <img src="{{ client.logo.url }}" id="logo-preview-img" alt="Logo actual">
+          {% else %}
+            <div class="logo-placeholder" id="logo-placeholder">
+              <i class="fa-regular fa-image"></i>
+              <span>Sin logotipo</span>
+            </div>
+          {% endif %}
+        </div>
+
+        {{ form.logo }}
+        {% if form.logo.errors %}
+          <ul class="form-errors">
+            {% for error in form.logo.errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+
+      <!-- Color principal -->
+      <div class="form-group">
+        <label class="form-label" for="primary-color-input">{{ form.primary_color.label }}</label>
+        <div class="color-input-row">
+          {{ form.primary_color }}
+          <span class="color-hex-display" id="color-hex-label">{{ client.primary_color }}</span>
+        </div>
+        {% if form.primary_color.errors %}
+          <ul class="form-errors">
+            {% for error in form.primary_color.errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk"></i> Guardar cambios
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Usuarios -->
+  <div class="client-card client-card-full">
+    <h2><i class="fa-solid fa-users"></i> Usuarios ({{ users|length }})</h2>
+    {% if users %}
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Roles</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td>{{ user.username }}</td>
+            <td>
+              {% if user.get_full_name %}
+                {{ user.get_full_name }}
+              {% else %}
+                <span style="color: var(--muted-color);">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if user.email %}
+                {{ user.email }}
+              {% else %}
+                <span style="color: var(--muted-color);">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% for role in user.roles.all %}
+                <span class="role-tag">{{ role.name }}</span>
+              {% empty %}
+                <span style="color: var(--muted-color); font-size: 0.8rem;">Sin roles</span>
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty-state">No hay usuarios registrados para este cliente.</p>
+    {% endif %}
+  </div>
+
+  <!-- Roles -->
+  <div class="client-card client-card-full">
+    <h2><i class="fa-solid fa-shield-halved"></i> Roles ({{ roles|length }})</h2>
+    {% if roles %}
+      <div class="roles-list">
+        {% for role in roles %}
+        <div class="role-item">
+          <div class="role-item-icon">
+            <i class="fa-solid fa-key"></i>
+          </div>
+          <div class="role-item-body">
+            <span class="role-item-name">{{ role.name }}</span>
+            <span class="role-item-code">{{ role.code }}</span>
+            {% if role.description %}
+              <span class="role-item-desc">{{ role.description }}</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-state">No hay roles definidos para este cliente.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // Logo preview
+  const logoInput = document.getElementById('logo-input');
+  const previewContainer = document.getElementById('logo-preview-container');
+
+  if (logoInput) {
+    logoInput.addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        previewContainer.innerHTML = `<img src="${e.target.result}" id="logo-preview-img" alt="Logo nuevo" style="max-width:160px;max-height:100px;object-fit:contain;border-radius:6px;">`;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Color hex label
+  const colorInput = document.getElementById('primary-color-input');
+  const colorHexLabel = document.getElementById('color-hex-label');
+
+  if (colorInput && colorHexLabel) {
+    colorInput.addEventListener('input', function () {
+      colorHexLabel.textContent = this.value.toUpperCase();
+    });
+  }
+
+});
+</script>
+{% endblock %}

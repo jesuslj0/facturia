@@ -38,6 +38,7 @@
         <a href="{% url 'documents:list' %}"><i class="fa-regular fa-file-lines"></i> Documentos</a>
         <a href="{% url 'finance:movements' %}"><i class="fa-solid fa-coins"></i> Finanzas</a>
         <a href="{% url 'metrics' %}"><i class="fa-solid fa-chart-line"></i> Métricas</a>
+        <a href="{% url 'clients:detail' %}"><i class="fa-solid fa-user"></i> Perfil</a>
         <form action="{% url 'logout' %}" method="post">
           {% csrf_token %}
           <button type="submit">Salir</button>
