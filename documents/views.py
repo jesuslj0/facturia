@@ -38,10 +38,20 @@ class DocumentListView(LoginRequiredMixin, ListView):
         context["document_types"] = Document.TYPE_CHOICES
         context["companies"] = Company.objects.filter(client=self.request.user.client).order_by("name")
 
-        # 🔹 Querystring sin page
+        # Querystring sin page (preserva sort/order para paginación y exports)
         querydict = self.request.GET.copy()
         querydict.pop("page", None)
         context["querystring"] = querydict.urlencode()
+
+        # Querystring sin page/sort/order para construir links de ordenación
+        sort_dict = self.request.GET.copy()
+        sort_dict.pop("page", None)
+        sort_dict.pop("sort", None)
+        sort_dict.pop("order", None)
+        context["sort_base"] = sort_dict.urlencode()
+
+        context["sort"] = self.request.GET.get("sort", "date")
+        context["order"] = self.request.GET.get("order", "desc")
         return context
     
     
@@ -247,7 +257,7 @@ class DocumentExportView(LoginRequiredMixin, View):
         return context
     
     
-from django.db.models import Sum, Min, Max, Avg
+from django.db.models import Sum, Min, Max, Avg, Count
 class DocumentExportPreviewView(LoginRequiredMixin, ListView):
     template_name = "private/documents/document_export_preview.html"
 
@@ -281,6 +291,14 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
 
         context["documents_count"] = qs.count()
         context["providers_count"] = qs.values("company").distinct().count()
+
+        flow_counts = {
+            item["flow"]: item["cnt"]
+            for item in qs.values("flow").annotate(cnt=Count("flow"))
+        }
+        in_count = flow_counts.get("in", 0)
+        out_count = flow_counts.get("out", 0)
+        context["companies_label"] = "Clientes" if in_count > out_count else "Proveedores"
         
         context["selected_format"] = selected_format
         context["selected_ids"] = self.request.GET.getlist("ids")
@@ -301,6 +319,13 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
         summary["max_date"] = format_date(summary["max_date"], format="d MMMM y", locale="es")
         context["summary"] = summary
         context["non_exportable_count"] = self.non_exportable_count
+
+        context["sort"] = self.request.GET.get("sort", "date")
+        context["order"] = self.request.GET.get("order", "desc")
+        sort_dict = self.request.GET.copy()
+        sort_dict.pop("sort", None)
+        sort_dict.pop("order", None)
+        context["sort_base"] = sort_dict.urlencode()
 
         return context
     

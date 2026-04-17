@@ -37,7 +37,7 @@
             <span class="value">{{ summary.min_date }} – {{ summary.max_date }}</span>
         </div>
         <div class="summary-item">
-            <span class="label">Proveedores</span>
+            <span class="label">{{ companies_label }}</span>
             <span class="value">{{ providers_count }}</span>
         </div>
         <div class="summary-item">
@@ -47,7 +47,7 @@
     </div>
 </div>
 
-<form method="post" class="export-bar" action="{% url 'documents:export' %}">
+<form method="post" class="export-bar" action="{% url 'documents:export' %}?sort={{ sort }}&order={{ order }}">
     {% csrf_token %}
     <div id="selected-ids-container">
         {% for selected_id in selected_ids %}
@@ -78,11 +78,31 @@
         <thead>
           <tr>
             <th><input type="checkbox" id="select-all"></th>
-            <th>N.º Documento</th>
-            <th>Fecha</th>
-            <th>Nombre</th>
+            <th class="sortable{% if sort == 'invoice_number' %} active-sort{% endif %}">
+              <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=invoice_number&order={% if sort == 'invoice_number' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}asc{% endif %}">
+                N.º Documento
+                {% if sort == 'invoice_number' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+              </a>
+            </th>
+            <th class="sortable{% if sort == 'date' %} active-sort{% endif %}">
+              <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=date&order={% if sort == 'date' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}desc{% endif %}">
+                Fecha
+                {% if sort == 'date' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+              </a>
+            </th>
+            <th class="sortable{% if sort == 'name' %} active-sort{% endif %}">
+              <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=name&order={% if sort == 'name' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}asc{% endif %}">
+                Nombre
+                {% if sort == 'name' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+              </a>
+            </th>
             <th>Proveedor</th>
-            <th>Total (€)</th>
+            <th class="sortable{% if sort == 'total' %} active-sort{% endif %}">
+              <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=total&order={% if sort == 'total' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}desc{% endif %}">
+                Total (€)
+                {% if sort == 'total' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+              </a>
+            </th>
             <th>Estado</th>
             <th>Acción</th>
           </tr>

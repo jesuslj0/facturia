@@ -126,10 +126,31 @@
   <table class="table">
     <thead>
       <tr>
-        <th>Nombre</th>
+        <th class="sortable{% if sort == 'invoice_number' %} active-sort{% endif %}">
+          <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=invoice_number&order={% if sort == 'invoice_number' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}asc{% endif %}">
+            N.º Factura
+            {% if sort == 'invoice_number' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+          </a>
+        </th>
+        <th class="sortable{% if sort == 'name' %} active-sort{% endif %}">
+          <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=name&order={% if sort == 'name' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}asc{% endif %}">
+            Nombre
+            {% if sort == 'name' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+          </a>
+        </th>
         <th>Empresa</th>
-        <th>Total (€)</th>
-        <th>Fecha</th>
+        <th class="sortable{% if sort == 'total' %} active-sort{% endif %}">
+          <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=total&order={% if sort == 'total' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}desc{% endif %}">
+            Total (€)
+            {% if sort == 'total' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+          </a>
+        </th>
+        <th class="sortable{% if sort == 'date' %} active-sort{% endif %}">
+          <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=date&order={% if sort == 'date' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}desc{% endif %}">
+            Fecha
+            {% if sort == 'date' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+          </a>
+        </th>
         <th>Tipo</th>
         <th>Estado</th>
         <th>Revisión</th>
@@ -140,6 +161,9 @@
     <tbody>
       {% for doc in documents %}
       <tr class="clickable-row" data-href="{% url 'documents:detail' doc.id %}">
+        <!-- N.º Factura -->
+        <td>{{ doc.document_number|default:"-" }}</td>
+
         <!-- Nombre / enlace al archivo -->
         <td>
           <a href="{{ doc.file.url }}">

@@ -440,6 +440,31 @@ label[for="q"] button:hover {
   color: var(--body-fg-color);
 }
 
+/* Ordenación en cabeceras de tabla */
+.table thead th.sortable a {
+  color: #cbd5f5;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.table thead th.sortable a:hover,
+.table thead th.active-sort a {
+  color: var(--enfasis-color);
+  text-decoration: none;
+}
+
+.table thead th.sortable a .sort-icon {
+  font-size: 0.6rem;
+  opacity: 0.3;
+}
+
+.table thead th.active-sort a .sort-icon {
+  opacity: 0.9;
+}
+
 /* Paginación */
 
 .pagination-inline {
