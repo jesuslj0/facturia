@@ -131,6 +131,26 @@ def export_invoices_to_pdf(qs, *, base_url=None, inline=False,**context):
 from django.utils import timezone
 from django.db.models import Sum, Count
 
+_ROWS_PER_PDF_PAGE = 30
+
+
+def _paginate_invoices(invoices_list):
+    from decimal import Decimal
+    zero = Decimal("0")
+    pages = []
+    for i in range(0, max(len(invoices_list), 1), _ROWS_PER_PDF_PAGE):
+        chunk = invoices_list[i:i + _ROWS_PER_PDF_PAGE]
+        pages.append({
+            "invoices": chunk,
+            "subtotals": {
+                "base": sum((inv.base_amount or zero) for inv in chunk),
+                "tax": sum((inv.tax_amount or zero) for inv in chunk),
+                "total": sum((inv.total_amount or zero) for inv in chunk),
+            },
+        })
+    return pages
+
+
 def _logo_as_data_uri(client):
     if not client.logo:
         return None
@@ -147,8 +167,10 @@ def _logo_as_data_uri(client):
 
 def build_pdf_context(qs, request):
     client = request.user.client
+    invoices = list(qs)
     return {
-        "invoices": qs,
+        "invoices": invoices,
+        "pages": _paginate_invoices(invoices),
         "client": client,
         "logo_data_uri": _logo_as_data_uri(client),
         "date": timezone.now(),
@@ -157,7 +179,7 @@ def build_pdf_context(qs, request):
             tax_total=Sum("tax_amount"),
             total=Sum("total_amount"),
             count=Count("id"),
-        )
+        ),
     }
 
 from django.shortcuts import render
