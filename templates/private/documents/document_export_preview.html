@@ -7,28 +7,41 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/documents/export_preview.css' %}">
 {% endblock %}
 {% block content %}
-<h1 class="page-title">Previsualización de exportación</h1>
-<h2 class="page-subtitle">Solo facturas aprobadas  
+
+<h1 class="page-title">
+    <i class="fa-solid fa-file-export"></i>
+    Previsualización de exportación
+</h1>
+<p class="page-subtitle">
+    Solo facturas aprobadas
     {% if non_exportable_count > 0 %}
-        · {{ non_exportable_count }} documentos no cumplen los requisitos de exportación
+        <span class="non-exportable-warning">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            {{ non_exportable_count }} excluidos
+        </span>
     {% endif %}
-</h2>
-<div class="export-summary">
-    <h3>Resumen de exportación</h3>
+</p>
+
+<!-- Resumen de métricas -->
+<section class="export-summary" aria-label="Resumen de exportación">
+    <div class="export-summary__header">
+        <i class="fa-solid fa-chart-bar"></i>
+        <h3>Resumen de exportación</h3>
+    </div>
     <div class="summary-grid">
         <div class="summary-item">
             <span class="label">Documentos</span>
             <span class="value" id="documents-count">{{ documents_count }}</span>
         </div>
-        <div class="summary-item">
+        <div class="summary-item money">
             <span class="label">Total base</span>
             <span class="value">{{ summary.base_total|spanish_currency }} €</span>
         </div>
-        <div class="summary-item">
+        <div class="summary-item money">
             <span class="label">Total IVA</span>
             <span class="value">{{ summary.tax_total|spanish_currency }} €</span>
         </div>
-        <div class="summary-item">
+        <div class="summary-item money kpi">
             <span class="label">Total acumulado</span>
             <span class="value">{{ summary.grand_total|spanish_currency }} €</span>
         </div>
@@ -41,12 +54,13 @@
             <span class="value">{{ providers_count }}</span>
         </div>
         <div class="summary-item">
-            <span class="label">Confianza Media OCR</span>
+            <span class="label">Confianza media OCR</span>
             <span class="value">{{ summary.avg_confidence|to_percent }} %</span>
         </div>
     </div>
-</div>
+</section>
 
+<!-- Barra de selección de formato y confirmación -->
 <form method="post" class="export-bar" action="{% url 'documents:export' %}?sort={{ sort }}&order={{ order }}">
     {% csrf_token %}
     <div id="selected-ids-container">
@@ -54,170 +68,209 @@
             <input type="hidden" name="ids" value="{{ selected_id }}">
         {% endfor %}
     </div>
-    <label for="format">Formato:</label>
+    <label class="export-bar__label" for="format">Formato de exportación</label>
     <select name="format" id="format">
         <option value="xlsx" {% if selected_format == "xlsx" %}selected{% endif %}>Excel (XLSX)</option>
         <option value="csv" {% if selected_format == "csv" %}selected{% endif %}>CSV</option>
         <option value="pdf" {% if selected_format == "pdf" %}selected{% endif %}>PDF</option>
     </select>
-    <button type="submit" class="btn btn-primary">Confirmar exportación <i class="fa-solid fa-download"></i></button>
+    <span class="export-bar__divider" aria-hidden="true"></span>
+    <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-download"></i>
+        Confirmar exportación
+    </button>
 </form>
 
-{% if selected_format == "pdf" %}
-    <h3>Vista previa PDF</h3>
+<!-- Vista previa PDF (se muestra solo al seleccionar PDF) -->
+<div class="pdf-preview-wrapper is-hidden" id="pdf-preview-section">
+    <div class="pdf-preview-wrapper__header">
+        <i class="fa-solid fa-file-pdf"></i>
+        <span>Vista previa del PDF</span>
+    </div>
     <iframe
         class="pdf-preview"
-        style="width:100%; height:600px; border:1px solid #ccc;"
-        src="{% url 'documents:pdf_preview' %}?format={{ selected_format }}{% for id in selected_ids %}&ids={{ id }}{% endfor %}">
+        id="pdf-preview-iframe"
+        title="Vista previa del documento PDF"
+        src="">
     </iframe>
-{% endif %}
+</div>
 
+<!-- Tabla de documentos incluidos en la exportación -->
 <div class="table-container">
     <div class="table-wrapper">
       <table class="table">
         <thead>
           <tr>
-            <th><input type="checkbox" id="select-all"></th>
+            <th>
+                <input
+                    type="checkbox"
+                    id="select-all"
+                    aria-label="Seleccionar todos los documentos">
+            </th>
             <th class="sortable{% if sort == 'invoice_number' %} active-sort{% endif %}">
               <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=invoice_number&order={% if sort == 'invoice_number' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}asc{% endif %}">
                 N.º Documento
-                {% if sort == 'invoice_number' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+                {% if sort == 'invoice_number' %}
+                    {% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}
+                {% else %}
+                    <i class="fa-solid fa-sort sort-icon"></i>
+                {% endif %}
               </a>
             </th>
             <th class="sortable{% if sort == 'date' %} active-sort{% endif %}">
               <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=date&order={% if sort == 'date' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}desc{% endif %}">
                 Fecha
-                {% if sort == 'date' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+                {% if sort == 'date' %}
+                    {% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}
+                {% else %}
+                    <i class="fa-solid fa-sort sort-icon"></i>
+                {% endif %}
               </a>
             </th>
             <th class="sortable{% if sort == 'name' %} active-sort{% endif %}">
               <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=name&order={% if sort == 'name' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}asc{% endif %}">
                 Nombre
-                {% if sort == 'name' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+                {% if sort == 'name' %}
+                    {% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}
+                {% else %}
+                    <i class="fa-solid fa-sort sort-icon"></i>
+                {% endif %}
               </a>
             </th>
             <th>Proveedor</th>
             <th class="sortable{% if sort == 'total' %} active-sort{% endif %}">
               <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=total&order={% if sort == 'total' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}desc{% endif %}">
                 Total (€)
-                {% if sort == 'total' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+                {% if sort == 'total' %}
+                    {% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}
+                {% else %}
+                    <i class="fa-solid fa-sort sort-icon"></i>
+                {% endif %}
               </a>
             </th>
             <th>Estado</th>
-            <th>Acción</th>
+            <th>Ver</th>
           </tr>
         </thead>
         <tbody>
           {% for doc in object_list %}
           <tr>
-            <td><input type="checkbox" name="ids" value="{{ doc.id }}" class="row-checkbox" checked></td>
+            <td>
+                <input
+                    type="checkbox"
+                    name="ids"
+                    value="{{ doc.id }}"
+                    class="row-checkbox"
+                    aria-label="Seleccionar documento {{ doc.document_number }}"
+                    checked>
+            </td>
             <td>{{ doc.document_number }}</td>
             <td>{{ doc.issue_date|date:"d/m/Y" }}</td>
             <td><a href="{{ doc.file.url }}">{{ doc.original_name }}</a></td>
             <td>{{ doc.company.name|default:"-" }}</td>
             <td class="amount">{% if doc.total_amount %}{{ doc.total_amount|floatformat:2 }}{% else %}-{% endif %}</td>
             <td><span class="status {{ doc.status }}">{{ doc.get_status_display }}</span></td>
-            <td><a class="btn-action" href="{% url 'documents:detail' doc.id %}">Ver</a></td>
+            <td>
+                <a class="btn-action" href="{% url 'documents:detail' doc.id %}" aria-label="Ver detalle del documento {{ doc.document_number }}">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </a>
+            </td>
           </tr>
           {% empty %}
-          <tr><td colspan="8">No hay documentos</td></tr>
+          <tr>
+            <td colspan="8" class="table__empty">
+                No hay documentos que cumplan los requisitos de exportación.
+            </td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
 {{ block.super }}
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     const formatSelect = document.getElementById("format");
-    const iframe = document.querySelector("iframe.pdf-preview");
+    const pdfSection  = document.getElementById("pdf-preview-section");
+    const iframe      = document.getElementById("pdf-preview-iframe");
+    const selectAll   = document.getElementById("select-all");
+    const checkboxes  = document.querySelectorAll(".row-checkbox");
+    const summaryDocsCount = document.getElementById("documents-count");
+    const idsContainer     = document.getElementById("selected-ids-container");
 
+    /* ---- Actualiza el iframe PDF y la URL del navegador ---- */
     function updatePDFPreview() {
-
         const params = new URLSearchParams(window.location.search);
         const format = formatSelect.value;
 
         params.delete("ids");
-
-        const ids = document.querySelectorAll("input[name='ids']");
-        ids.forEach(input => {
-            if (input.checked) {
-                params.append("ids", input.value);
-            }
+        checkboxes.forEach(function (cb) {
+            if (cb.checked) params.append("ids", cb.value);
         });
-
         params.set("format", format);
 
-        // Actualizar URL del navegador sin recargar
-        const newUrl = window.location.pathname + '?' + params.toString();
-        window.history.replaceState(null, "", newUrl);
+        // Actualiza URL sin recargar
+        window.history.replaceState(null, "", window.location.pathname + "?" + params.toString());
 
-        if (iframe) {
-            iframe.src = "{% url 'documents:pdf_preview' %}" + '?' + params.toString();
-            iframe.style.display = format === "pdf" ? "block" : "none";
+        // Muestra u oculta la sección del PDF mediante clase CSS
+        if (pdfSection) {
+            if (format === "pdf") {
+                pdfSection.classList.remove("is-hidden");
+                if (iframe) {
+                    iframe.src = "{% url 'documents:pdf_preview' %}?" + params.toString();
+                }
+            } else {
+                pdfSection.classList.add("is-hidden");
+                if (iframe) iframe.src = "";
+            }
         }
     }
 
-    // Disparar al cambiar el select
-    formatSelect.addEventListener("change", updatePDFPreview);
-
-    // Inicializar al cargar la página
-    updatePDFPreview();
-
-    const selectedFormat = "{{ selected_format }}";
-    if (selectedFormat === "pdf") {
-        const formatSelect = document.getElementById("format");
-        formatSelect.value = "pdf"; 
-        updatePDFPreview();           
-    }
-    const selectAll = document.getElementById("select-all");
-    const checkboxes = document.querySelectorAll(".row-checkbox");
-    const summaryDocsCount = document.getElementById("documents-count");
-    const idsContainer = document.getElementById("selected-ids-container"); // contenedor de inputs ocultos
-    
+    /* ---- Sincroniza los inputs ocultos del form con los checkboxes ---- */
     function updateSelectedIDs() {
-        // Limpiar los inputs antiguos
         idsContainer.innerHTML = "";
-    
-        // Crear inputs ocultos para cada checkbox seleccionado
-        checkboxes.forEach(cb => {
+        checkboxes.forEach(function (cb) {
             if (cb.checked) {
-                const input = document.createElement("input");
-                input.type = "hidden";
-                input.name = "ids";
+                var input = document.createElement("input");
+                input.type  = "hidden";
+                input.name  = "ids";
                 input.value = cb.value;
                 idsContainer.appendChild(input);
             }
         });
-    
-        // Actualiza la URL y el iframe según el formato
         updatePDFPreview();
     }
-    
-    // Inicialización de "select all"
+
+    /* ---- Select-all ---- */
     if (selectAll) {
-        selectAll.checked = [...checkboxes].every(c => c.checked);
-        selectAll.addEventListener("change", () => {
-            checkboxes.forEach(cb => cb.checked = selectAll.checked);
-            summaryDocsCount.textContent = [...checkboxes].filter(c => c.checked).length;
+        selectAll.checked = Array.from(checkboxes).every(function (c) { return c.checked; });
+        selectAll.addEventListener("change", function () {
+            checkboxes.forEach(function (cb) { cb.checked = selectAll.checked; });
+            summaryDocsCount.textContent = Array.from(checkboxes).filter(function (c) { return c.checked; }).length;
             updateSelectedIDs();
         });
     }
-    
-    // Cada checkbox individual
-    checkboxes.forEach(cb => {
-        cb.addEventListener("change", () => {
+
+    /* ---- Checkboxes individuales ---- */
+    checkboxes.forEach(function (cb) {
+        cb.addEventListener("change", function () {
             if (selectAll) {
-                selectAll.checked = [...checkboxes].every(c => c.checked);
+                selectAll.checked = Array.from(checkboxes).every(function (c) { return c.checked; });
             }
-            summaryDocsCount.textContent = [...checkboxes].filter(c => c.checked).length;
+            summaryDocsCount.textContent = Array.from(checkboxes).filter(function (c) { return c.checked; }).length;
             updateSelectedIDs();
         });
     });
-});
 
+    /* ---- Cambio de formato ---- */
+    formatSelect.addEventListener("change", updatePDFPreview);
+
+    /* ---- Inicialización ---- */
+    updatePDFPreview();
+});
 </script>
 {% endblock %}
