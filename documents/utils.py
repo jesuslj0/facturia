@@ -131,10 +131,26 @@ def export_invoices_to_pdf(qs, *, base_url=None, inline=False,**context):
 from django.utils import timezone
 from django.db.models import Sum, Count
 
+def _logo_as_data_uri(client):
+    if not client.logo:
+        return None
+    try:
+        import base64, mimetypes
+        name = client.logo.name.lower()
+        mime = mimetypes.guess_type(name)[0] or "image/png"
+        with client.logo.open("rb") as f:
+            b64 = base64.b64encode(f.read()).decode()
+        return f"data:{mime};base64,{b64}"
+    except Exception:
+        return None
+
+
 def build_pdf_context(qs, request):
+    client = request.user.client
     return {
         "invoices": qs,
-        "client": request.user.client,
+        "client": client,
+        "logo_data_uri": _logo_as_data_uri(client),
         "date": timezone.now(),
         "totals": qs.aggregate(
             base_total=Sum("base_amount"),

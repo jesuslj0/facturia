@@ -128,8 +128,8 @@
 <body style="--primary: {{ client.primary_color|default:'#0a7bb0' }}">
     <div class="pdf-header" style="color: {{ client.primary_color|default:'#0a7bb0' }}">
         <div class="brand">
-            {% if client.logo %}
-                <img src="{{ client.logo.url }}" alt="Logo" class="logo">
+            {% if logo_data_uri %}
+                <img src="{{ logo_data_uri }}" alt="Logo" class="logo">
             {% endif %}
             <span class="client-name">{{ client.name }}</span>
         </div>
