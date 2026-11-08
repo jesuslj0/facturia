@@ -1,0 +1,44 @@
+# Producción: Django (Gunicorn + WhiteNoise) + PostgreSQL
+#
+# Uso:
+#   cp .env.prod.example .env.prod   # y rellenar valores reales
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Crear superusuario:
+#   docker compose -f docker-compose.prod.yml exec web python manage.py createsuperuser
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: .env.prod  # usa POSTGRES_DB / POSTGRES_USER / POSTGRES_PASSWORD
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Sin "ports": la BD solo es accesible desde la red interna de compose
+
+  web:
+    build: .
+    image: billing_ai:latest
+    restart: unless-stopped
+    env_file: .env.prod
+    environment:
+      DJANGO_SETTINGS_MODULE: billing_ai.settings.production
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - media_data:/app/media
+    ports:
+      # Si hay un Nginx/Caddy en el host haciendo HTTPS, usar "127.0.0.1:8000:8000"
+      - "8000:8000"
+
+volumes:
+  postgres_data:
+  media_data:

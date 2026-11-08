@@ -1,0 +1,26 @@
+.git
+.gitignore
+.claude
+venv
+.venv
+env
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.mypy_cache
+
+# Datos locales: no deben acabar dentro de la imagen
+db.sqlite3
+*.sqlite3
+media
+staticfiles
+
+# Secretos
+.env
+.env.*
+!.env.prod.example
+
+# Compose / docs
+docker-compose*.yml
+*.md
