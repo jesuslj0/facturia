@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.exceptions import ValidationError
 
 # Create your models here.
@@ -26,13 +26,28 @@ class Role(models.Model):
     def __str__(self):
         return f"{self.client.name} - {self.name}"
     
+class CustomUserManager(UserManager):
+    def _create_user_object(self, username, email, password, **extra_fields):
+        # createsuperuser pasa el id del Client (no la instancia) para las FK
+        # de REQUIRED_FIELDS; lo convertimos a client_id.
+        client = extra_fields.get("client")
+        if client is not None and not isinstance(client, Client):
+            extra_fields["client_id"] = extra_fields.pop("client")
+        return super()._create_user_object(username, email, password, **extra_fields)
+
+
 class CustomUser(AbstractUser):
+    objects = CustomUserManager()
+
     client = models.ForeignKey(
         Client, 
         on_delete=models.CASCADE, 
         related_name="users"
     )
     roles = models.ManyToManyField(Role, blank=True)
+
+    # createsuperuser pedirá el id del Client (FK obligatoria)
+    REQUIRED_FIELDS = ["email", "client"]
 
     def has_role(self, code):
         return self.roles.filter(code=code).exists()
