@@ -72,6 +72,8 @@ class Document(models.Model):
         ("delivery", "Albarán"),
         ("corrected_invoice", "Factura rectificativa"),
         ("delivery_credit_note", "Abono de albarán"),
+        ("receipt", "Ticket"),
+        ("quote", "Presupuesto"),
     ]
 
     TOTAL_SOURCE_CHOICES = [

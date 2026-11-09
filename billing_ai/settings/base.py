@@ -170,6 +170,16 @@ STORAGES = {
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
 
+# --- Extracción con Claude --------------------------------------------------
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+EXTRACTION_MODEL = os.getenv("EXTRACTION_MODEL", "claude-haiku-5-5")
+EXTRACTION_FALLBACK_MODEL = os.getenv("EXTRACTION_FALLBACK_MODEL", "claude-sonnet-5-5")
+EXTRACTION_EFFORT = os.getenv("EXTRACTION_EFFORT", "low")
+EXTRACTION_FALLBACK_EFFORT = os.getenv("EXTRACTION_FALLBACK_EFFORT", "medium")
+EXTRACTION_MAX_TOKENS = int(os.getenv("EXTRACTION_MAX_TOKENS", "8192"))
+EXTRACTION_TIMEOUT_SECONDS = float(os.getenv("EXTRACTION_TIMEOUT_SECONDS", "120"))
+EXTRACTION_FALLBACK_CONFIDENCE = float(os.getenv("EXTRACTION_FALLBACK_CONFIDENCE", "0.80"))
+
 # Límites de subida
 UPLOAD_MAX_FILE_MB = int(os.getenv("UPLOAD_MAX_FILE_MB", "20"))
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024

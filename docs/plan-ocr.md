@@ -198,7 +198,17 @@ Cubierto: auth por API key, reglas `get_review_level/get_status`, ingesta (alta,
 | Hito | Estado | Notas |
 |---|---|---|
 | H0 Hardening + R2 | Hecho (`681232a`) | 218 tests |
-| H1 Modelos | Hecho | Ver desviaciones abajo. 265 tests; cobertura del código nuevo ≈ 91 % |
+| H1 Modelos | Hecho (`7bb5d64`) | Ver desviaciones abajo. 265 tests; cobertura del código nuevo ≈ 91 % |
+
+| H2 Extracción | Hecho (API mockeada; falta probar con clave real) | 335 tests; cobertura del paquete ≈ 98 % |
+
+**H2 — desviaciones y decisiones:**
+- Salida estructurada con esquema Pydantic (`messages.parse`) en lugar de *tool use*: en los modelos 5.5 el `tool_choice` forzado devuelve 400.
+- Los importes salen como texto y se convierten a `Decimal` en `normalize.py` (nunca `float`). El flujo `in`/`out` se calcula comparando NIF con el del cliente, no lo decide el modelo.
+- Se añaden los tipos `receipt` (ticket) y `quote` (presupuesto) a `Document.document_type` (migración `0014`).
+- Respaldo a Sonnet si hay respuesta inválida/rechazo, confianza global < 0,80 o el validador (H5) detecta problemas. Los errores reintentables (429, timeout, caída) no activan el respaldo: se registran y se relanzan para el reintento con backoff de H4.
+- `run_extraction` registra cada intento en `ExtractionRun` (tokens, coste estimado, error) pero no modifica el `Document`; aplicar el resultado es trabajo de H4/H5.
+- Test contra la API real: `pytest -m live_api -s` (excluido por defecto).
 
 **H1 — desviaciones respecto al diseño:**
 - El trimestre es una propiedad calculada (`Document.quarter`), no una columna, para no duplicar dato derivado de `issue_date`.
