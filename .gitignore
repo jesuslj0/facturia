@@ -57,3 +57,7 @@ wheels
 .claude/agent-memory/
 .claude/settings.local.json
 
+
+# Cobertura
+.coverage
+htmlcov/

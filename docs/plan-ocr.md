@@ -190,3 +190,19 @@ Cubierto: auth por API key, reglas `get_review_level/get_status`, ingesta (alta,
 - **Coste:** sin estimar; se medirá en la evaluación.
 
 **Detenido a la espera de tu aprobación para empezar H0. No se implementará nada hasta entonces.**
+
+---
+
+## Estado de implementación
+
+| Hito | Estado | Notas |
+|---|---|---|
+| H0 Hardening + R2 | Hecho (`681232a`) | 218 tests |
+| H1 Modelos | Hecho | Ver desviaciones abajo. 265 tests; cobertura del código nuevo ≈ 91 % |
+
+**H1 — desviaciones respecto al diseño:**
+- El trimestre es una propiedad calculada (`Document.quarter`), no una columna, para no duplicar dato derivado de `issue_date`.
+- `Folder` es plana (sin carpetas anidadas) por ahora.
+- `DocumentFile` existe solo para el documento original; las rectificaciones reutilizan su archivo (`unique(client, sha256)`).
+- El IRPF/recargo viven en `TaxBreakdown`; la regla `total = base + IVA + recargo − retención` está en `documents/services/taxes.py` (aún no se aplica a la ingesta: llega con H5).
+- Migraciones: `0012_h1_models` (aditiva) y `0013` (NIF `""` → NULL). Backfill: `python manage.py backfill_h1 [--dry-run]`.
