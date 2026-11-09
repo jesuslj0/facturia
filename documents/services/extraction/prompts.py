@@ -1,7 +1,7 @@
 """Prompts de extracción. Subir PROMPT_VERSION al cambiar cualquier texto."""
 from .base import ExtractionInput
 
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"
 
 # Texto estable (candidato a prompt caching): no incluir datos variables aquí.
 SYSTEM_PROMPT = """\
@@ -14,7 +14,10 @@ Reglas:
    (factura rectificativa o abono), receipt (ticket o recibo simplificado),
    quote (presupuesto o proforma), delivery_note (albarán) u other.
 2. `issuer` es quien emite el documento; `recipient`, a quien se dirige.
-   Copia el NIF/CIF/NIE tal y como aparece (sin inventar dígitos).
+   Copia el NIF/CIF/NIE tal y como aparece, incluido el prefijo de país si lo
+   lleva (p. ej. "ESB12345678"). Búscalo en cabecera, pie y datos fiscales; si
+   está en el documento, extráelo siempre: no lo dejes en null por su formato.
+   No inventes dígitos.
 3. Importes como texto con punto decimal y sin separador de miles ("1234.50").
    Los importes que restan (retenciones/IRPF) van SIEMPRE en positivo, con
    `kind` = "withholding". IVA: `kind` = "vat"; recargo de equivalencia:

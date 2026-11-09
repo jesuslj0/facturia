@@ -57,26 +57,34 @@ class TestPrivateFiles:
         from billing_ai.storage import document_upload_to
 
         content = b"%PDF-1.4 contenido determinista"
-        inst = type("I", (), {})()
-        inst.client_id = client_entity.pk
-        inst.file = SimpleUploadedFile("Factura Cliente.PDF", content)
-        key = document_upload_to(inst, "Factura Cliente.PDF")
+        doc = apps.get_model("documents", "Document")(client=client_entity)
+        doc.file = SimpleUploadedFile("Factura Cliente.PDF", content)  # asignado, sin guardar
+        key = document_upload_to(doc, "Factura Cliente.PDF")
         digest = hashlib.sha256(content).hexdigest()
         assert key.startswith(f"{client_entity.pk}/documents/")
         assert key.endswith(f"/{digest}.pdf")
-        assert inst.file.read() == content  # puntero restaurado
+        assert doc.file.file.read() == content  # puntero restaurado
 
     def test_same_content_same_key_different_content_different_key(self, client_entity):
         from billing_ai.storage import document_upload_to
+        Document = apps.get_model("documents", "Document")
 
         def key(content):
-            inst = type("I", (), {})()
-            inst.client_id = client_entity.pk
-            inst.file = SimpleUploadedFile("a.pdf", content)
-            return document_upload_to(inst, "a.pdf")
+            doc = Document(client=client_entity)
+            doc.file = SimpleUploadedFile("a.pdf", content)
+            return document_upload_to(doc, "a.pdf")
 
         assert key(b"%PDF-1 A") == key(b"%PDF-1 A")
         assert key(b"%PDF-1 A") != key(b"%PDF-1 B")
+
+    def test_saved_file_is_never_hashed_as_new_content(self, document):
+        """Un archivo ya guardado no debe usarse para nombrar otro (sería el contenido antiguo)."""
+        from billing_ai.storage import document_upload_to
+        key = document_upload_to(document, "x.pdf")
+        import hashlib
+        with document.file.open("rb") as fh:
+            old_hash = hashlib.sha256(fh.read()).hexdigest()
+        assert old_hash not in key
 
 
 @pytest.mark.django_db
@@ -186,3 +194,59 @@ class TestSyncMedia:
         assert default_storage.exists("documents/a.pdf")
         call_command("sync_media_to_storage")  # segunda vez: no duplica
         assert not default_storage.exists("documents/a_1.pdf")
+
+
+@pytest.mark.django_db
+class TestFieldFileSaveHashing:
+    """`FieldFile.save(nombre, contenido)`: Django no pasa el contenido a upload_to."""
+
+    def _sha(self, data):
+        import hashlib
+        return hashlib.sha256(data).hexdigest()
+
+    def test_save_on_empty_field_uses_content_hash(self, client_entity):
+        from django.core.files.base import ContentFile
+        Document = apps.get_model("documents", "Document")
+        doc = Document(client=client_entity)
+        content = b"%PDF-1.4 subido con save()"
+        doc.file.save("Mi Factura.PDF", ContentFile(content), save=False)
+        assert doc.file.name.startswith(f"{client_entity.pk}/documents/")
+        assert doc.file.name.endswith(f"/{self._sha(content)}.pdf")
+        assert default_storage_read(doc.file.name) == content
+
+    def test_save_on_field_with_existing_file_does_not_hash_the_old_one(self, document, client_entity):
+        from django.core.files.base import ContentFile
+        old_name = document.file.name
+        new = b"%PDF-1.4 contenido NUEVO"
+        document.file.save("otra.pdf", ContentFile(new), save=False)
+        assert document.file.name != old_name
+        assert document.file.name.endswith(f"/{self._sha(new)}.pdf")
+
+    def test_pending_hash_does_not_leak_between_saves(self, client_entity):
+        from django.core.files.base import ContentFile
+        Document = apps.get_model("documents", "Document")
+        doc = Document(client=client_entity)
+        doc.file.save("a.pdf", ContentFile(b"%PDF-1.4 A"), save=False)
+        assert doc.__dict__["_pending_upload_sha256"] == {}
+
+    def test_logo_and_receipt_fields_also_hash(self, client_entity):
+        import io
+        from django.core.files.base import ContentFile
+        from PIL import Image
+        buf = io.BytesIO(); Image.new("RGB", (4, 4), "red").save(buf, "PNG")
+        client_entity.logo.save("logo.png", ContentFile(buf.getvalue()), save=False)
+        assert client_entity.logo.name.endswith(f"/{self._sha(buf.getvalue())}.png")
+        assert f"{client_entity.pk}/logos/" in client_entity.logo.name
+
+        from finance.models import FinancialMovement
+        m = FinancialMovement()
+        m.client = client_entity
+        m.receipt.save("r.pdf", ContentFile(b"%PDF-1.4 recibo"), save=False)
+        assert m.receipt.name.endswith(f"/{self._sha(b'%PDF-1.4 recibo')}.pdf")
+        assert f"{client_entity.pk}/receipts/" in m.receipt.name
+
+
+def default_storage_read(name):
+    from django.core.files.storage import default_storage
+    with default_storage.open(name, "rb") as fh:
+        return fh.read()

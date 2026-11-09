@@ -5,6 +5,7 @@ import pytest
 from documents.services.extraction import (
     InvalidResponseError, ProviderTimeoutError, RateLimitedError, RefusedError, run_extraction,
 )
+from documents.services.extraction.prompts import PROMPT_VERSION
 from documents.tests import factories as f
 from documents.tests.fakes import FakeExtractor, make_result
 
@@ -36,7 +37,7 @@ def test_success_records_run_with_tokens_cost_and_raw(doc):
     assert (r.input_tokens, r.output_tokens) == (1000, 200)
     assert r.cost_usd == D("0.000200") and r.confidence == D("0.9500")
     assert r.raw_response["parsed"]["document_number"] == "F-001" and r.raw_response["request_id"] == "req_fake"
-    assert r.prompt_version == "v1" and r.started_at and r.finished_at
+    assert r.prompt_version == PROMPT_VERSION and r.started_at and r.finished_at
 
 
 def test_client_context_is_sent_to_extractor(doc):

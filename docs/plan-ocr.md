@@ -206,6 +206,8 @@ Cubierto: auth por API key, reglas `get_review_level/get_status`, ingesta (alta,
 
 | H4 Cola | Hecho | Celery + Redis; `documents/tasks.py`, `documents/services/{processing,apply}.py`; Redis y worker en ambos compose |
 
+**Prueba de extremo a extremo (dev, API real, 2026-11-09):** 2 documentos de ejemplo subidos a R2 → cola (Redis + worker) → Haiku 5.5. Importes, IVA, líneas e IBAN correctos; coste 0,04–0,11 céntimos/documento; caché de prompt activa (2 891 tokens leídos). Hallazgos: (1) Haiku dejaba `tax_id` en null cuando el NIF llevaba prefijo `ES` → prompt v2 lo corrige (flujo `in` y tercero correcto); (2) bug en la clave por hash con `FieldFile.save()` → corregido con campos `Hashed*Field`. Con flujo desconocido la empresa se crea sin rol (ni proveedor ni cliente).
+
 **H4 — decisiones:**
 - Flujo: `uploaded → queued → processing → processed` (o `failed`). `enqueue_processing` encola al confirmarse la transacción (`on_commit`).
 - **Idempotencia:** `claim_document` es un único UPDATE condicional; solo procesa documentos `pending` y no archivados. Un worker caído se detecta por `processing_started_at` (> `EXTRACTION_STALE_MINUTES`, 15) y el documento se reclama de nuevo.

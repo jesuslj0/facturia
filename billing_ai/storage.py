@@ -3,6 +3,8 @@ import hashlib
 import os
 import uuid
 
+from django.db import models
+from django.db.models.fields.files import FieldFile, ImageFieldFile
 from django.http import FileResponse, Http404
 from django.utils import timezone
 
@@ -20,6 +22,27 @@ def sha256_of(uploaded) -> str | None:
         return None
 
 
+def _content_hash(instance, field_name: str) -> str | None:
+    """SHA-256 del archivo que se está guardando, o None si no se puede saber.
+
+    Dos casos (Django llama a `upload_to` sin pasar el contenido):
+      1. `FieldFile.save(nombre, contenido)`: lo captura `HashedFieldFile.save`.
+      2. Archivo asignado y aún no guardado (constructor, formularios, API):
+         se lee del propio campo (`_committed` es False).
+    Un archivo ya guardado NUNCA se usa: sería el contenido antiguo.
+    """
+    pending = getattr(instance, "_pending_upload_sha256", {})
+    if field_name in pending:
+        return pending[field_name]
+    field_file = getattr(instance, field_name, None)
+    if field_file is not None and getattr(field_file, "_committed", True) is False:
+        try:
+            return sha256_of(field_file.file)
+        except Exception:
+            return None
+    return None
+
+
 def _tenant_path(kind: str, instance, filename: str, field_name: str) -> str:
     """`<client_id>/<kind>/<AAAA>/<MM>/<sha256><ext>`.
 
@@ -29,9 +52,34 @@ def _tenant_path(kind: str, instance, filename: str, field_name: str) -> str:
     ext = os.path.splitext(filename)[1].lower()[:10]
     now = timezone.now()
     client_id = getattr(instance, "client_id", None) or getattr(instance, "pk", None) or "unassigned"
-    field_file = getattr(instance, field_name, None)
-    name = sha256_of(field_file.file) if field_file is not None and hasattr(field_file, "file") else None
+    name = _content_hash(instance, field_name)
     return f"{client_id}/{kind}/{now:%Y}/{now:%m}/{name or uuid.uuid4().hex}{ext}"
+
+
+class _HashingSaveMixin:
+    def save(self, name, content, save=True):
+        pending = self.instance.__dict__.setdefault("_pending_upload_sha256", {})
+        pending[self.field.attname] = sha256_of(content)
+        try:
+            return super().save(name, content, save=save)
+        finally:
+            pending.pop(self.field.attname, None)
+
+
+class HashedFieldFile(_HashingSaveMixin, FieldFile):
+    pass
+
+
+class HashedImageFieldFile(_HashingSaveMixin, ImageFieldFile):
+    pass
+
+
+class HashedFileField(models.FileField):
+    attr_class = HashedFieldFile
+
+
+class HashedImageField(models.ImageField):
+    attr_class = HashedImageFieldFile
 
 
 def document_upload_to(instance, filename):
