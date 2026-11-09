@@ -14,7 +14,7 @@ from documents.services.extraction.prompts import PROMPT_VERSION
 from documents.services.extraction.schemas import ExtractionResult
 from documents.tests.fakes import FakeAnthropic, fake_response, make_result
 
-PDF = ExtractionInput(content=b"%PDF-1.4 x", mime_type="application/pdf", client_name="Mi Empresa", client_tax_id="A87654321")
+PDF = ExtractionInput(content=b"%PDF-1.4 x", mime_type="application/pdf", client_name="Mi Empresa", client_tax_id="A87654323")
 
 
 def _http_error(cls, status, headers=None):
@@ -36,11 +36,11 @@ class TestRequestShape:
         assert call["output_config"] == {"effort": "low"}
         assert call["system"][0]["cache_control"] == {"type": "ephemeral"}
         # nada variable (NIF del cliente) en el system cacheado
-        assert "A87654321" not in call["system"][0]["text"]
+        assert "A87654323" not in call["system"][0]["text"]
         content = call["messages"][0]["content"]
         assert content[0]["type"] == "document" and content[0]["source"]["media_type"] == "application/pdf"
         assert base64.b64decode(content[0]["source"]["data"]) == PDF.content
-        assert content[1]["type"] == "text" and "A87654321" in content[1]["text"]
+        assert content[1]["type"] == "text" and "A87654323" in content[1]["text"]
         assert out.prompt_version == PROMPT_VERSION
 
     def test_image_block_and_no_forbidden_params(self):

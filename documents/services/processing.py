@@ -15,6 +15,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from documents.models import Document, DocumentAuditLog, ExtractionRun
+from documents.services import validation
 from documents.services.apply import apply_extraction
 from documents.services.extraction import (
     ExtractionError, RateLimitedError, build_extractors, run_extraction,
@@ -82,6 +83,8 @@ def run_processing(document_id, *, extractor=None, fallback=None, validator=None
         _fail(doc, exc.code, str(exc))
         return "failed"
 
+    if validator is None:
+        validator = fallback_validator(doc)
     try:
         outcome = run_extraction(
             doc, pre.content, pre.mime_type, extractor=extractor, fallback=fallback, validator=validator,
@@ -112,6 +115,15 @@ def run_processing(document_id, *, extractor=None, fallback=None, validator=None
         _fail(doc, "apply_failed", f"{type(exc).__name__}")
         return "failed"
     return "processed"
+
+
+def fallback_validator(doc):
+    """Incidencias que otro modelo podría resolver: si las hay, se prueba el respaldo."""
+    def check(normalized):
+        return validation.fallback_problems(
+            validation.validate(normalized, client=doc.client, document=doc)
+        )
+    return check
 
 
 def mark_failed_after_retries(document_id, exc: ExtractionError) -> None:

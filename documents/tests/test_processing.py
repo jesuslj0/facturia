@@ -31,8 +31,8 @@ def pdf(pages=1):
 
 @pytest.fixture
 def client_a():
-    # el NIF del destinatario de make_result() es A87654321 → gasto (out)
-    return f.ClientFactory(tax_id="A87654321")
+    # el NIF del destinatario de make_result() es A87654323 → gasto (out)
+    return f.ClientFactory(tax_id="A87654323")
 
 
 def new_doc(client, status="uploaded", data=None, **kw):
@@ -114,7 +114,7 @@ class TestRunProcessing:
         assert (d.document_type, d.document_number, str(d.issue_date)) == ("invoice", "F-001", "2026-03-15")
         assert (d.base_amount, d.tax_amount, d.tax_percentage, d.total_amount) == (D("100.00"), D("21.00"), D("21"), D("121.00"))
         assert (d.flow, d.flow_source, d.total_source, d.currency, d.iban) == ("out", "auto", "explicit", "EUR", "ES9121000418450200051332")
-        assert d.company.name == "Proveedor SL" and d.company.tax_id == "B12345678" and d.company.is_provider
+        assert d.company.name == "Proveedor SL" and d.company.tax_id == "B12345674" and d.company.is_provider
         assert d.confidence["confianza_extraccion"] == 0.95 and d.confidence_global == D("0.9500")
         assert d.review_level == "recommended"  # nunca "auto" hasta H5
         t = d.tax_lines.get(); assert (t.kind, t.rate, t.amount) == ("vat", D("21"), D("21.00"))
@@ -125,11 +125,11 @@ class TestRunProcessing:
         assert d.extraction_runs.get().status == "succeeded"
 
     def test_income_invoice_creates_customer(self):
-        c = f.ClientFactory(tax_id="B12345678")  # el cliente es el emisor
+        c = f.ClientFactory(tax_id="B12345674")  # el cliente es el emisor
         d = new_doc(c)
         assert run(d) == "processed"
         d.refresh_from_db()
-        assert d.flow == "in" and d.company.is_customer and d.company.tax_id == "A87654321"
+        assert d.flow == "in" and d.company.is_customer and d.company.tax_id == "A87654323"
 
     @pytest.mark.parametrize("over", [
         dict(total_amount=None), dict(issue_date=None), dict(document_type="other"),
@@ -154,7 +154,7 @@ class TestRunProcessing:
         assert d.company is None and d.processing_status == "processed"
 
     def test_reuses_existing_company_by_tax_id(self, client_a):
-        existing = f.CompanyFactory(client=client_a, tax_id="B12345678", name="Nombre antiguo", is_provider=False)
+        existing = f.CompanyFactory(client=client_a, tax_id="B12345674", name="Nombre antiguo", is_provider=False)
         d = new_doc(client_a)
         run(d)
         d.refresh_from_db(); existing.refresh_from_db()
@@ -307,3 +307,90 @@ def test_enqueue_command_sync(client_a):
     with patch("documents.services.processing.build_extractors", return_value=(FakeExtractor("m"), None)):
         call_command("enqueue_extraction", "--sync")
     d.refresh_from_db(); assert d.processing_status == "processed"
+
+
+class TestValidationIntegration:
+    """Validación determinista + política de revisión dentro del procesado."""
+
+    def test_issues_are_persisted_and_logged(self, client_a):
+        d = new_doc(client_a)
+        run(d, FakeExtractor("m", [make_result(total_amount="999")]))
+        d.refresh_from_db()
+        assert d.review_level == "required" and d.status == "pending"
+        assert {i["code"] for i in d.validation_issues} == {"totals_mismatch"}
+        assert d.audit_logs.get(action="extracted").changes["issues"] == ["totals_mismatch"]
+
+    def test_clean_document_has_no_issues(self, client_a):
+        d = new_doc(client_a)
+        run(d)
+        d.refresh_from_db()
+        assert d.validation_issues == [] and d.review_level == "recommended" and d.status == "pending"
+
+    def test_auto_approve_when_enabled_and_clean(self, client_a, settings):
+        settings.EXTRACTION_AUTO_APPROVE = True
+        d = new_doc(client_a)
+        run(d)
+        d.refresh_from_db()
+        assert (d.status, d.review_level, d.is_auto_approved) == ("approved", "auto", True)
+        assert d.approved_by is None and d.display_review_level == "Auto"
+        assert d.audit_logs.filter(action="approved", changes__auto=True).count() == 1
+
+    def test_auto_approve_never_happens_with_validation_errors(self, client_a, settings):
+        settings.EXTRACTION_AUTO_APPROVE = True
+        d = new_doc(client_a)
+        run(d, FakeExtractor("m", [make_result(total_amount="999")]))
+        d.refresh_from_db()
+        assert d.status == "pending" and not d.is_auto_approved
+
+    def test_auto_approve_off_by_default(self, client_a):
+        d = new_doc(client_a)
+        run(d)
+        d.refresh_from_db()
+        assert d.status == "pending"
+
+    def test_invalid_tax_id_triggers_fallback_and_second_opinion_wins(self, client_a):
+        from documents.services.extraction.schemas import Party
+        bad = make_result(issuer=Party(name="Proveedor SL", tax_id="B12345678", address=None))  # dígito mal leído
+        d = new_doc(client_a)
+        run(d, FakeExtractor("haiku", [bad]), FakeExtractor("sonnet"))
+        d.refresh_from_db()
+        assert d.extraction_runs.count() == 2
+        assert d.company.tax_id == "B12345674" and d.validation_issues == []
+        assert d.audit_logs.get(action="extracted").changes["fallback"] is True
+
+    def test_fallback_not_used_when_problem_is_not_model_fixable(self, client_a):
+        # Cliente sin NIF → flow_unknown (no lo arregla otro modelo): no se gasta Sonnet
+        c = f.ClientFactory(tax_id=None)
+        d = new_doc(c)
+        fb = FakeExtractor("sonnet")
+        run(d, FakeExtractor("haiku"), fb)
+        assert fb.calls == []
+        d.refresh_from_db()
+        assert {i["code"] for i in d.validation_issues} == {"flow_unknown"} and d.review_level == "required"
+
+    def test_still_wrong_after_fallback_requires_review(self, client_a):
+        bad = make_result(total_amount="999")
+        d = new_doc(client_a)
+        run(d, FakeExtractor("haiku", [bad]), FakeExtractor("sonnet", [bad]))
+        d.refresh_from_db()
+        assert d.extraction_runs.count() == 2 and d.review_level == "required"
+
+    def test_duplicate_by_issuer_and_number_is_flagged_not_failed(self, client_a):
+        co = f.CompanyFactory(client=client_a, tax_id="B12345674")
+        orig = f.DocumentFactory(client=client_a, company=co, document_number="F-001", flow="out")
+        d = new_doc(client_a)
+        fb = FakeExtractor("sonnet")
+        assert run(d, FakeExtractor("haiku"), fb) == "processed"
+        d.refresh_from_db()
+        dup = next(i for i in d.validation_issues if i["code"] == "duplicate_document")
+        assert f"#{orig.pk}" in dup["message"] and d.review_level == "required"
+        assert fb.calls == []          # un duplicado no se arregla con otro modelo
+        assert d.status == "pending"   # nunca se aprueba solo
+
+    def test_reprocessing_does_not_flag_itself_as_duplicate(self, client_a):
+        d = new_doc(client_a)
+        run(d)
+        Document.all_objects.filter(pk=d.pk).update(processing_status="uploaded")
+        run(d)
+        d.refresh_from_db()
+        assert d.validation_issues == []

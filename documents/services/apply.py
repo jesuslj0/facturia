@@ -1,15 +1,16 @@
 """Aplica el resultado normalizado de una extracción a un Document.
 
 Idempotente: se puede ejecutar varias veces; desglose de impuestos y líneas se
-reemplazan. No aprueba nada (la política de auto-aprobación llega con la validación, H5).
+reemplazan. Valida el resultado (documents.services.validation), guarda las
+incidencias y fija el nivel de revisión; solo auto-aprueba si la política lo permite.
 """
 from decimal import Decimal
 
 from django.db import transaction
 
 from documents.models import Document, DocumentAuditLog, InvoiceLine, TaxBreakdown
+from documents.services import validation
 from documents.services.companies import get_or_create_company
-from documents.services.review import get_review_level
 
 CENT = Decimal("0.01")
 MAX_MONEY = Decimal("100000000")  # Document: max_digits=10, decimal_places=2
@@ -68,7 +69,12 @@ def apply_extraction(document, outcome, *, user=None) -> Document:
 
         doc.confidence = n.legacy_confidence()
         doc.confidence_global = Decimal(str(round(n.confidence_global, 4)))
-        doc.review_level = _review_level(doc, n)
+        issues = validation.validate(n, client=doc.client, document=doc)
+        decision = validation.decide(issues, n)
+        doc.validation_issues = validation.issues_to_json(issues)
+        doc.review_level = decision.review_level
+        if doc.total_amount is None or doc.issue_date is None:
+            doc.review_level = "required"   # no se podría aprobar igualmente
         doc.is_auto_approved = False
         doc.processing_status = "processed"
         doc.save()
@@ -82,21 +88,18 @@ def apply_extraction(document, outcome, *, user=None) -> Document:
                 "run_id": outcome.run.pk, "model": outcome.run.model,
                 "fallback": outcome.used_fallback, "flow": n.flow,
                 "confidence": round(n.confidence_global, 4),
+                "issues": [i.code for i in issues],
+                "review_level": doc.review_level,
             },
         ).save()
+
+        if decision.auto_approve and doc.can_be_approved():
+            doc.approve(auto=True)
+            DocumentAuditLog(
+                document=doc, user=None, action="approved",
+                changes={"auto": True, "confidence": round(n.confidence_global, 4)},
+            ).save()
     return doc
-
-
-def _review_level(doc, n) -> str:
-    incomplete = (
-        n.flow == "unknown" or doc.total_amount is None
-        or doc.issue_date is None or n.document_type is None
-    )
-    if incomplete:
-        return "required"
-    level = get_review_level(doc.confidence, doc.document_type)
-    # Sin auto-aprobación hasta que exista validación determinista (H5).
-    return "recommended" if level == "auto" else level
 
 
 def _replace_tax_lines(doc, n) -> None:

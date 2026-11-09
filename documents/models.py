@@ -305,6 +305,8 @@ class Document(models.Model):
         max_length=12, choices=PROCESSING_CHOICES, default="processed", db_index=True
     )
     processing_started_at = models.DateTimeField(null=True, blank=True)
+    # Resultado de la validación determinista: [{code, severity, message, field, model_fixable}]
+    validation_issues = models.JSONField(default=list, blank=True)
     source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default="n8n")
     currency = models.CharField(max_length=3, default="EUR")
     iban = models.CharField(max_length=34, blank=True, default="")

@@ -33,8 +33,8 @@ def test_parse_date():
 
 
 def test_normalize_tax_id():
-    assert normalize_tax_id(" b-123.456 78 ") == "B12345678"
-    assert normalize_tax_id("ESB12345678") == "B12345678"
+    assert normalize_tax_id(" b-123.456 74 ") == "B12345674"
+    assert normalize_tax_id("ESB12345674") == "B12345674"
     assert normalize_tax_id("") is None and normalize_tax_id(None) is None
 
 
@@ -53,22 +53,22 @@ class TestFlow:
 
 class TestNormalize:
     def test_expense_invoice(self):
-        n = normalize(make_result(), client_tax_id="A87654321")
+        n = normalize(make_result(), client_tax_id="A87654323")
         assert n.flow == "out"
-        assert (n.counterparty_name, n.counterparty_tax_id) == ("Proveedor SL", "B12345678")
+        assert (n.counterparty_name, n.counterparty_tax_id) == ("Proveedor SL", "B12345674")
         assert n.document_type == "invoice" and n.currency == "EUR"
         assert (n.base_amount, n.total_amount) == (D("100.00"), D("121.00"))
         assert n.tax_lines[0].rate == D("21") and n.tax_lines[0].amount == D("21.00")
         assert n.issue_date == date(2026, 3, 15)
 
     def test_income_invoice_counterparty_is_recipient(self):
-        n = normalize(make_result(), client_tax_id="B12345678")
+        n = normalize(make_result(), client_tax_id="B12345674")
         assert n.flow == "in"
-        assert n.counterparty_tax_id == "A87654321"
+        assert n.counterparty_tax_id == "A87654323"
 
     def test_flow_is_not_taken_from_model(self):
         n = normalize(make_result(), client_tax_id=None)
-        assert n.flow == "unknown" and n.counterparty_tax_id == "B12345678"
+        assert n.flow == "unknown" and n.counterparty_tax_id == "B12345674"
 
     def test_type_mapping(self):
         assert normalize(make_result(document_type="credit_note")).document_type == "corrected_invoice"

@@ -181,6 +181,10 @@ EXTRACTION_TIMEOUT_SECONDS = float(os.getenv("EXTRACTION_TIMEOUT_SECONDS", "120"
 EXTRACTION_MAX_PAGES = int(os.getenv("EXTRACTION_MAX_PAGES", "20"))
 EXTRACTION_MAX_IMAGE_SIDE = int(os.getenv("EXTRACTION_MAX_IMAGE_SIDE", "2000"))   # px, lado mayor
 EXTRACTION_MAX_IMAGE_MB = int(os.getenv("EXTRACTION_MAX_IMAGE_MB", "5"))          # límite por imagen de la API
+# Auto-aprobación: solo si no hay ninguna incidencia de validación Y la confianza es alta.
+# Desactivada por defecto hasta medir la precisión con facturas reales (dataset de evaluación).
+EXTRACTION_AUTO_APPROVE = os.getenv("EXTRACTION_AUTO_APPROVE", "False").lower() in ("1", "true", "yes")
+EXTRACTION_AUTO_APPROVE_MIN_CONFIDENCE = float(os.getenv("EXTRACTION_AUTO_APPROVE_MIN_CONFIDENCE", "0.90"))
 EXTRACTION_FALLBACK_CONFIDENCE = float(os.getenv("EXTRACTION_FALLBACK_CONFIDENCE", "0.80"))
 
 # --- Cola de tareas (Celery + Redis) -----------------------------------------

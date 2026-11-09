@@ -15,7 +15,7 @@ PDF = b"%PDF-1.4 x"
 
 @pytest.fixture
 def doc():
-    c = f.ClientFactory(tax_id="A87654321")
+    c = f.ClientFactory(tax_id="A87654323")
     return f.DocumentFactory(client=c)
 
 
@@ -43,7 +43,7 @@ def test_success_records_run_with_tokens_cost_and_raw(doc):
 def test_client_context_is_sent_to_extractor(doc):
     p = FakeExtractor()
     run(doc, p)
-    assert p.calls[0].client_tax_id == "A87654321" and p.calls[0].client_name == doc.client.name
+    assert p.calls[0].client_tax_id == "A87654323" and p.calls[0].client_name == doc.client.name
 
 
 def test_high_confidence_does_not_call_fallback(doc):

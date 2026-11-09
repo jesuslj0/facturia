@@ -9,8 +9,8 @@ from documents.services.extraction.schemas import Confidence, Party, TaxLine
 def make_result(**over) -> ExtractionResult:
     base = dict(
         document_type="invoice",
-        issuer=Party(name="Proveedor SL", tax_id="B12345678", address=None),
-        recipient=Party(name="Mi Empresa SA", tax_id="A87654321", address=None),
+        issuer=Party(name="Proveedor SL", tax_id="B12345674", address=None),
+        recipient=Party(name="Mi Empresa SA", tax_id="A87654323", address=None),
         document_number="F-001",
         issue_date="2026-03-15",
         currency="EUR",

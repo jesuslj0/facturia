@@ -206,6 +206,14 @@ Cubierto: auth por API key, reglas `get_review_level/get_status`, ingesta (alta,
 
 | H4 Cola | Hecho | Celery + Redis; `documents/tasks.py`, `documents/services/{processing,apply}.py`; Redis y worker en ambos compose |
 
+| H5 Validación | Hecho | `documents/validators.py`, `documents/services/{validation,duplicates}.py`; 506 tests |
+
+**H5 — reglas y política:**
+- Gravedad: **ERROR** → revisión obligatoria; **WARNING** → recomendada, nunca auto-aprobado; **INFO** → solo informativo. Las incidencias se guardan en `Document.validation_issues` (para mostrarlas en la UI de revisión, H6) y sus códigos en el registro de auditoría.
+- Reglas: total = base + IVA + recargo − retención (tolerancia 0,02) y cuadre de cada línea de impuesto (0,05), con signo correcto en rectificativas; NIF/NIE/CIF con dígito de control (contrastado con CIF reales); fecha ausente, futura, anterior a 2000 o de más de 5 años; tipos de IVA/retención/recargo poco habituales; moneda ≠ EUR; emisor sin NIF; cliente sin NIF o ausente del documento (flujo desconocido); duplicados por emisor + nº de factura (y por hash: `find_duplicate_by_hash`, para la subida).
+- **Respaldo a Sonnet solo si hay un ERROR que otro modelo podría arreglar** (`model_fixable`: NIF con dígito mal leído, descuadre, dato ausente). Un duplicado, o un cliente sin NIF, no gastan Sonnet.
+- **Auto-aprobación: desactivada por defecto** (`EXTRACTION_AUTO_APPROVE=False`). Solo se aprueba si está activada, no hay ningún ERROR ni WARNING y la confianza ≥ `EXTRACTION_AUTO_APPROVE_MIN_CONFIDENCE` (0,90). Activarla cuando haya precisión medida con facturas reales (dataset de evaluación).
+
 **Prueba de extremo a extremo (dev, API real, 2026-11-09):** 2 documentos de ejemplo subidos a R2 → cola (Redis + worker) → Haiku 5.5. Importes, IVA, líneas e IBAN correctos; coste 0,04–0,11 céntimos/documento; caché de prompt activa (2 891 tokens leídos). Hallazgos: (1) Haiku dejaba `tax_id` en null cuando el NIF llevaba prefijo `ES` → prompt v2 lo corrige (flujo `in` y tercero correcto); (2) bug en la clave por hash con `FieldFile.save()` → corregido con campos `Hashed*Field`. Con flujo desconocido la empresa se crea sin rol (ni proveedor ni cliente).
 
 **H4 — decisiones:**
