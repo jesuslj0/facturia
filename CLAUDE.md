@@ -47,6 +47,10 @@ pytest
 pytest documents/tests/           # solo una app
 pytest -k test_nombre              # test específico
 
+# Tras añadir dependencias a requirements.txt hay que reconstruir la imagen
+# (si no: "No module named ..." al arrancar; billing_ai/__init__.py importa celery)
+docker compose build            # y luego: docker compose up -d
+
 # Cola de extracción (Celery + Redis)
 docker compose up -d redis                       # solo Redis, Django en el host
 celery -A billing_ai worker -l info              # worker (en otra terminal)
