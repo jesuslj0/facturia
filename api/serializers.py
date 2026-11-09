@@ -3,6 +3,7 @@ from django.urls import reverse
 from rest_framework import serializers
 
 from documents.models import Document
+from documents.services.preprocess import detect_mime
 from documents.selectors.document_selector import DocumentSelector
 
 
@@ -37,13 +38,8 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
             )
         head = value.read(16)
         value.seek(0)
-        is_pdf = head.startswith(b"%PDF")
-        is_jpeg = head.startswith(b"\xff\xd8\xff")
-        is_png = head.startswith(b"\x89PNG\r\n\x1a\n")
-        is_webp = head[:4] == b"RIFF" and head[8:12] == b"WEBP"
-        is_heic = head[4:8] == b"ftyp" and head[8:12] in (b"heic", b"heix", b"mif1", b"msf1", b"hevc")
-        if not (is_pdf or is_jpeg or is_png or is_webp or is_heic):
-            raise serializers.ValidationError("Tipo de archivo no permitido (PDF, JPG, PNG, WEBP o HEIC).")
+        if detect_mime(head) is None:
+            raise serializers.ValidationError("Tipo de archivo no permitido (PDF, JPG, PNG, WEBP, GIF o HEIC).")
         return value
 
     def validate_external_id(self, value):

@@ -202,6 +202,14 @@ Cubierto: auth por API key, reglas `get_review_level/get_status`, ingesta (alta,
 
 | H2 Extracción | Hecho (API mockeada; falta probar con clave real) | 335 tests; cobertura del paquete ≈ 98 % |
 
+| H3 Preprocesado | Hecho | `documents/services/preprocess.py`; sin dependencias de sistema (los wheels de `pillow-heif` incluyen libheif) |
+
+**H3 — decisiones:**
+- El tipo se detecta por la firma del archivo (`detect_mime`), no por extensión ni por el MIME que declare el cliente; el serializer de ingesta reutiliza esa función.
+- PDF: se envía tal cual (lectura nativa, multipágina) tras validar que no está dañado ni protegido con contraseña. **Más de `EXTRACTION_MAX_PAGES` (20) páginas se rechaza, no se trunca**; hay que avisar al usuario en la UI (H6).
+- Imágenes: HEIC→JPEG, rotación EXIF, sin metadatos (GPS, dispositivo), transparencia sobre blanco, lado máximo 2000 px, máximo 5 MB por imagen (límite de la API) y protección contra bombas de descompresión (80 Mpx). Si no hace falta tocar nada, se envía el original.
+- El archivo almacenado nunca se modifica; solo se preparan los bytes que van al proveedor.
+
 **H2 — desviaciones y decisiones:**
 - Salida estructurada con esquema Pydantic (`messages.parse`) en lugar de *tool use*: en los modelos 5.5 el `tool_choice` forzado devuelve 400.
 - Los importes salen como texto y se convierten a `Decimal` en `normalize.py` (nunca `float`). El flujo `in`/`out` se calcula comparando NIF con el del cliente, no lo decide el modelo.
