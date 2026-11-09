@@ -5,6 +5,9 @@
 #   docker compose exec web python manage.py createsuperuser
 #   docker compose exec web pytest
 #
+# Solo Redis (Django en el host con venv):   docker compose up -d redis
+# Worker de extracción en el host:           celery -A billing_ai worker -l info
+#
 # Producción: ver docker-compose.prod.yml
 
 services:
@@ -25,6 +28,20 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      # Solo accesible desde tu máquina (Django/Celery en el host usan localhost:6379)
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   web:
     build: .
     image: billing_ai:dev
@@ -34,6 +51,7 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: billing_ai.settings.docker_dev
       POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
     volumes:
       # Código montado: los cambios se recargan sin reconstruir la imagen
       - .:/app
@@ -42,6 +60,28 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    # Procesa la extracción de documentos (OCR con Claude). Sin autoreload:
+    # reiniciar con `docker compose restart worker` tras cambiar código.
+    image: billing_ai:dev
+    command: celery -A billing_ai worker -l info --concurrency 2
+    environment:
+      DJANGO_SETTINGS_MODULE: billing_ai.settings.docker_dev
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
 
 volumes:
   postgres_dev_data:
+  redis_dev_data:

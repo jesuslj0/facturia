@@ -47,6 +47,14 @@ pytest
 pytest documents/tests/           # solo una app
 pytest -k test_nombre              # test específico
 
+# Cola de extracción (Celery + Redis)
+docker compose up -d redis                       # solo Redis, Django en el host
+celery -A billing_ai worker -l info              # worker (en otra terminal)
+python manage.py enqueue_extraction [--sync]     # encola documentos uploaded/failed
+
+# Tests contra la API real de Claude (cuestan dinero; excluidos por defecto)
+pytest -m live_api -s
+
 # Estáticos (producción)
 python manage.py collectstatic --noinput
 ```

@@ -204,6 +204,17 @@ Cubierto: auth por API key, reglas `get_review_level/get_status`, ingesta (alta,
 
 | H3 Preprocesado | Hecho | `documents/services/preprocess.py`; sin dependencias de sistema (los wheels de `pillow-heif` incluyen libheif) |
 
+| H4 Cola | Hecho | Celery + Redis; `documents/tasks.py`, `documents/services/{processing,apply}.py`; Redis y worker en ambos compose |
+
+**H4 — decisiones:**
+- Flujo: `uploaded → queued → processing → processed` (o `failed`). `enqueue_processing` encola al confirmarse la transacción (`on_commit`).
+- **Idempotencia:** `claim_document` es un único UPDATE condicional; solo procesa documentos `pending` y no archivados. Un worker caído se detecta por `processing_started_at` (> `EXTRACTION_STALE_MINUTES`, 15) y el documento se reclama de nuevo.
+- **Reintentos:** errores reintentables (429, timeout, caída) → backoff exponencial con jitter (30 s ×2ⁿ, tope 15 min, respeta `retry-after`), hasta `EXTRACTION_MAX_RETRIES` (5); luego `failed`. Errores definitivos (archivo dañado, demasiadas páginas, petición inválida…) → `failed` sin reintentar, con el motivo en `ExtractionRun`.
+- `apply_extraction` rellena el `Document`, el desglose de impuestos y las líneas, y deja un registro de auditoría. **Nunca aprueba**: aunque la confianza sea ≥ 0,9 el nivel queda `recommended`; la auto-aprobación llega con la validación determinista (H5).
+- `get_or_create_company`, `get_review_level` y `get_status` pasan de `api/views.py` a `documents/services/` (la API los sigue usando).
+- `Document.company` admite vacío (documentos subidos sin tercero reconocible) y se añade `processing_started_at`.
+- Operación: `python manage.py enqueue_extraction [--sync] [--client N] [--limit N]`.
+
 **H3 — decisiones:**
 - El tipo se detecta por la firma del archivo (`detect_mime`), no por extensión ni por el MIME que declare el cliente; el serializer de ingesta reutiliza esa función.
 - PDF: se envía tal cual (lectura nativa, multipágina) tras validar que no está dañado ni protegido con contraseña. **Más de `EXTRACTION_MAX_PAGES` (20) páginas se rechaza, no se trunca**; hay que avisar al usuario en la UI (H6).

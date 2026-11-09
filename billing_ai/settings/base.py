@@ -183,6 +183,22 @@ EXTRACTION_MAX_IMAGE_SIDE = int(os.getenv("EXTRACTION_MAX_IMAGE_SIDE", "2000")) 
 EXTRACTION_MAX_IMAGE_MB = int(os.getenv("EXTRACTION_MAX_IMAGE_MB", "5"))          # límite por imagen de la API
 EXTRACTION_FALLBACK_CONFIDENCE = float(os.getenv("EXTRACTION_FALLBACK_CONFIDENCE", "0.80"))
 
+# --- Cola de tareas (Celery + Redis) -----------------------------------------
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "False").lower() in ("1", "true", "yes")
+CELERY_TASK_ACKS_LATE = True                  # si el worker muere, la tarea se reentrega
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1         # tareas largas: no acaparar
+CELERY_TASK_IGNORE_RESULT = True              # el estado vive en la BD (Document/ExtractionRun)
+CELERY_TASK_SERIALIZER = "json"
+CELERY_TASK_SOFT_TIME_LIMIT = 600
+CELERY_TASK_TIME_LIMIT = 660
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": 3600}   # > límite de la tarea
+EXTRACTION_MAX_RETRIES = int(os.getenv("EXTRACTION_MAX_RETRIES", "5"))
+EXTRACTION_RETRY_BASE_SECONDS = int(os.getenv("EXTRACTION_RETRY_BASE_SECONDS", "30"))
+EXTRACTION_RETRY_MAX_SECONDS = int(os.getenv("EXTRACTION_RETRY_MAX_SECONDS", "900"))
+EXTRACTION_STALE_MINUTES = int(os.getenv("EXTRACTION_STALE_MINUTES", "15"))
+
 # Límites de subida
 UPLOAD_MAX_FILE_MB = int(os.getenv("UPLOAD_MAX_FILE_MB", "20"))
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024

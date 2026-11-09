@@ -1,5 +1,7 @@
 from .serializers import DocumentIngestSerializer, DocumentSerializer, DocumentListSerializer
 from documents.models import Document, Company
+from documents.services.companies import get_or_create_company, normalize_name, normalize_tax_id  # noqa: F401
+from documents.services.review import get_review_level, get_status  # noqa: F401
 from documents.selectors.document_selector import DocumentSelector
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
@@ -9,101 +11,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status as rst_status
 from documents.utils import normalize_tax, round_decimal  
 from rest_framework.exceptions import ValidationError
-
-def get_review_level(confidence: dict, document_type):
-    extraction_confidence = confidence.get("confianza_extraccion", 0.0)
-    fecha_conf = confidence.get("fecha", 0.0)
-    total_conf = confidence.get("total", 0)
-
-    if extraction_confidence >= 0.9:
-        return "auto"
-
-    if extraction_confidence < 0.75:
-        return "required"
-
-    if fecha_conf < 0.7 or total_conf < 0.8:
-        return "required"
-
-    if document_type.lower() not in ["invoice", "delivery"]:
-        return "required"
-
-    return "recommended"
-
-
-def get_status(review_level):
-    return "approved" if review_level == "auto" else "pending"
-
-def normalize_tax_id(tax_id):
-    if not tax_id:
-        return None
-    return tax_id.replace(" ", "").replace("-", "").upper()
-
-def normalize_name(name: str | None) -> str:
-    if not name:
-        return ""
-    return name.strip()
-
-from django.db import transaction, IntegrityError
-
-@transaction.atomic
-def get_or_create_company(*, client, name: str, tax_id: str | None, is_provider: bool = False, is_customer: bool = False):
-    tax_id = normalize_tax_id(tax_id)
-    name = normalize_name(name)
-    company = None
-
-    # 1️⃣ Buscar por CIF
-    if tax_id:
-        company = (
-            Company.objects
-            .select_for_update()
-            .filter(client=client, tax_id=tax_id)
-            .first()
-        )
-
-    # 2️⃣ Buscar por nombre
-    if not company and name:
-        company = (
-            Company.objects
-            .select_for_update()
-            .filter(client=client, name__iexact=name)
-            .first()
-        )
-
-    if company:
-        # 🔥 Actualizar roles si hace falta
-        updated = False
-
-        if is_provider and not company.is_provider:
-            company.is_provider = True
-            updated = True
-
-        if is_customer and not company.is_customer:
-            company.is_customer = True
-            updated = True
-
-        if updated:
-            company.save(update_fields=["is_provider", "is_customer"])
-
-        return company
-
-    # 3️⃣ Crear con protección contra race condition
-    try:
-        company = Company.objects.create(
-            client=client,
-            name=name,
-            tax_id=tax_id,
-            is_provider=is_provider,
-            is_customer=is_customer
-        )
-    except IntegrityError:
-        # Otro proceso la creó justo antes
-        if tax_id:
-            company = Company.objects.filter(client=client, tax_id=tax_id).first()
-        if not company and name:
-            company = Company.objects.filter(client=client, name__iexact=name).first()
-
-    return company
-
 
 class DocumentIngestAPIView(APIView):
     authentication_classes = []

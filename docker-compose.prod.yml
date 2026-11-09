@@ -1,4 +1,4 @@
-# Producción: Django (Gunicorn + WhiteNoise) + PostgreSQL
+# Producción: Django (Gunicorn + WhiteNoise) + PostgreSQL + Redis + worker Celery
 #
 # Uso:
 #   cp .env.prod.example .env.prod   # y rellenar valores reales
@@ -21,6 +21,19 @@ services:
       retries: 10
     # Sin "ports": la BD solo es accesible desde la red interna de compose
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # Sin "ports": solo accesible desde la red interna de compose
+
   web:
     build: .
     image: billing_ai:latest
@@ -30,8 +43,11 @@ services:
       DJANGO_SETTINGS_MODULE: billing_ai.settings.production
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
+      CELERY_BROKER_URL: redis://redis:6379/0
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     volumes:
       - media_data:/app/media
@@ -39,6 +55,26 @@ services:
       # Si hay un Nginx/Caddy en el host haciendo HTTPS, usar "127.0.0.1:8000:8000"
       - "8000:8000"
 
+  worker:
+    image: billing_ai:latest
+    restart: unless-stopped
+    # El CMD de la imagen arranca gunicorn; aquí se sustituye por el worker.
+    command: celery -A billing_ai worker -l info --concurrency 2
+    env_file: .env.prod
+    environment:
+      DJANGO_SETTINGS_MODULE: billing_ai.settings.production
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      CELERY_BROKER_URL: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started   # web ejecuta las migraciones al arrancar
+
 volumes:
+  redis_data:
   postgres_data:
   media_data:

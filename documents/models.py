@@ -206,7 +206,8 @@ class Document(models.Model):
     company = models.ForeignKey(
         Company, on_delete=models.SET_NULL, 
         related_name="documents",
-        null=True
+        null=True,
+        blank=True,
     )
     external_id = models.CharField(max_length=255, null=True, blank=True)
     original_name = models.CharField(max_length=255)
@@ -303,6 +304,7 @@ class Document(models.Model):
     processing_status = models.CharField(
         max_length=12, choices=PROCESSING_CHOICES, default="processed", db_index=True
     )
+    processing_started_at = models.DateTimeField(null=True, blank=True)
     source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default="n8n")
     currency = models.CharField(max_length=3, default="EUR")
     iban = models.CharField(max_length=34, blank=True, default="")
