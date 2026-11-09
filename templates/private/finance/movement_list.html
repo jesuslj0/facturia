@@ -131,7 +131,7 @@
 
                         <td class="receipt">
                             {% if movement.has_receipt %}
-                                <a href="{{ movement.receipt.url }}" target="_blank" class="receipt-link">
+                                <a href="{% url 'finance:receipt' movement.pk %}" target="_blank" class="receipt-link">
                                     <i class="fa-solid fa-paperclip"></i>
                                 </a>
                             {% else %}

@@ -78,7 +78,7 @@
 
         <div class="logo-preview" id="logo-preview-container">
           {% if client.logo %}
-            <img src="{{ client.logo.url }}" id="logo-preview-img" alt="Logo actual">
+            <img src="{% url 'clients:logo' %}" id="logo-preview-img" alt="Logo actual">
           {% else %}
             <div class="logo-placeholder" id="logo-placeholder">
               <i class="fa-regular fa-image"></i>

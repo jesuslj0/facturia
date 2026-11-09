@@ -166,7 +166,7 @@
 
         <!-- Nombre / enlace al archivo -->
         <td>
-          <a href="{{ doc.file.url }}">
+          <a href="{% url 'documents:file' doc.pk %}">
             {{ doc.original_name }}
           </a>
         </td>

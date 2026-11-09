@@ -74,7 +74,7 @@ def get_or_create_company(*, client, name: str, tax_id: str | None, is_provider:
         updated = False
 
         if is_provider and not company.is_provider:
-            company.is_supplier = True
+            company.is_provider = True
             updated = True
 
         if is_customer and not company.is_customer:
@@ -110,9 +110,6 @@ class DocumentIngestAPIView(APIView):
     permission_classes = [HasApiKey]
 
     def post(self, request):
-        print("HEADERS:", request.headers)
-        print("META:", request.META.get("HTTP_X_API_KEY"))
-
         serializer = DocumentIngestSerializer(
             data=request.data,
             context={"client": request.client},
@@ -205,8 +202,8 @@ from django.utils.dateparse import parse_date
 class MetricsDashboardView(APIView):
 
     def get(self, request):
-        start = parse_date(request.GET.get("start"))
-        end = parse_date(request.GET.get("end"))
+        start = parse_date(request.GET.get("start") or "")
+        end = parse_date(request.GET.get("end") or "")
 
         if not start or not end:
             raise ValidationError("Fechas inválidas. Formato requerido: YYYY-MM-DD")

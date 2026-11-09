@@ -6,6 +6,9 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from .filters import get_filtered_movements
+from django.shortcuts import get_object_or_404
+from django.views import View
+from billing_ai.storage import private_file_response
 
 class FinancialMovementListView(LoginRequiredMixin, ListView):
     model = FinancialMovement
@@ -163,3 +166,10 @@ class MovementCategoryDeleteView(LoginRequiredMixin, DeleteView):
     def form_valid(self, form):
         messages.success(self.request, f"Categoría {self.object.name} borrada correctamente")
         return super().form_valid(form)
+
+class FinancialMovementReceiptView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        movement = get_object_or_404(
+            FinancialMovement, pk=pk, client=request.user.client
+        )
+        return private_file_response(movement.receipt)

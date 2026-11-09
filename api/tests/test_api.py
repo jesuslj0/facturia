@@ -53,7 +53,7 @@ class TestApiAuthAndSerializers:
         request = rf.get("/api/v1/documents/")
         serialized = DocumentListSerializer(document, context={"request": request}).data
 
-        assert serialized["file_url"].endswith(document.file.url)
+        assert serialized["file_url"].endswith(f"/documents/{document.pk}/file/")
 
 
 @pytest.mark.django_db
@@ -83,7 +83,7 @@ class TestDocumentApiViews:
             response = api_client.post(
                 "/api/v1/documents/ingest/",
                 data={
-                    "file": SimpleUploadedFile("invoice.pdf", b"pdf-content", content_type="application/pdf"),
+                    "file": SimpleUploadedFile("invoice.pdf", b"%PDF-1.4 content", content_type="application/pdf"),
                     "external_id": "api-doc-001",
                     "original_name": "invoice.pdf",
                     "document_type": "invoice",
@@ -117,7 +117,7 @@ class TestDocumentApiViews:
             response = api_client.post(
                 "/api/v1/documents/ingest/",
                 data={
-                    "file": SimpleUploadedFile("invoice.pdf", b"pdf-content", content_type="application/pdf"),
+                    "file": SimpleUploadedFile("invoice.pdf", b"%PDF-1.4 content", content_type="application/pdf"),
                     "external_id": "api-doc-002",
                     "original_name": "invoice.pdf",
                     "document_type": "invoice",

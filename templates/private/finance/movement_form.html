@@ -23,7 +23,7 @@
                     </summary>
                     <div class="receipt-preview-container {% if form.instance.receipt %}show{% endif %}">
                         <span class="receipt-name">{{ form.instance.receipt_name }}</span>
-                        <img src="{{ form.instance.receipt.url }}" alt="Receipt" class="receipt-preview-img">
+                        <img src="{% url 'finance:receipt' form.instance.pk %}" alt="Receipt" class="receipt-preview-img">
                     </div>
                 </details>
                 {% endif %}

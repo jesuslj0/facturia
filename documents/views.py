@@ -14,6 +14,7 @@ from django.contrib.auth import get_user_model
 from .filters.document_filters import get_filtered_documents, get_exportable_documents
 from documents.models import Company
 from .forms import DocumentRectificationForm
+from billing_ai.storage import private_file_response
 
 User = get_user_model()
 
@@ -431,13 +432,18 @@ class DocumentRectifyView(LoginRequiredMixin, FormView):
 
         return super().dispatch(request, *args, **kwargs)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["client"] = self.request.user.client
+        return kwargs
+
     def get_initial(self):
         initial = {
             "base_amount": self.document.base_amount,
             "tax_amount": self.document.tax_amount,
             "tax_percentage": self.document.tax_percentage,
             "total_amount": self.document.total_amount,
-            "issue_date": self.document.issue_date.strftime("%Y-%m-%d"),
+            "issue_date": self.document.issue_date.strftime("%Y-%m-%d") if self.document.issue_date else None,
             "document_number": self.document.document_number,
             "company": self.document.company,
         }
@@ -459,3 +465,14 @@ class DocumentRectifyView(LoginRequiredMixin, FormView):
         context["document"] = self.document
         context["is_rectification"] = True
         return context
+
+class DocumentFileView(LoginRequiredMixin, View):
+    """Entrega el archivo original solo si pertenece al cliente del usuario."""
+
+    def get(self, request, pk):
+        document = get_object_or_404(
+            Document.all_objects.only("id", "client_id", "file", "original_name"),
+            pk=pk,
+            client=request.user.client,
+        )
+        return private_file_response(document.file, download_name=document.original_name or None)

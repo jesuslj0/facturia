@@ -2,6 +2,7 @@ from django.db import models
 from clients.models import Client
 from clients.models import CustomUser
 import os
+from billing_ai.storage import receipt_upload_to
 
 class MovementCategory(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="movement_categories")
@@ -69,7 +70,7 @@ class FinancialMovement(models.Model):
     category = models.ForeignKey(MovementCategory, on_delete=models.PROTECT, related_name="movements")
     description = models.CharField(max_length=255, blank=True, verbose_name="Concepto")
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    receipt = models.FileField(upload_to="finance/receipts/", blank=True, null=True,verbose_name="Recibo")
+    receipt = models.FileField(upload_to=receipt_upload_to, blank=True, null=True,verbose_name="Recibo")
     receipt_name = models.CharField(max_length=255, blank=True, null=True)
     payment_method = models.CharField(max_length=20, blank=True, null=True, choices=PAYMENT_CHOICES)
     is_reconciled = models.BooleanField(default=False)

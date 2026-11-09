@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.urls import reverse
 from rest_framework import serializers
 
 from documents.models import Document
@@ -26,6 +28,23 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
 
     # Confianza / revisión
     confidence = serializers.JSONField(default=dict)
+
+    def validate_file(self, value):
+        max_bytes = settings.UPLOAD_MAX_FILE_MB * 1024 * 1024
+        if value.size > max_bytes:
+            raise serializers.ValidationError(
+                f"El archivo supera el máximo de {settings.UPLOAD_MAX_FILE_MB} MB."
+            )
+        head = value.read(16)
+        value.seek(0)
+        is_pdf = head.startswith(b"%PDF")
+        is_jpeg = head.startswith(b"\xff\xd8\xff")
+        is_png = head.startswith(b"\x89PNG\r\n\x1a\n")
+        is_webp = head[:4] == b"RIFF" and head[8:12] == b"WEBP"
+        is_heic = head[4:8] == b"ftyp" and head[8:12] in (b"heic", b"heix", b"mif1", b"msf1", b"hevc")
+        if not (is_pdf or is_jpeg or is_png or is_webp or is_heic):
+            raise serializers.ValidationError("Tipo de archivo no permitido (PDF, JPG, PNG, WEBP o HEIC).")
+        return value
 
     def validate_external_id(self, value):
         client = self.context.get("client")
@@ -80,5 +99,5 @@ class DocumentListSerializer(serializers.ModelSerializer):
     def get_file_url(self, obj):
         request = self.context.get("request")
         if obj.file and request:
-            return request.build_absolute_uri(obj.file.url)
+            return request.build_absolute_uri(reverse("documents:file", args=[obj.pk]))
         return None

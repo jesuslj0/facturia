@@ -54,11 +54,11 @@
             <div id="pdf-viewer" style="width:100%; height:100%; max-height:800px; overflow:auto; transition: transform 0.2s ease;"></div>
             <p id="pdf-fallback" style="display:none;">
                 No se puede visualizar el PDF.
-                <a href="{{ document.file.url }}" target="_blank">Descargar PDF</a>
+                <a href="{% url 'documents:file' document.pk %}" target="_blank">Descargar PDF</a>
             </p>
         {% elif document.is_image %}
             <div id="image-container">
-                <img  src="{{ document.file.url }}" style="max-width:100%; height: auto;transform:scale(1); transform-origin:center;" />
+                <img  src="{% url 'documents:file' document.pk %}" style="max-width:100%; height: auto;transform:scale(1); transform-origin:center;" />
             </div>
         {% else %}
             <p>No se puede visualizar el archivo</p>
@@ -374,7 +374,7 @@
     <script>
     document.addEventListener("DOMContentLoaded", function () {
         
-        const url = "{{ document.file.url }}";
+        const url = "{% url 'documents:file' document.pk %}";
         const pdfContainer = document.getElementById('pdf-viewer');
         const fallback = document.getElementById('pdf-fallback');
         const imageContainer = document.getElementById('image-container');

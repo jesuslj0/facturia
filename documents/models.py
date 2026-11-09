@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 
 from django.contrib.auth import get_user_model
+from billing_ai.storage import document_upload_to
 User = get_user_model()
 
 class Company(models.Model):
@@ -200,7 +201,7 @@ class Document(models.Model):
     )
     external_id = models.CharField(max_length=255, null=True, blank=True)
     original_name = models.CharField(max_length=255)
-    file = models.FileField(upload_to="documents/")
+    file = models.FileField(upload_to=document_upload_to)
     document_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     document_number = models.CharField(max_length=255, null=True, blank=True)
     confidence = models.JSONField(default=dict)
@@ -287,6 +288,8 @@ class Document(models.Model):
             models.Index(fields=["client", "review_level"]),
             models.Index(fields=["client", "created_at"]),
             models.Index(fields=["client", "company"]),
+            models.Index(fields=["client", "is_current"], name="doc_client_current_idx"),
+            models.Index(fields=["client", "issue_date"], name="doc_client_issue_idx"),
         ]
         constraints = [
             models.UniqueConstraint(

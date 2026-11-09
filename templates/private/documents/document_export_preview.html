@@ -166,7 +166,7 @@
             </td>
             <td>{{ doc.document_number }}</td>
             <td>{{ doc.issue_date|date:"d/m/Y" }}</td>
-            <td><a href="{{ doc.file.url }}">{{ doc.original_name }}</a></td>
+            <td><a href="{% url 'documents:file' doc.pk %}">{{ doc.original_name }}</a></td>
             <td>{{ doc.company.name|default:"-" }}</td>
             <td class="amount">{% if doc.total_amount %}{{ doc.total_amount|floatformat:2 }}{% else %}-{% endif %}</td>
             <td><span class="status {{ doc.status }}">{{ doc.get_status_display }}</span></td>

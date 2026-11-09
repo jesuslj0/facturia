@@ -3,7 +3,9 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.views import View
 
+from django.http import Http404
 from clients.forms import ClientProfileForm
+from billing_ai.storage import private_file_response
 
 
 class ClientDetailView(LoginRequiredMixin, View):
@@ -39,3 +41,13 @@ class ClientDetailView(LoginRequiredMixin, View):
             'users': users,
             'roles': roles,
         })
+
+
+class ClientLogoView(LoginRequiredMixin, View):
+    """Logo del cliente del usuario autenticado (nunca el de otro tenant)."""
+
+    def get(self, request):
+        client = request.user.client
+        if not client.logo:
+            raise Http404("Sin logo")
+        return private_file_response(client.logo)
