@@ -4,6 +4,10 @@
 # Variables: se definen en la pestaña de entorno del servicio; Compose las toma de ahí con ${VAR}.
 # Plantilla: .env.easypanel.example
 #
+# Red: los servicios de Easypanel (el Postgres) viven en una red de Docker aparte. web y worker se unen
+# a ella además de a la red del compose; Redis se queda solo en la del compose. El nombre de la red va
+# en EASYPANEL_NETWORK (por defecto «easypanel»); se comprueba en el servidor con `docker network ls`.
+#
 # Dominio: en Easypanel, apuntar el dominio al servicio "web", puerto 8000 (él pone el HTTPS).
 # No se publican puertos en el host a propósito.
 #
@@ -56,6 +60,7 @@ services:
     image: billing_ai:latest
     restart: unless-stopped
     environment: *django-env
+    networks: [default, easypanel]
     depends_on:
       redis:
         condition: service_healthy
@@ -68,11 +73,17 @@ services:
     # El CMD de la imagen arranca gunicorn; aquí se sustituye por el worker.
     command: celery -A billing_ai worker -l info --concurrency 2
     environment: *django-env
+    networks: [default, easypanel]
     depends_on:
       redis:
         condition: service_healthy
       web:
         condition: service_started   # la web ejecuta las migraciones al arrancar
+
+networks:
+  easypanel:
+    external: true
+    name: ${EASYPANEL_NETWORK:-easypanel}
 
 volumes:
   redis_data:
