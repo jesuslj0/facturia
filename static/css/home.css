@@ -176,7 +176,6 @@
 }
 .timeline p { margin: 0; font-size: 0.88rem; line-height: 1.35; }
 .timeline small { color: var(--muted-color); font-size: 0.75rem; }
-.tone-neutral { --tone: var(--muted-color); }
 
 /* ---------- Tablas dentro de paneles ---------- */
 .table-wrapper.flat { border: none; background: transparent; border-radius: 0; }

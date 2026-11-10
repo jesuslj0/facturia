@@ -3,6 +3,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views import View
 
 from billing_ai.storage import private_file_response
@@ -10,20 +11,25 @@ from clients.forms import ClientInfoForm, ClientProfileForm, UserPasswordForm, U
 from documents.models import Document
 
 
+TABS = ('perfil', 'empresa')
+
+
 class ClientDetailView(LoginRequiredMixin, View):
-    """Perfil: «Mi cuenta» (datos del usuario) y «Empresa» (datos del cliente).
+    """Cuenta: pestañas «Mi perfil» (datos del usuario) y «Mi empresa» (datos del cliente).
 
     Tres formularios en la misma página, distinguidos por el campo `form_name`
-    (`account`, `password`, `company_info`, `company`; sin él se asume `company`).
+    (`account`, `password` -> pestaña perfil; `company_info`, `company` -> pestaña empresa; sin él se asume `company`).
     """
     template_name = 'private/clients/client_detail.html'
 
     def get_client(self):
         return self.request.user.client
 
-    def render_page(self, request, *, account_form=None, password_form=None, company_form=None, info_form=None):
+    def render_page(self, request, *, tab=None, account_form=None, password_form=None, company_form=None, info_form=None):
         client = self.get_client()
+        tab = tab if tab in TABS else (request.GET.get('tab') if request.GET.get('tab') in TABS else 'perfil')
         return render(request, self.template_name, {
+            'tab': tab,
             'client': client,
             'form': company_form or ClientProfileForm(instance=client),
             'account_form': account_form or UserProfileForm(instance=request.user),
@@ -34,6 +40,10 @@ class ClientDetailView(LoginRequiredMixin, View):
             'roles': client.roles.all(),
             'my_roles': request.user.roles.all(),
         })
+
+    @staticmethod
+    def back(tab):
+        return redirect(f"{reverse('clients:detail')}?tab={tab}")
 
     def get(self, request):
         return self.render_page(request)
@@ -46,8 +56,8 @@ class ClientDetailView(LoginRequiredMixin, View):
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Tus datos se han actualizado.')
-                return redirect('clients:detail')
-            return self.render_page(request, account_form=form)
+                return self.back('perfil')
+            return self.render_page(request, tab='perfil', account_form=form)
 
         if name == 'password':
             form = UserPasswordForm(request.user, request.POST)
@@ -55,23 +65,23 @@ class ClientDetailView(LoginRequiredMixin, View):
                 user = form.save()
                 update_session_auth_hash(request, user)  # no cerrar la sesión actual
                 messages.success(request, 'Contraseña cambiada correctamente.')
-                return redirect('clients:detail')
-            return self.render_page(request, password_form=form)
+                return self.back('perfil')
+            return self.render_page(request, tab='perfil', password_form=form)
 
         if name == 'company_info':
             form = ClientInfoForm(request.POST, instance=self.get_client())
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Información de la empresa actualizada.')
-                return redirect('clients:detail')
-            return self.render_page(request, info_form=form)
+                return self.back('empresa')
+            return self.render_page(request, tab='empresa', info_form=form)
 
         form = ClientProfileForm(request.POST, request.FILES, instance=self.get_client())
         if form.is_valid():
             form.save()
             messages.success(request, 'Perfil del cliente actualizado correctamente.')
-            return redirect('clients:detail')
-        return self.render_page(request, company_form=form)
+            return self.back('empresa')
+        return self.render_page(request, tab='empresa', company_form=form)
 
 
 class ClientLogoView(LoginRequiredMixin, View):

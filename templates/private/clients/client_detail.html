@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load ui %}
-{% block title %}Perfil - FacturIA{% endblock %}
+{% block title %}Cuenta - FacturIA{% endblock %}
 
 {% block styles %}
 {% load static %}
@@ -10,17 +10,22 @@
 {% block content %}
 
 <div class="page-header">
-  <h1><i class="fa-solid fa-user"></i> Perfil</h1>
+  <h1><i class="fa-solid fa-user"></i> Cuenta</h1>
   <a href="{% url 'dashboard' %}" class="btn btn-back">
     <i class="fa-solid fa-arrow-left"></i> Volver
   </a>
 </div>
 
+<nav class="account-tabs" aria-label="Secciones de la cuenta">
+  <a class="account-tab{% if tab == 'perfil' %} active{% endif %}" href="?tab=perfil"{% if tab == 'perfil' %} aria-current="page"{% endif %}><i class="fa-solid fa-circle-user"></i> Mi perfil</a>
+  <a class="account-tab{% if tab == 'empresa' %} active{% endif %}" href="?tab=empresa"{% if tab == 'empresa' %} aria-current="page"{% endif %}><i class="fa-solid fa-building"></i> Mi empresa</a>
+</nav>
+
 <div class="client-layout">
 
-  <!-- ===================== MI CUENTA ===================== -->
-  <h2 class="profile-section" id="cuenta"><i class="fa-solid fa-circle-user"></i> Mi cuenta
-    <small>Datos del usuario con el que has iniciado sesión</small></h2>
+{% if tab == 'perfil' %}
+  <!-- ===================== MI PERFIL ===================== -->
+  <p class="tab-intro">Datos del usuario con el que has iniciado sesión.</p>
 
   <div class="client-card client-card-full" data-editable{% if account_form.errors %} data-start-editing="account"{% elif password_form.errors %} data-start-editing="password"{% endif %}>
     <h2><i class="fa-solid fa-id-card"></i> Datos personales</h2>
@@ -91,9 +96,11 @@
     </form>
   </div>
 
-  <!-- ===================== EMPRESA ===================== -->
-  <h2 class="profile-section" id="empresa"><i class="fa-solid fa-building"></i> Empresa
-    <small>{{ client.name }} · datos compartidos por todos los usuarios</small></h2>
+{% endif %}
+
+{% if tab == 'empresa' %}
+  <!-- ===================== MI EMPRESA ===================== -->
+  <p class="tab-intro"><strong>{{ client.name }}</strong> · datos compartidos por todos los usuarios de la empresa.</p>
 
   <!-- Ficha de la empresa -->
   <div class="client-card client-card-full" data-editable{% if info_form.errors %} data-start-editing="company"{% endif %}>
@@ -278,6 +285,8 @@
       <p class="empty-state">No hay roles definidos para este cliente.</p>
     {% endif %}
   </div>
+
+{% endif %}
 
 </div>
 

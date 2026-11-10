@@ -359,3 +359,12 @@
 .muted { color: var(--muted-color); }
 
 .table tr.is-me td { background: color-mix(in srgb, var(--color-info) 6%, transparent); }
+
+/* Pestañas «Mi perfil» / «Mi empresa» */
+.account-tabs { display: flex; gap: 0.3rem; width: fit-content; max-width: 100%; margin: 0 0 1.25rem; padding: 0.25rem; border-radius: 12px; background: var(--body-bg-color); border: 1px solid var(--border-color); overflow-x: auto; }
+.account-tab { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.1rem; border-radius: 9px; white-space: nowrap; font-size: 0.9rem; font-weight: 500; color: var(--muted-color); text-decoration: none; transition: background 0.15s, color 0.15s; }
+.account-tab:hover { color: var(--body-fg-color); background: var(--surface-hover); }
+.account-tab.active { color: var(--enfasis-color); background: color-mix(in srgb, var(--enfasis-color) 14%, transparent); }
+.tab-intro { grid-column: 1 / -1; margin: 0; color: var(--muted-color); font-size: 0.9rem; }
+.tab-intro strong { color: var(--body-fg-color); }
+@media (max-width: 480px) { .account-tabs { width: 100%; } .account-tab { flex: 1; justify-content: center; padding-inline: 0.6rem; } }

@@ -83,7 +83,10 @@ h1, h2, h3, h4, h5, p {
   text-decoration: none;
   font-weight: 600;
 }
-.sidebar-brand img { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border-color); flex-shrink: 0; }
+.sidebar-brand img, .brand-logo { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border-color); flex-shrink: 0; object-fit: contain; background: var(--card-bg-color); }
+.brand-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-size: 0.95rem; }
+.topbar-brand { display: inline-flex; align-items: center; gap: 0.6rem; min-width: 0; }
+.topbar-brand strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.95rem; }
 
 .sidebar-collapse {
   display: inline-flex;
@@ -182,7 +185,7 @@ h1, h2, h3, h4, h5, p {
     top: 0;
     z-index: 30;
   }
-  .topbar img { width: 32px; height: 32px; border-radius: 8px; }
+  .topbar .brand-logo { width: 32px; height: 32px; border-radius: 8px; }
 
   .sidebar {
     position: fixed;

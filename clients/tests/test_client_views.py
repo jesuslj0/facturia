@@ -56,8 +56,11 @@ class TestProfileAccount:
 
     def test_page_shows_both_sections(self, auth_client):
         body = auth_client.get(self.url).content.decode()
-        assert "Mi cuenta" in body and "Empresa" in body
+        assert "Mi perfil" in body and "Mi empresa" in body and 'aria-current="page"' in body
         assert 'name="form_name" value="account"' in body and 'value="password"' in body
+        assert 'value="company_info"' not in body                      # la ficha de empresa vive en su pestaña
+        company = auth_client.get(self.url, {"tab": "empresa"}).content.decode()
+        assert 'value="company_info"' in company and 'value="account"' not in company
 
     def test_update_own_data(self, auth_client, user):
         r = auth_client.post(self.url, {"form_name": "account", "first_name": "Ana", "last_name": "Ruiz", "email": "ana@x.com"})
@@ -141,7 +144,7 @@ class TestCompanyInfo:
     url = "/clients/detail/"
 
     def test_company_info_shown_fixed_first(self, auth_client, client_entity):
-        body = auth_client.get(self.url).content.decode()
+        body = auth_client.get(self.url, {"tab": "empresa"}).content.decode()
         assert "Fecha de fundación" in body and "Empleados" in body and 'data-edit="company"' in body
         assert "data-start-editing" not in body
 
@@ -153,7 +156,7 @@ class TestCompanyInfo:
         assert r.status_code == 302
         client_entity.refresh_from_db()
         assert (client_entity.employee_count, client_entity.industry, client_entity.city) == (12, "Consultoría", "Sevilla")
-        body = auth_client.get(self.url).content.decode()
+        body = auth_client.get(self.url, {"tab": "empresa"}).content.decode()
         assert "Feb. 05 de 2015" in body and "https://acme.example" in body
 
     def test_all_optional_and_name_taxid_untouched(self, auth_client, client_entity):
@@ -170,10 +173,35 @@ class TestCompanyInfo:
         assert r.status_code == 200 and 'data-start-editing="company"' in r.content.decode()
 
     def test_users_table_marks_current_user(self, auth_client, user, other_user):
-        body = auth_client.get(self.url).content.decode()
+        body = auth_client.get(self.url, {"tab": "empresa"}).content.decode()
         assert body.count(">Tú<") == 1 and 'class="is-me"' in body
 
     def test_other_tenant_not_modified(self, auth_client, other_client_entity):
         auth_client.post(self.url, {"form_name": "company_info", "city": "Madrid"})
         other_client_entity.refresh_from_db()
         assert other_client_entity.city == ""
+
+
+class TestAccountTabs:
+    url = "/clients/detail/"
+
+    def test_default_and_invalid_tab_fall_back_to_perfil(self, auth_client):
+        assert auth_client.get(self.url).context["tab"] == "perfil"
+        assert auth_client.get(self.url, {"tab": "otra"}).context["tab"] == "perfil"
+        assert auth_client.get(self.url, {"tab": "empresa"}).context["tab"] == "empresa"
+
+    def test_saving_redirects_to_the_right_tab(self, auth_client):
+        r = auth_client.post(self.url, {"form_name": "account", "email": "a@b.com"})
+        assert r.url.endswith("?tab=perfil")
+        r = auth_client.post(self.url, {"form_name": "company_info", "city": "Cádiz"})
+        assert r.url.endswith("?tab=empresa")
+
+    def test_errors_stay_on_their_tab(self, auth_client):
+        r = auth_client.post(self.url, {"form_name": "company_info", "founded_date": "2999-01-01"})
+        assert r.context["tab"] == "empresa"
+        r = auth_client.post(self.url, {"form_name": "account", "email": ""})
+        assert r.context["tab"] == "perfil"
+
+    def test_page_and_sidebar_named_cuenta(self, auth_client):
+        body = auth_client.get(self.url).content.decode()
+        assert "<h1><i class=\"fa-solid fa-user\"></i> Cuenta</h1>" in body and 'title="Cuenta"' in body and 'title="Perfil"' not in body

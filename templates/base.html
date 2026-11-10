@@ -33,9 +33,10 @@
   {% if user.is_authenticated %}
   <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
     <div class="sidebar-top">
-      <a href="{% url 'dashboard' %}" class="sidebar-brand" title="FacturIA">
-        <img src="{% static 'favicons/android-chrome-192x192.png' %}" alt="">
-        <span class="nav-label">FacturIA</span>
+      <a href="{% url 'dashboard' %}" class="sidebar-brand" title="{{ user.client.name }}">
+        {% if user.client.logo %}<img src="{% url 'clients:logo' %}?v={{ user.client.logo.name|urlencode }}" alt="Logo de {{ user.client.name }}" class="brand-logo">
+        {% else %}<img src="{% static 'favicons/android-chrome-192x192.png' %}" alt="" class="brand-logo">{% endif %}
+        <span class="nav-label brand-name">{{ user.client.name }}</span>
       </a>
       <button type="button" class="sidebar-collapse" id="sidebar-collapse" aria-label="Contraer menú" title="Contraer menú">
         {% icon "collapse" %}
@@ -55,8 +56,8 @@
         {% icon "categories" %}<span class="nav-label">Categorías</span></a>
       <a href="{% url 'metrics' %}" title="Métricas" {% if page == 'metrics' %}class="active" aria-current="page"{% endif %}>
         {% icon "metrics" %}<span class="nav-label">Métricas</span></a>
-      <a href="{% url 'clients:detail' %}" title="Perfil" {% if ns == 'clients' %}class="active" aria-current="page"{% endif %}>
-        {% icon "profile" %}<span class="nav-label">Perfil</span></a>
+      <a href="{% url 'clients:detail' %}" title="Cuenta" {% if ns == 'clients' %}class="active" aria-current="page"{% endif %}>
+        {% icon "profile" %}<span class="nav-label">Cuenta</span></a>
     </nav>
 
     <div class="sidebar-bottom">
@@ -92,7 +93,11 @@
     {% if user.is_authenticated %}
     <div class="topbar">
       <button type="button" class="btn btn-ghost" id="sidebar-open" aria-label="Abrir menú">{% icon "menu" %}</button>
-      <img src="{% static 'favicons/android-chrome-192x192.png' %}" alt="FacturIA">
+      <span class="topbar-brand">
+        {% if user.client.logo %}<img src="{% url 'clients:logo' %}?v={{ user.client.logo.name|urlencode }}" alt="" class="brand-logo">
+        {% else %}<img src="{% static 'favicons/android-chrome-192x192.png' %}" alt="" class="brand-logo">{% endif %}
+        <strong>{{ user.client.name }}</strong>
+      </span>
     </div>
     {% endif %}
 

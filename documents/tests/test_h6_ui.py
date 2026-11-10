@@ -276,7 +276,7 @@ class TestSharedUi:
 
     @pytest.mark.parametrize("name,expected", [
         ("documents:list", "Documentos"), ("documents:upload", "Subir"), ("dashboard", "Inicio"),
-        ("metrics", "Métricas"), ("finance:movements", "Movimientos"), ("finance:categories", "Categorías"), ("finance:new_movement", "Movimientos"), ("finance:new_category", "Categorías"), ("clients:detail", "Perfil"),
+        ("metrics", "Métricas"), ("finance:movements", "Movimientos"), ("finance:categories", "Categorías"), ("finance:new_movement", "Movimientos"), ("finance:new_category", "Categorías"), ("clients:detail", "Cuenta"),
     ])
     def test_sidebar_marks_active_page(self, auth_client, name, expected):
         import re
@@ -344,3 +344,29 @@ class TestUploadPageLayout:
 
     def test_empty_account_message(self, auth_client):
         assert "Todavía no has subido ningún documento" in auth_client.get(reverse("documents:upload")).content.decode()
+
+
+class TestSidebarBrand:
+    def brand(self, auth_client):
+        body = auth_client.get(reverse("dashboard")).content.decode()
+        return body.split('class="sidebar-brand"')[1].split("</a>")[0]
+
+    def test_shows_company_name_instead_of_app_name(self, auth_client, client_entity):
+        brand = self.brand(auth_client)
+        assert client_entity.name in brand and "FacturIA" not in brand
+        assert "android-chrome-192x192" in brand                      # sin logo: icono por defecto
+
+    def test_shows_company_logo_when_set(self, auth_client, client_entity):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        client_entity.logo = SimpleUploadedFile("logo.png", b"\x89PNG\r\n\x1a\n" + b"0" * 32)
+        client_entity.save()
+        brand = self.brand(auth_client)
+        assert reverse("clients:logo") + "?v=" in brand and "android-chrome" not in brand
+        assert f'alt="Logo de {client_entity.name}"' in brand
+
+    def test_topbar_uses_company_branding_too(self, auth_client, client_entity):
+        body = auth_client.get(reverse("dashboard")).content.decode()
+        assert f"<strong>{client_entity.name}</strong>" in body.split('class="topbar"')[1]
+
+    def test_other_tenant_name_never_shown(self, auth_client, other_client_entity):
+        assert other_client_entity.name not in self.brand(auth_client)

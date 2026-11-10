@@ -138,3 +138,20 @@ class TestView:
         f.DocumentFactory(client=other_user.client, status="approved", flow="in", issue_date=date.today(),
                           base_amount=D("77777"), tax_amount=D("0"), total_amount=D("77777"))
         assert "77.777" not in auth_client.get(self.url).content.decode()
+
+
+class TestHeroTone:
+    def test_negative_profit_renders_danger_tone(self, auth_client, user):
+        from documents.tests import factories as fx
+        fx.DocumentFactory(client=user.client, status="approved", flow="out", issue_date=date.today(),
+                           base_amount=D("500"), tax_amount=D("0"), total_amount=D("500"))
+        body = auth_client.get("/metrics/dashboard/").content.decode()
+        hero = body.split('class="panel hero-kpi')[1].split(">")[0]
+        assert "tone-danger" in hero and "tone-success" not in hero
+
+    def test_positive_profit_renders_success_tone(self, auth_client, user):
+        from documents.tests import factories as fx
+        fx.DocumentFactory(client=user.client, status="approved", flow="in", issue_date=date.today(),
+                           base_amount=D("500"), tax_amount=D("0"), total_amount=D("500"))
+        hero = auth_client.get("/metrics/dashboard/").content.decode().split('class="panel hero-kpi')[1].split(">")[0]
+        assert "tone-success" in hero

@@ -9,7 +9,7 @@
   <!-- Cabecera -->
   <header class="hero rise">
     <div class="hero-text">
-      <p class="hero-eyebrow"><a class="link" href="{% url 'clients:detail' %}">{{ client.name }}</a></p>
+      <p class="hero-eyebrow"><a class="link" href="{% url 'clients:detail' %}?tab=empresa">{{ client.name }}</a></p>
       <h1>{{ greeting }}, {{ first_name }}</h1>
       <p class="hero-sub">
         {% if pending_count %}

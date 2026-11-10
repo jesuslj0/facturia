@@ -114,11 +114,14 @@ a.link:hover { text-decoration: underline; }
   border: 1px solid color-mix(in srgb, var(--tone) 38%, transparent);
 }
 .badge-status i { font-size: 0.75em; }
-.tone-success { --tone: var(--color-success); }
-.tone-warning { --tone: var(--color-warning); }
-.tone-danger  { --tone: var(--color-danger); }
-.tone-info    { --tone: var(--color-info); }
-.tone-neutral { --tone: var(--muted-color); }
+/* Tonos de estado. Clase duplicada a propósito (especificidad 0,2,0): los componentes definen su
+   propio `--tone` por defecto en hojas que se cargan después (.kpi-card, .hero-kpi, .delta…) y, con
+   una sola clase, ese valor por defecto ganaba y todo salía del mismo color (p. ej. beneficio negativo en verde). */
+.tone-success.tone-success { --tone: var(--color-success); }
+.tone-warning.tone-warning { --tone: var(--color-warning); }
+.tone-danger.tone-danger   { --tone: var(--color-danger); }
+.tone-info.tone-info       { --tone: var(--color-info); }
+.tone-neutral.tone-neutral { --tone: var(--muted-color); }
 
 .badge-status .confidence { opacity: 0.8; font-weight: 400; }
 
