@@ -14,98 +14,130 @@
   <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicons/favicon-32x32.png' %}">
   <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicons/favicon-16x16.png' %}">
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/ui.css' %}">
   {% block styles %}{% endblock %}
   <title>
     {% load static %}
     {% block title %}FacturIA{% endblock %}
   </title>
+  <script>
+    /* Evita el parpadeo: aplicar el estado del sidebar antes de pintar */
+    try { if (localStorage.getItem("sidebarCollapsed") === "1") document.documentElement.classList.add("sidebar-collapsed"); } catch (e) {}
+  </script>
 </head>
 <body>
+{% load ui %}
+{% with ns=request.resolver_match.namespace page=request.resolver_match.url_name %}
+<div class="app-shell{% if not user.is_authenticated %} no-sidebar{% endif %}">
 
-  <!-- Header / Nav -->
-  <header class="app-header">
-    <div class="container">
-      <div class="logo">
-        <img src="{% static "favicons/android-chrome-192x192.png" %}" /> 
-      </div>
-      
-      <div>
-        <div class="nav-toggle-container">
-        <button id="nav-toggle"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <nav class="nav">
-        <a href="{% url 'dashboard' %}"><i class="fa-solid fa-house"></i> Inicio</a>
-        <a href="{% url 'documents:list' %}"><i class="fa-regular fa-file-lines"></i> Documentos</a>
-        <a href="{% url 'finance:movements' %}"><i class="fa-solid fa-coins"></i> Finanzas</a>
-        <a href="{% url 'metrics' %}"><i class="fa-solid fa-chart-line"></i> Métricas</a>
-        <a href="{% url 'clients:detail' %}"><i class="fa-solid fa-user"></i> Perfil</a>
-        <form action="{% url 'logout' %}" method="post">
-          {% csrf_token %}
-          <button type="submit">Salir</button>
-        </form>
-        </nav>
-      </div>
+  {% if user.is_authenticated %}
+  <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+    <div class="sidebar-top">
+      <a href="{% url 'dashboard' %}" class="sidebar-brand" title="FacturIA">
+        <img src="{% static 'favicons/android-chrome-192x192.png' %}" alt="">
+        <span class="nav-label">FacturIA</span>
+      </a>
+      <button type="button" class="sidebar-collapse" id="sidebar-collapse" aria-label="Contraer menú" title="Contraer menú">
+        {% icon "collapse" %}
+      </button>
     </div>
-  </header>
 
-  <!-- Main -->
-  <main class="app-main container">
+    <nav class="sidebar-nav">
+      <a href="{% url 'dashboard' %}" title="Inicio" {% if page == 'dashboard' %}class="active" aria-current="page"{% endif %}>
+        {% icon "home" %}<span class="nav-label">Inicio</span></a>
+      <a href="{% url 'documents:list' %}" title="Documentos" {% if ns == 'documents' and page != 'upload' %}class="active" aria-current="page"{% endif %}>
+        {% icon "document" %}<span class="nav-label">Documentos</span></a>
+      <a href="{% url 'documents:upload' %}" title="Subir" {% if page == 'upload' %}class="active" aria-current="page"{% endif %}>
+        {% icon "upload" %}<span class="nav-label">Subir</span></a>
+      <a href="{% url 'finance:movements' %}" title="Finanzas" {% if ns == 'finance' %}class="active" aria-current="page"{% endif %}>
+        {% icon "finance" %}<span class="nav-label">Finanzas</span></a>
+      <a href="{% url 'metrics' %}" title="Métricas" {% if page == 'metrics' %}class="active" aria-current="page"{% endif %}>
+        {% icon "metrics" %}<span class="nav-label">Métricas</span></a>
+      <a href="{% url 'clients:detail' %}" title="Perfil" {% if ns == 'clients' %}class="active" aria-current="page"{% endif %}>
+        {% icon "profile" %}<span class="nav-label">Perfil</span></a>
+    </nav>
 
-    {% if messages %}
-      <div class="messages">
-        {% for message in messages %}
-          <div class="message {{ message.tags }}">
-            {{ message }}
-          </div>
-        {% endfor %}
+    <div class="sidebar-bottom">
+      <a class="sidebar-user" href="{% url 'clients:detail' %}" title="{{ user.get_username }}">
+        {% icon "profile" %}
+        <span class="nav-label sidebar-user-text">
+          <span class="sidebar-user-name">{{ user.get_username }}</span>
+          {% for role in user.roles.all|slice:":1" %}<span class="sidebar-role">{{ role.name }}</span>{% endfor %}
+        </span>
+      </a>
+      <button type="button" class="btn btn-ghost sidebar-logout" id="logout-open" title="Cerrar sesión">
+        {% icon "logout" %}<span class="nav-label">Cerrar sesión</span>
+      </button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <dialog class="dialog" id="logout-dialog" aria-labelledby="logout-title">
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <div class="dialog-icon tone-warning">{% icon "logout" %}</div>
+      <h3 id="logout-title">¿Cerrar sesión?</h3>
+      <p>Saldrás de FacturIA como <strong>{{ user.get_username }}</strong>.</p>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-ghost" data-dialog-close>Cancelar</button>
+        <button type="submit" class="btn btn-primary" autofocus>{% icon "logout" %} Cerrar sesión</button>
       </div>
+    </form>
+  </dialog>
+  {% endif %}
+
+  <div class="app-content">
+    {% if user.is_authenticated %}
+    <div class="topbar">
+      <button type="button" class="btn btn-ghost" id="sidebar-open" aria-label="Abrir menú">{% icon "menu" %}</button>
+      <img src="{% static 'favicons/android-chrome-192x192.png' %}" alt="FacturIA">
+    </div>
     {% endif %}
 
-    {% block content %}
-    {% endblock %}
+    <main class="app-main">
+      {% if messages %}
+        <div class="messages">
+          {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
 
-  </main>
+      {% block content %}
+      {% endblock %}
+    </main>
+  </div>
+</div>
+{% endwith %}
 
   {% block scripts %}
     <script>
-      const nav = document.querySelector('.nav');
-      const toggleNavBtn = document.getElementById('nav-toggle');
+      (function () {
+        const root = document.documentElement;
+        const shell = document.querySelector(".app-shell");
+        const collapseBtn = document.getElementById("sidebar-collapse");
+        const openBtn = document.getElementById("sidebar-open");
+        const overlay = document.getElementById("sidebar-overlay");
+        if (!collapseBtn) return;
 
-      const getNavStatus = () => {
-        const data = JSON.parse(localStorage.getItem('navStatus') || '{}');
-        return data.open || false;
-      };
+        collapseBtn.addEventListener("click", () => {
+          const collapsed = root.classList.toggle("sidebar-collapsed");
+          try { localStorage.setItem("sidebarCollapsed", collapsed ? "1" : "0"); } catch (e) {}
+          collapseBtn.setAttribute("aria-label", collapsed ? "Expandir menú" : "Contraer menú");
+        });
 
-      const setNavStatus = (status) => {
-        localStorage.setItem('navStatus', JSON.stringify({ open: status }));
-      };
+        // Confirmación de logout
+        const dialog = document.getElementById("logout-dialog");
+        document.getElementById("logout-open").addEventListener("click", () => dialog.showModal());
+        dialog.querySelector("[data-dialog-close]").addEventListener("click", () => dialog.close());
+        dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });  // clic en el fondo
 
-      const updateToggleBtn = () => {
-        if (nav.classList.contains('open')) {
-          toggleNavBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-          toggleNavBtn.setAttribute('aria-label', 'Cerrar menú');
-        } else {
-          toggleNavBtn.innerHTML = '<i class="fa-solid fa-bars"></i>';
-          toggleNavBtn.setAttribute('aria-label', 'Abrir menú');
-        }
-      };
-
-      // Toggle nav
-      toggleNavBtn.addEventListener('click', () => {
-        nav.classList.toggle('open');
-        setNavStatus(nav.classList.contains('open'));
-        updateToggleBtn();
-      });
-
-      // Inicialización al cargar
-      window.addEventListener('load', () => {
-        if (getNavStatus()) {
-          nav.classList.add('open');
-        } else {
-          nav.classList.remove('open');
-        }
-        updateToggleBtn();
-      });
+        // Móvil: el sidebar es un panel que se abre desde la barra superior
+        const setOpen = (open) => shell.classList.toggle("sidebar-open", open);
+        openBtn.addEventListener("click", () => setOpen(true));
+        overlay.addEventListener("click", () => setOpen(false));
+        document.addEventListener("keydown", (e) => { if (e.key === "Escape") setOpen(false); });
+      })();
     </script>
   {% endblock %}
 

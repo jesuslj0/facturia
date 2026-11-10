@@ -4,6 +4,7 @@ import logging
 
 import anthropic
 import pydantic
+from anthropic import transform_schema
 
 from .base import (
     SUPPORTED_MIME_TYPES, ConfigurationError, ExtractionInput, ExtractionOutput,
@@ -51,6 +52,20 @@ class ClaudeExtractor:
         data = base64.standard_b64encode(inp.content).decode("ascii")
         kind = "document" if inp.mime_type == "application/pdf" else "image"
         return {"type": kind, "source": {"type": "base64", "media_type": inp.mime_type, "data": data}}
+
+    def batch_params(self, inp: ExtractionInput) -> dict:
+        """Parámetros de una petición para la Batch API (mismo prompt y esquema que `extract`)."""
+        schema = transform_schema(pydantic.TypeAdapter(ExtractionResult).json_schema())
+        return {
+            "model": self.model,
+            "max_tokens": self.max_tokens,
+            "system": [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
+            "messages": [{
+                "role": "user",
+                "content": [self._content_block(inp), {"type": "text", "text": build_user_text(inp)}],
+            }],
+            "output_config": {"effort": self.effort, "format": {"type": "json_schema", "schema": schema}},
+        }
 
     def extract(self, inp: ExtractionInput) -> ExtractionOutput:
         block = self._content_block(inp)

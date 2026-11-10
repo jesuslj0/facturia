@@ -1,1 +1,2 @@
 from .document_rectification_form import DocumentRectificationForm
+from .document_upload_form import DocumentUploadForm

@@ -132,6 +132,15 @@ class Document(models.Model):
         return self.extension in [".jpg", ".jpeg", ".png", ".webp"]
     
     @property
+    def review_key(self):
+        """Clave de nivel de revisión efectiva (la que muestran los badges)."""
+        if self.status == "rejected" or (self.status == "approved" and self.approved_at):
+            return "manual"
+        if self.status == "approved" and not self.approved_at:
+            return "auto"
+        return self.review_level
+
+    @property
     def display_review_level(self):
         if self.status == "rejected" or (self.status == "approved" and self.approved_at):
             return "Manual"
@@ -147,9 +156,14 @@ class Document(models.Model):
             return "Revisión obligatoria"
         return "-"
 
+    @property
+    def is_processing(self):
+        """Extracción en curso: los datos aún no son definitivos (no editar ni aprobar)."""
+        return self.processing_status in ("uploaded", "queued", "processing", "batched")
+
     @property 
     def is_editable(self):
-        return self.status == "pending" and not self.is_archived
+        return self.status == "pending" and not self.is_archived and not self.is_processing
     
     @property
     def has_rectifications(self):
@@ -293,6 +307,7 @@ class Document(models.Model):
         ("uploaded", "Subido"),
         ("queued", "En cola"),
         ("processing", "Procesando"),
+        ("batched", "En lote (diferido)"),
         ("processed", "Procesado"),
         ("failed", "Error"),
     ]
@@ -366,6 +381,7 @@ class Document(models.Model):
     def can_be_approved(self): 
         return (
             self.status == "pending" 
+            and not self.is_processing
             and self.total_amount is not None
             and self.issue_date is not None
         )
@@ -591,6 +607,27 @@ class DocumentFile(models.Model):
         super().save(*args, **kwargs)
 
 
+class ExtractionBatch(models.Model):
+    """Lote enviado a la Batch API de Anthropic (procesado diferido, ~50 % más barato)."""
+    STATUS_CHOICES = [
+        ("submitted", "Enviado"),
+        ("collected", "Recogido"),
+    ]
+
+    provider_batch_id = models.CharField(max_length=100, unique=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="submitted", db_index=True)
+    model = models.CharField(max_length=100, blank=True, default="")
+    request_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    collected_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.provider_batch_id} ({self.status})"
+
+
 class ExtractionRun(models.Model):
     """Una llamada de extracción (OCR/estructuración) sobre un documento."""
     STATUS_CHOICES = [
@@ -602,6 +639,9 @@ class ExtractionRun(models.Model):
 
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="extraction_runs")
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="extraction_runs")
+    batch = models.ForeignKey(
+        "ExtractionBatch", null=True, blank=True, on_delete=models.SET_NULL, related_name="runs"
+    )
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
     provider = models.CharField(max_length=30, default="anthropic")
     model = models.CharField(max_length=100, blank=True, default="")

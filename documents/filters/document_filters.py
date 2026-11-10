@@ -74,6 +74,11 @@ def get_filtered_documents(request, base_qs=None):
         "date_to": request.GET.get("date_to"),
         "document_type": request.GET.get("document_type"),
         "flow": request.GET.get("flow"),
+        "folder": request.GET.get("folder"),
+        "category": request.GET.get("category"),
+        "tag": request.GET.get("tag"),
+        "quarter": request.GET.get("quarter"),
+        "processing": request.GET.get("processing"),
     }
 
     filters = {k: v for k, v in filters.items() if v}

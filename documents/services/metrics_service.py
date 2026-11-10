@@ -1,5 +1,5 @@
 from django.db.models import Sum, Count, Q, Avg, Case, When, DecimalField, F
-from django.db.models.functions import TruncMonth, TruncDay
+from django.db.models.functions import TruncMonth, TruncDay, TruncQuarter
 from django.utils import timezone
 from django.utils.formats import date_format
 from documents.models import Document
@@ -10,22 +10,43 @@ from django.contrib.auth import get_user_model
 from documents.selectors.document_selector import DocumentSelector
 from babel.dates import format_date
 from finance.models import FinancialMovement
+from documents.models import TaxBreakdown
+from documents.services.signs import signed_amount
+from documents.services.usage import extraction_usage
 
 User = get_user_model()
+
+def _usage_summary(u):
+    """Coste/tokens de extracción en tipos serializables (sin desgloses diarios)."""
+    return {
+        "documents": u["documents"],
+        "runs": u["runs"],
+        "failed_runs": u["failed_runs"],
+        "fallback_runs": u["fallback_runs"],
+        "input_tokens": u["input_tokens"],
+        "output_tokens": u["output_tokens"],
+        "cache_read_tokens": u["cache_read_tokens"],
+        "cost_usd": float(u["cost_usd"]),
+        "cost_per_document": float(u["cost_per_document"]),
+    }
+
 
 class MetricsService:
 
     @staticmethod
     def get_user_metrics(user, start=None, end=None):
-        queryset = DocumentSelector.for_client(user.client)
+        if not (start and end):
+            end = timezone.now().date()
+            start = end.replace(day=1)
+
+        queryset = DocumentSelector.for_client(user.client).select_related("company", "category")
         movement_queryset = FinancialMovement.objects.filter(
             client=user.client,
             is_active=True,
         )
 
-        if start and end:
-            queryset = queryset.filter(issue_date__range=[start, end])
-            movement_queryset = movement_queryset.filter(date__range=[start, end])
+        queryset = queryset.filter(issue_date__range=[start, end])
+        movement_queryset = movement_queryset.filter(date__range=[start, end])
 
 
         # 1. Metricas de documentos
@@ -82,24 +103,8 @@ class MetricsService:
         income_queryset = billing_queryset.filter(flow="in")
         expense_queryset = billing_queryset.filter(flow="out")
 
-        def signed(field):
-            return Case(
-                # Rectificativa de ingreso → resta
-                When(
-                    document_type="corrected_invoice",
-                    flow="in",
-                    then=-F(field)
-                ),
-                # Rectificativa de gasto → suma (anula gasto previo)
-                When(
-                    document_type="corrected_invoice",
-                    flow="out",
-                    then=F(field)
-                ),
-                default=F(field),
-                output_field=DecimalField()
-            )
-        
+        signed = signed_amount
+
         def get_granularity(start, end):
             delta = (end - start).days
             if delta <= 31:
@@ -164,6 +169,69 @@ class MetricsService:
             for k, v in chart_result.items()
         ]
 
+        # Retenciones (IRPF) y recargo de equivalencia, con el mismo signo que el documento
+        tax_rows = (
+            TaxBreakdown.objects
+            .filter(document__in=billing_queryset.values("pk"))
+            .values("document__flow", "kind")
+            .annotate(total=Sum(signed_amount("amount", type_field="document__document_type")))
+            .order_by()
+        )
+        withholding = {"in": Decimal("0"), "out": Decimal("0")}
+        surcharge = {"in": Decimal("0"), "out": Decimal("0")}
+        for row in tax_rows:
+            target = {"withholding": withholding, "surcharge": surcharge}.get(row["kind"])
+            if target is not None and row["document__flow"] in target:
+                target[row["document__flow"]] += row["total"] or Decimal("0")
+
+        def breakdown(group_field, label_field, limit=10):
+            rows = (
+                billing_queryset
+                .filter(flow__in=["in", "out"])
+                .values(group_field, label_field, "flow")
+                .annotate(total=Sum(signed("base_amount")), count=Count("id"))
+                .order_by()
+            )
+            grouped = {}
+            for r in rows:
+                key = r[group_field]
+                item = grouped.setdefault(key, {
+                    "id": key, "name": r[label_field] or "Sin asignar",
+                    "income": Decimal("0"), "expense": Decimal("0"), "count": 0,
+                })
+                item["income" if r["flow"] == "in" else "expense"] += r["total"] or Decimal("0")
+                item["count"] += r["count"]
+            items = sorted(grouped.values(), key=lambda i: abs(i["income"]) + abs(i["expense"]), reverse=True)[:limit]
+            return [
+                {**i, "income": float(i["income"]), "expense": float(i["expense"])}
+                for i in items
+            ]
+
+        by_company = breakdown("company_id", "company__name")
+        by_category = breakdown("category_id", "category__name")
+
+        quarter_rows = (
+            billing_queryset
+            .filter(issue_date__isnull=False, flow__in=["in", "out"])
+            .annotate(q=TruncQuarter("issue_date"))
+            .values("q", "flow")
+            .annotate(base=Sum(signed("base_amount")), vat=Sum(signed("tax_amount")))
+            .order_by("q")
+        )
+        quarters = {}
+        for r in quarter_rows:
+            key = f"{r['q'].year}-T{(r['q'].month - 1) // 3 + 1}"
+            item = quarters.setdefault(key, {
+                "period": key, "income": 0.0, "expense": 0.0, "vat_collected": 0.0, "vat_paid": 0.0,
+            })
+            if r["flow"] == "in":
+                item["income"] += float(r["base"] or 0)
+                item["vat_collected"] += float(r["vat"] or 0)
+            else:
+                item["expense"] += float(r["base"] or 0)
+                item["vat_paid"] += float(r["vat"] or 0)
+        by_quarter = list(quarters.values())
+
         status_distribution = {
             "auto_approved": totals["auto_approved_count"] or 0,
             "rejected": totals["rejected_documents"] or 0,
@@ -196,7 +264,15 @@ class MetricsService:
                         "collected": float(tax_income), # IVA cobrado
                         "paid": float(tax_expense), # IVA pagado
                         "balance": float(tax_income - tax_expense),
-                    }
+                    },
+                    "withholding": {
+                        "suffered": float(withholding["in"]),   # retenciones que nos practican
+                        "applied": float(withholding["out"]),   # retenciones que practicamos
+                    },
+                    "surcharge": {
+                        "collected": float(surcharge["in"]),
+                        "paid": float(surcharge["out"]),
+                    },
                 },
                 "movements": {
                     "count": movement_count,
@@ -214,8 +290,12 @@ class MetricsService:
             },
             "charts": {
                 "income_expense_monthly": chart,
+                "by_quarter": by_quarter,
+                "by_company": by_company,
+                "by_category": by_category,
             },
             "status_distribution": status_distribution,
+            "extraction": _usage_summary(extraction_usage(user.client, start, end)),
         }
     
     @staticmethod

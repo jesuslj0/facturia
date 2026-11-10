@@ -25,7 +25,10 @@ CACHE_READ_FACTOR = Decimal("0.1")    # lectura de caché ≈ 0,1 × entrada
 CACHE_WRITE_FACTOR = Decimal("1.25")  # escritura de caché (TTL 5 min) ≈ 1,25 × entrada
 
 
-def estimate_cost(model: str, usage: Usage) -> Decimal | None:
+BATCH_DISCOUNT = Decimal("0.5")       # la Batch API cuesta el 50 % del precio estándar
+
+
+def estimate_cost(model: str, usage: Usage, *, batch: bool = False) -> Decimal | None:
     """Coste estimado en USD, o None si no se conoce el precio del modelo."""
     table = {**PRICES, **getattr(settings, "EXTRACTION_PRICING", {})}
     p = table.get(model)
@@ -41,4 +44,6 @@ def estimate_cost(model: str, usage: Usage) -> Decimal | None:
         + Decimal(usage.cache_read_tokens) * price_in * CACHE_READ_FACTOR
         + Decimal(usage.cache_creation_tokens) * price_in * CACHE_WRITE_FACTOR
     ) / MILLION
+    if batch:
+        cost *= BATCH_DISCOUNT
     return cost.quantize(Decimal("0.000001"))

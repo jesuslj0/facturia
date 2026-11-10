@@ -11,7 +11,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from documents.models import Document, DocumentAuditLog, ExtractionRun
@@ -68,7 +68,26 @@ def claim_document(document_id) -> Document | None:
     return None
 
 
-def run_processing(document_id, *, extractor=None, fallback=None, validator=None) -> str:
+def run_processing(document_id, **kwargs) -> str:
+    """Ejecuta el pipeline y deja una línea de resumen por documento (solo ids, sin datos personales)."""
+    outcome = _run_processing(document_id, **kwargs)
+    if outcome != "skipped":
+        _log_summary(document_id, outcome)
+    return outcome
+
+
+def _log_summary(document_id, outcome: str) -> None:
+    agg = ExtractionRun.objects.filter(document_id=document_id).aggregate(
+        runs=Count("id"), tin=Sum("input_tokens"), tout=Sum("output_tokens"), cost=Sum("cost_usd"),
+    )
+    client_id = Document.all_objects.filter(pk=document_id).values_list("client_id", flat=True).first()
+    logger.info(
+        "document=%s client=%s outcome=%s runs=%s tokens_in=%s tokens_out=%s cost_usd=%s",
+        document_id, client_id, outcome, agg["runs"], agg["tin"] or 0, agg["tout"] or 0, agg["cost"] or 0,
+    )
+
+
+def _run_processing(document_id, *, extractor=None, fallback=None, validator=None) -> str:
     """Ejecuta el pipeline completo. Devuelve 'processed' | 'failed' | 'skipped'.
 
     Lanza el `ExtractionError` original si es reintentable (la tarea reintenta);

@@ -45,9 +45,9 @@
           </div>
           </div>
         <div class="buttons">
-          <button type="submit" class="btn">Ver</button>
+          <button type="submit" class="btn btn-primary">Ver</button>
           {% if request.GET %}
-            <a href="?" class="btn-clear">Limpiar</a>
+            <a href="?" class="btn btn-ghost">Limpiar</a>
           {% endif %}
         </div>
       </form>
@@ -125,7 +125,7 @@
     </div>
 
     <div class="card">
-      <a href="{% url 'documents:list' %}?date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
+      <a class="card-link" href="{% url 'documents:list' %}?date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
         <h3><i class="fa-regular fa-file-lines"></i> Documentos</h3>
         <span class="kpi">
           {{ documents.total }}
@@ -210,7 +210,7 @@
     </div>
 
     <div class="card">
-      <a href="{% url 'finance:movements' %}?date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
+      <a class="card-link" href="{% url 'finance:movements' %}?date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
         <h3><i class="fa-solid fa-wallet"></i> Movimientos</h3>
         <span class="kpi">
           {{ financials.movements.count }}
@@ -269,14 +269,14 @@
   <small class="section-subtitle">En el periodo seleccionado</small>
   <div class="dashboard-cards">
     <div class="card">
-      <a href="{% url 'documents:list' %}?date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
+      <a class="card-link" href="{% url 'documents:list' %}?date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
         <h3>Total documentos</h3>
         <span class="kpi">{{ documents.total|default:0 }}</span>
       </a>
     </div>
 
     <div class="card">
-      <a href="{% url 'documents:list' %}?status=approved&date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
+      <a class="card-link" href="{% url 'documents:list' %}?status=approved&date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
         <h3>Aprobados</h3>
         <span class="kpi text-success">
           {{ documents.approved|default:0 }}
@@ -285,7 +285,7 @@
     </div>
 
     <div class="card">
-      <a href="{% url 'documents:list' %}?status=pending&date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
+      <a class="card-link" href="{% url 'documents:list' %}?status=pending&date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
         <h3>Pendientes</h3>
         <span class="kpi text-warning">
           {{ documents.pending|default:0 }}
@@ -294,7 +294,7 @@
     </div>
 
     <div class="card">
-      <a href="{% url 'documents:list' %}?status=rejected&date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
+      <a class="card-link" href="{% url 'documents:list' %}?status=rejected&date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
         <h3>Rechazados</h3>
         <span class="kpi text-danger">
           {{ documents.rejected|default:0 }}
@@ -355,16 +355,16 @@
               {
                   label: 'Ingresos',
                   data: incomeData,
-                  borderColor: '#22c55e',
-                  backgroundColor: 'rgba(34,197,94,0.1)',
+                  borderColor: '#3fbf7f',
+                  backgroundColor: 'rgba(63,191,127,0.12)',
                   tension: 0.4,
                   fill: true
               },
               {
                   label: 'Gastos',
                   data: expenseData,
-                  borderColor: '#ef4444',
-                  backgroundColor: 'rgba(239,68,68,0.1)',
+                  borderColor: '#e5636b',
+                  backgroundColor: 'rgba(229,99,107,0.12)',
                   tension: 0.4,
                   fill: true
               },
@@ -372,8 +372,8 @@
               {
                   label: 'Beneficio',
                   data: profitData,
-                  borderColor: '#3b82f6',
-                  backgroundColor: 'rgba(59,130,246,0.1)',
+                  borderColor: '#5b9bef',
+                  backgroundColor: 'rgba(91,155,239,0.12)',
                   tension: 0.4,
                   fill: true,
                   borderDash: [5, 5]
@@ -427,7 +427,7 @@
           labels: statusLabelsFormatted,
           datasets: [{
               data: statusValues,
-              backgroundColor: ['#22c55e', '#ef4444', '#6c757d', '#3b82f6'],
+              backgroundColor: ['#3fbf7f', '#e5636b', '#6c757d', '#5b9bef'],
               borderWidth: 1,
               cutout: '65%',
           }]

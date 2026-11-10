@@ -1,3 +1,5 @@
+from django.conf import settings
+from documents.services.ingest import DuplicateFileError, ingest_document
 from .serializers import DocumentIngestSerializer, DocumentSerializer, DocumentListSerializer
 from documents.models import Document, Company
 from documents.services.companies import get_or_create_company, normalize_name, normalize_tax_id  # noqa: F401
@@ -13,83 +15,29 @@ from documents.utils import normalize_tax, round_decimal
 from rest_framework.exceptions import ValidationError
 
 class DocumentIngestAPIView(APIView):
+    """Ingesta del contrato de n8n. Se mantiene mientras `N8N_INGEST_ENABLED` sea True (H10)."""
     authentication_classes = []
     permission_classes = [HasApiKey]
 
     def post(self, request):
+        if not settings.N8N_INGEST_ENABLED:
+            return Response(
+                {"detail": "La ingesta externa está desactivada. Sube los documentos desde la aplicación."},
+                status=rst_status.HTTP_410_GONE,
+            )
         serializer = DocumentIngestSerializer(
             data=request.data,
             context={"client": request.client},
         )
         serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-
-        # Revisión y status
-        review_level = get_review_level(
-            confidence=data.get("confidence", {}),
-            document_type=data["document_type"]
-        )
-        status = get_status(review_level)
-
-        is_auto_approved = review_level == "auto"
-
-        # Normalización de cantidades
-        normalized_amounts = normalize_tax(
-            data["base_amount"], 
-            data["tax_amount"], 
-            data["tax_percentage"], 
-            data["total_amount"]
-        )
-
-        #Inferir tipo de company
-        FLOW_ROLE_MAP = {
-            "in": {"is_customer": True},
-            "out": {"is_provider": True},
-        }
-
-        flow = (data.get("flow") or "").strip().lower()
-
-        if flow not in FLOW_ROLE_MAP:
-            raise ValidationError("Flow inválido")
-
-        roles = FLOW_ROLE_MAP[flow]
-
-        company = get_or_create_company(
-            client=request.client,
-            name=data["provider_name"],
-            tax_id=data["provider_tax_id"],
-            **roles
-        )
-
-        confidence_dict = data.get("confidence") or {}
-        confidence_global = confidence_dict.get("confianza_extraccion", 0.0)
-
-        document = Document.objects.create(
-            client=request.client,
-            company=company,
-            external_id=data["external_id"],
-            file=data["file"],
-            original_name=data["original_name"],
-            document_type=data["document_type"],
-            document_number=data.get("document_number"),
-            issue_date=data.get("issue_date"),
-            base_amount = normalized_amounts.get("base") or 0,
-            tax_amount = normalized_amounts.get("tax_amount") or 0,
-            tax_percentage = normalized_amounts.get("tax_percentage") or 0,
-            total_amount=normalized_amounts.get("total") or 0,
-            confidence=data.get("confidence", {}),
-            status=status,
-            review_level=review_level,
-            is_auto_approved=is_auto_approved,
-            confidence_global=round_decimal(confidence_global, 4),
-            flow=flow
-        )
-
-        return Response(
-            DocumentSerializer(document).data,
-            status=rst_status.HTTP_201_CREATED,
-        )
-
+        try:
+            document = ingest_document(request.client, serializer.validated_data, source="n8n", origin="n8n")
+        except DuplicateFileError as dup:
+            return Response(
+                {"detail": "Ya existe un documento con el mismo contenido.", "document_id": dup.document.pk},
+                status=rst_status.HTTP_409_CONFLICT,
+            )
+        return Response(DocumentSerializer(document).data, status=rst_status.HTTP_201_CREATED)
 
 
 class DocumentListAPIView(ListAPIView):

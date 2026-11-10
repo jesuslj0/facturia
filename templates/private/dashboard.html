@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load ui %}
 {% block title %}Inicio - FacturIA{% endblock %}
 {% load static %}
 {% load custom_filters %}
@@ -6,28 +7,28 @@
 {% block content %}
 <div class="container dashboard home">
   <div class="dashboard-header">
-    <h1><i class="fa-solid fa-house"></i> Inicio · <span class="client-name"><a href="{% url 'clients:detail' %}">{{ client.name }}</a></span></h1>
+    <h1><i class="fa-solid fa-house"></i> Inicio · <span class="client-name"><a class="link" href="{% url 'clients:detail' %}">{{ client.name }}</a></span></h1>
     <p>Tienes {{ pending_count }} documentos por revisar</p>
   </div>
 
   <!-- KPIs -->
   <div class="dashboard-cards">
     <div class="card">
-      <a href="{% url 'documents:list' %}?status=pending">
+      <a class="card-link" href="{% url 'documents:list' %}?status=pending">
         <h3>Pendientes</h3>
         <span class="kpi">{% if pending_count %}{{ pending_count }}{% else %}0{% endif %}</span>
       </a>
     </div>
     
     <div class="card">
-      <a href="{% url 'documents:list' %}?status=pending&review_level=recommended">
+      <a class="card-link" href="{% url 'documents:list' %}?status=pending&review_level=recommended">
         <h3>Recomendados</h3>
         <span class="kpi text-warning">{% if recommended_review_count %}{{ recommended_review_count }}{% else %}0{% endif %}</span>
       </a>
     </div>
 
     <div class="card">
-      <a href="{% url 'documents:list' %}?status=pending&review_level=required">
+      <a class="card-link" href="{% url 'documents:list' %}?status=pending&review_level=required">
         <h3>Revisión obligatoria</h3>
         <span class="kpi text-danger">{% if required_review_count %}{{ required_review_count }}{% else %}0{% endif %}</span>
       </a>
@@ -44,19 +45,19 @@
 
     <div class="dashboard-cards finance-cards">
       <div class="card">
-        <a href="{% url 'finance:movements' %}">
+        <a class="card-link" href="{% url 'finance:movements' %}">
           <h3>Ingresos</h3>
           <span class="kpi text-success">{{ finance_income_total|spanish_currency }} €</span>
         </a>
       </div>
       <div class="card">
-        <a href="{% url 'finance:movements' %}">
+        <a class="card-link" href="{% url 'finance:movements' %}">
           <h3>Gastos</h3>
           <span class="kpi text-danger">{{ finance_expense_total|spanish_currency }} €</span>
         </a>
       </div>
       <div class="card">
-        <a href="{% url 'finance:movements' %}">
+        <a class="card-link" href="{% url 'finance:movements' %}">
           <h3>Balance</h3>
           <span class="kpi {% if finance_balance < 0 %}text-danger{% else %}text-success{% endif %}">
             {{ finance_balance|spanish_currency }} €
@@ -64,7 +65,7 @@
         </a>
       </div>
       <div class="card">
-        <a href="{% url 'finance:movements' %}">
+        <a class="card-link" href="{% url 'finance:movements' %}">
           <h3>Sin conciliar</h3>
           <span class="kpi text-warning">{{ unreconciled_movements_count }}</span>
         </a>
@@ -76,9 +77,9 @@
         <thead>
           <tr>
             <th>Fecha</th>
-            <th>Categoría</th>
+            <th class="hide-sm">Categoría</th>
             <th>Concepto</th>
-            <th>Importe</th>
+            <th class="num">Importe</th>
           </tr>
         </thead>
         <tbody>
@@ -86,7 +87,7 @@
             {% for movement in recent_movements %}
               <tr>
                 <td>{{ movement.date|date:"d/m/Y" }}</td>
-                <td>{{ movement.category.name }}</td>
+                <td class="hide-sm">{{ movement.category.name }}</td>
                 <td>{{ movement.description|default:"—" }}</td>
                 <td class="amount {% if movement.movement_type == 'income' %}text-success{% else %}text-danger{% endif %}">
                   {{ movement.amount|spanish_currency }} €
@@ -94,7 +95,7 @@
               </tr>
             {% endfor %}
           {% else %}
-            <tr><td colspan="4">No hay movimientos financieros este mes.</td></tr>
+            <tr><td colspan="4" class="empty">No hay movimientos financieros este mes.</td></tr>
           {% endif %}
         </tbody>
       </table>
@@ -128,35 +129,31 @@
             <tr>
               <th>Proveedor</th>
               <th>Fecha</th>
-              <th>Tipo</th>
-              <th>Total</th>
+              <th class="hide-sm">Tipo</th>
+              <th class="hide-md">Revisión</th>
+              <th class="num">Total</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {% if pending_documents|length == 0 %}
-              <tr><td colspan="5">No hay documentos pendientes.</td></tr>
-            {% else %}
-              {% for doc in pending_documents %}
-                  <tr class="clickable-row" data-href="{% url 'documents:detail' doc.id %}">
-                    <td>{{ doc.company.name|default:"—" }} </td>
-                    <td>{{ doc.issue_date|date:"d/m/Y"|default:"—" }}</td>
-                    <td>{{ doc.get_document_type_display|default:"—" }}</td>
-                    <td class="amount">{% if doc.total_amount %}{{ doc.total_amount|floatformat:2 }}{% else %}—{% endif %} €</td>
-                    <td class="text-end">
-                      <a href="{% url 'documents:detail' doc.id %}" class="btn btn-sm btn-primary">
-                        Ver
-                      </a>
-                    </td>
-                  </tr>
-              {% endfor %}
-            {% endif %}
+            {% for doc in pending_documents %}
+              <tr class="clickable-row" data-href="{% url 'documents:detail' doc.id %}">
+                <td>{{ doc.company.name|default:"—" }}</td>
+                <td>{{ doc.issue_date|date:"d/m/Y"|default:"—" }}</td>
+                <td class="hide-sm">{{ doc.get_document_type_display|default:"—" }}</td>
+                <td class="hide-md">
+                  {% if doc.is_processing or doc.processing_status == "failed" %}{% badge "processing" doc.processing_status %}{% else %}{% badge "review" doc.review_key %}{% endif %}
+                </td>
+                <td class="amount">{% if doc.total_amount %}{{ doc.total_amount|floatformat:2 }} €{% else %}—{% endif %}</td>
+                <td class="col-actions">
+                  <a href="{% url 'documents:detail' doc.id %}" class="btn btn-ghost btn-sm">{% icon "view" %} Ver</a>
+                </td>
+              </tr>
+            {% endfor %}
           </tbody>
         </table>
         <div class="table-footer">
-          <a href="{% url 'documents:list' %}?status=pending">
-            Ver todos
-          </a>
+          <a href="{% url 'documents:list' %}?status=pending" class="btn btn-ghost btn-sm">Ver todos {% icon "next" %}</a>
         </div>
       </div>
     {% else %}

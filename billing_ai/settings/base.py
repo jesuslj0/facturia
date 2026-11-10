@@ -159,6 +159,10 @@ if _use_r2:
             "querystring_expire": 300,
             # Claves por contenido (SHA-256): reescribir la misma clave guarda los mismos bytes.
             "file_overwrite": True,
+            # Cifrado en reposo: R2 cifra siempre con AES-256. En AWS S3 definir STORAGE_SSE=AES256
+            # (o aws:kms); en R2 dejarlo vacío (no admite la cabecera SSE-S3).
+            **({"object_parameters": {"ServerSideEncryption": os.environ["STORAGE_SSE"]}}
+               if os.getenv("STORAGE_SSE") else {}),
         },
     }
 else:
@@ -202,6 +206,12 @@ EXTRACTION_MAX_RETRIES = int(os.getenv("EXTRACTION_MAX_RETRIES", "5"))
 EXTRACTION_RETRY_BASE_SECONDS = int(os.getenv("EXTRACTION_RETRY_BASE_SECONDS", "30"))
 EXTRACTION_RETRY_MAX_SECONDS = int(os.getenv("EXTRACTION_RETRY_MAX_SECONDS", "900"))
 EXTRACTION_STALE_MINUTES = int(os.getenv("EXTRACTION_STALE_MINUTES", "15"))
+
+# Salida de n8n (H10): False apaga el endpoint de ingesta (responde 410) cuando se cumpla el criterio de apagado.
+N8N_INGEST_ENABLED = os.getenv("N8N_INGEST_ENABLED", "True").lower() in ("1", "true", "yes")
+
+# Retención de documentos (años desde la fecha de emisión). Provisional: confirmar con el asesor.
+DOCUMENT_RETENTION_YEARS = int(os.getenv("DOCUMENT_RETENTION_YEARS", "10"))
 
 # Límites de subida
 UPLOAD_MAX_FILE_MB = int(os.getenv("UPLOAD_MAX_FILE_MB", "20"))

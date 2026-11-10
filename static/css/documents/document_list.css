@@ -1,5 +1,8 @@
 /* Título */
 .page-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin: 1.5rem 0 1rem;
   font-size: 1.2rem;
   font-weight: 500;
@@ -23,160 +26,20 @@
 }
 
 /* Wrapper para scroll en móvil */
-.table-wrapper {
-  background: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  overflow-x: auto;
-}
 
 /* Tabla */
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 600px;
-}
 
 /* Cabecera */
-.table thead th {
-  text-align: left;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #cbd5f5;
-  background: #020617;
-  padding: 0.75rem 1rem;
-}
 
 /* Filas */
-.table tbody tr {
-  transition: background 0.15s;
-}
-
-.table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
 
 /* Celdas */
-.table td {
-  padding: 0.75rem 1rem;
-  font-size: 0.9rem;
-  color: #e5e7eb;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
 
 /* Links */
-.table a {
-  color: var(--enfasis-color);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.table a:hover {
-  text-decoration: underline;
-}
-
-/* Botón Ver Detalle */
-.table a.btn-action {
-  color: var(--body-fg-color);
-  text-decoration: none;
-  font-size: 0.95rem;
-  padding: 0.4rem 0.6rem;
-  border-radius: 6px;
-  transition: background 0.2s, color 0.2s;
-}
-
-
-.table a.btn-action:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
 
 /* Columna importe */
-.table td.amount {
-  font-variant-numeric: tabular-nums;
-  color: var(--muted-color);
-  padding: 0.75rem 1.5rem;
-}
-
-/* Estado */
-.status {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.status.approved {
-  background: rgba(34, 197, 94, 0.15);
-  color: var(--color-success);
-}
-
-.status.pending {
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--color-info);
-}
-
-.status.rejected {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--color-danger);
-}
 
 /* Badge Archivado */
-.archived-badge {
-  display: inline-block;
-  margin-left: 0.4rem;
-  padding: 0.15rem 0.5rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  border-radius: 999px;
-  background-color: rgba(245, 158, 11, 0.12); /* warning soft */
-  color: #b45309; /* warning oscuro elegante */
-  letter-spacing: 0.3px;
-}
-@media (min-width: 768px) {
-  .table td {
-    padding: 0.75rem 1.5rem;
-  }
-
-  .table-wrapper {
-    max-width: 1200px;
-  }
-}
-
-/* Mantener todo en fila */
-.table td .review_level {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.3em;
-  font-weight: 500;
-  font-size: 0.95em;
-}
-.table td .review_level.manual {
-  color: var(--color-info);  
-}
-
-.table td .review_level.auto {
-  color: var(--color-success);  
-}
-
-.table td .review_level.recommended {
-  color: var(--color-warning);  
-}
-
-.table td .review_level.required {
-  color: var(--color-danger);    
-}
-
-/* Confianza entre paréntesis */
-.table td .review_level span.confidence {
-  font-weight: 400;
-  font-size: 0.85em;
-  color: var(--color-info);      
-}
-
 
 /* Filtros y busqueda */
 
@@ -260,25 +123,10 @@ label[for="q"] {
   font-weight: 500;
 }
 
-label[for="q"] button {
-  color: var(--body-fg-color);
-  font-weight: 500;
-  margin-right: 5px;
-  background-color: var(--enfasis-color-dark);
-  padding: 0.45rem 0.6rem;
-  border-radius: 6px;
-  border: 2px solid var(--border-color-btn);
-  cursor: pointer;
-}
-
 .search {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-label[for="q"] button:hover {
-  filter: brightness(1.2);
 }
 
 .filters-bar .right-filters {
@@ -352,7 +200,6 @@ label[for="q"] button:hover {
   }
 }
 
-
 .filters-bar input,
 .filters-bar select {
   padding: 0.45rem 0.6rem;
@@ -364,19 +211,6 @@ label[for="q"] button:hover {
 
 .filters-bar input[type="text"] {
   min-width: 200px;
-}
-
-
-.filters-bar .btn-clear {
-  font-size: 0.9rem;
-  color: var(--color-warning);
-  text-decoration: none;
-  transition: color 0.2s;
-  background-color: var(--card-bg-color);
-  padding: 0.45rem 0.6rem;
-  border-radius: 6px;
-  border: 1px solid var(--color-warning);
-  cursor: pointer;
 }
 
 .filters-bar input {
@@ -417,18 +251,6 @@ label[for="q"] button:hover {
 .documents-label {
   font-size: 0.85rem;
   color: var(--muted-color);
-}
-
-.export-buttons .btn {
-  font-size: 0.8rem;
-  padding: 0.45rem 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.export-buttons .btn:hover {
-  filter: brightness(1.2);
 }
 
 /* Estilos para Export Preview */
@@ -496,7 +318,6 @@ label[for="q"] button:hover {
   color: var(--body-fg-color)
 }
 
-
 @media (max-width: 768px) {
   .export-bar {
     flex-direction: column;
@@ -508,3 +329,15 @@ label[for="q"] button:hover {
     align-self: flex-start;
   }
 }
+
+/* ---------- H6 ---------- */
+.page-title .upload-link { margin-left: auto; font-size: 0.85rem; text-decoration: none; }
+.processing-note {
+  margin-bottom: 1rem;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-info) 35%, transparent);
+  background: color-mix(in srgb, var(--color-info) 10%, transparent);
+  font-size: 0.9rem;
+}
+.processing-note a { color: var(--enfasis-color); margin-left: 0.5rem; }

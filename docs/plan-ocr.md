@@ -208,6 +208,31 @@ Cubierto: auth por API key, reglas `get_review_level/get_status`, ingesta (alta,
 
 | H5 Validación | Hecho | `documents/validators.py`, `documents/services/{validation,duplicates}.py`; 506 tests |
 
+| H6 UI | Hecho (estilos provisionales; renovación visual pendiente) | Subida, revisión, filtros y organización; 534 tests |
+
+| H7 Métricas/export | Hecho | `services/signs.py`, `metrics_service.py`, `utils.py`; 20 tests |
+
+| H8 Observabilidad y RGPD | Hecho | `services/{usage,retention}.py`; comandos `extraction_cost`, `purge_expired`; 14 tests |
+
+| H9 Batch | Hecho (cliente simulado; falta probar con clave real) | `services/extraction/batch.py`; comandos `submit_batch`, `collect_batch`; 21 tests |
+
+| H10 Salida de n8n | Hecho (el apagado depende de datos reales) | `services/{ingest,n8n_import,n8n_exit}.py`; `import_n8n`, `n8n_exit_report`; 17 tests. Suite: 632 |
+
+**H7 — decisiones:** una sola regla de signo (`documents/services/signs.py`): una rectificativa **resta siempre** (ingresos y gastos), venga guardada en positivo (n8n) o negativo (IA); antes los gastos rectificados *sumaban*. Métricas: se añaden `charts.by_quarter`, `by_company`, `by_category` y `financials.documents.withholding/surcharge` (desde `TaxBreakdown`); sin periodo usa el mes actual. Export CSV/Excel/PDF: columnas Tipo, NIF y Retención; importes con signo; totales en `Decimal`; sin fallos con consulta vacía, sin tercero o sin importes; inyección de fórmulas neutralizada (`'` delante de `= + - @`). **Cambia las cifras visibles** de gastos con rectificativas.
+
+**H8 — decisiones:** línea de resumen por documento (`document= client= outcome= tokens cost`, solo ids). `extraction_usage` (tokens/coste por modelo y día) se expone en la métrica `extraction` y en `manage.py extraction_cost`. Retención: `DOCUMENT_RETENTION_YEARS` (10) desde la fecha de emisión; una cadena de rectificaciones se conserva hasta que caducan todas sus versiones; `purge_expired` es **simulacro salvo `--apply`**. Cifrado: R2 cifra siempre; `STORAGE_SSE` solo para AWS S3. El bucket privado se configura en Cloudflare, no en código.
+
+**H9 — decisiones:** Batch API (50 % más barata, hasta 24 h). `submit_batch` marca los documentos `batched` (la cola de Celery no los toca) y crea `ExtractionBatch` + un `ExtractionRun` por documento; `collect_batch` (idempotente, ejecutable periódicamente) aplica cada resultado con el mismo pipeline. Una petición fallida/caducada/inválida vuelve al flujo normal (reintentos + respaldo a Sonnet). El lote **no usa el respaldo a Sonnet**: los resultados dudosos quedan en revisión según la política de H5. Coste registrado con el 50 % de descuento.
+
+**H10 — decisiones:** el endpoint n8n sigue igual (`source=n8n`) y ahora crea `DocumentFile` (hash): un archivo repetido responde **409** (antes no había deduplicación por hash en la API). `N8N_INGEST_ENABLED=False` lo apaga (410). `import_n8n <carpeta> --client N` importa pares `X.pdf`+`X.json` con `source=import`. `n8n_exit_report` mide el criterio (app >90 % del volumen, ≥95 % de campos sin corregir en documentos revisados, 0 incidencias críticas, 28 días de historial). "Incidencia crítica" = `ExtractionRun` fallido con `unexpected_error`/`apply_failed`/`configuration`; las incidencias de negocio hay que valorarlas a mano.
+
+**H6 — qué hay y decisiones:**
+- **Subida** (`/documents/upload/`, enlace «Subir» en el menú): multi-archivo con arrastrar y soltar, y botón «Hacer foto» (`capture="environment"`, visible solo en pantallas táctiles; origen `mobile`). Máximo 20 archivos por subida. `documents/services/upload.py` valida tamaño y tipo real, **detecta duplicados por hash antes de crear nada** (`find_duplicate_by_hash`, por tenant), crea `Document` (`pending`/`uploaded`, flujo `unknown`, `source=upload`) + `DocumentFile` + auditoría `created`, y encola. Resultado por archivo: subido / duplicado / rechazado.
+- **Revisión** (`document_detail`): ya era lado a lado; ahora muestra el estado de extracción (banner con recarga automática mientras se procesa; si falla, el motivo del último `ExtractionRun` y «Reintentar»), las incidencias de validación (con el campo afectado resaltado), el desglose de impuestos/retenciones y las líneas, y permite editar tipo, tercero (entre los existentes), categoría, carpeta (o crear una nueva) y etiquetas. Enlace «Siguiente pendiente». Mientras se extrae no se puede editar, aprobar ni rechazar (`Document.is_processing`); un documento `failed` sí se puede rellenar a mano.
+- **Listado**: filtros por carpeta, etiqueta, categoría, trimestre (los que tienen documentos) y estado de extracción; chips de carpeta/etiquetas; aviso con recarga automática mientras hay documentos en proceso. Los ids de otros tenants se ignoran siempre (carpeta/categoría/empresa/etiqueta se resuelven contra el cliente).
+- **JS común** extraído a `static/js/`: `document-viewer.js` y `tax-calculator.js` (detalle y rectificación), `confirm-modal.js`, `auto-refresh.js`, `upload.js`.
+- **Pendiente / fuera de alcance**: el aviso de «más de 20 páginas» se ve al terminar la extracción (documento `failed`), no antes de subir; no hay gestión de carpetas/etiquetas/categorías (renombrar, borrar, colores) ni asignación masiva desde el listado; el tercero no se crea desde la pantalla de revisión.
+
 **H5 — reglas y política:**
 - Gravedad: **ERROR** → revisión obligatoria; **WARNING** → recomendada, nunca auto-aprobado; **INFO** → solo informativo. Las incidencias se guardan en `Document.validation_issues` (para mostrarlas en la UI de revisión, H6) y sus códigos en el registro de auditoría.
 - Reglas: total = base + IVA + recargo − retención (tolerancia 0,02) y cuadre de cada línea de impuesto (0,05), con signo correcto en rectificativas; NIF/NIE/CIF con dígito de control (contrastado con CIF reales); fecha ausente, futura, anterior a 2000 o de más de 5 años; tipos de IVA/retención/recargo poco habituales; moneda ≠ EUR; emisor sin NIF; cliente sin NIF o ausente del documento (flujo desconocido); duplicados por emisor + nº de factura (y por hash: `find_duplicate_by_hash`, para la subida).

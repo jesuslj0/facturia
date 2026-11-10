@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load ui %}
 {% load custom_filters %}
 {% block title %}Movimientos - FacturIA{% endblock %}
 {% block styles %}
@@ -20,7 +21,7 @@
             <input type="date" name="end" value="{{ request.GET.end }}" class="date-filter">
             <button type="submit" class="btn btn-primary">Filtrar</button>
             {% if request.GET %}
-                <a href="{% url 'finance:movements' %}" class="btn btn-secondary">Limpiar</a>
+                <a href="{% url 'finance:movements' %}" class="btn btn-ghost">Limpiar</a>
             {% endif %}
         </div>
         <div class="filters-container bottom-left">
@@ -79,7 +80,7 @@
             </a>
         </div>
 
-        <table class="movements-table">
+        <table class="table movements-table">
             <thead>
                 <tr>
                     <th>Fecha</th>
@@ -88,7 +89,7 @@
                     <th>Método</th>
                     <th>Recibo</th>
                     <th>Estado</th>
-                    <th class="text-end">Importe</th>
+                    <th class="num">Importe</th>
                     <th></th>
                 </tr>
             </thead>
@@ -141,13 +142,9 @@
 
                         <td class="status">
                             {% if movement.is_reconciled %}
-                                <span class="badge badge-success">
-                                    <i class="fa-solid fa-check"></i>
-                                </span>
+                                {% badge "reconcile" "reconciled" %}
                             {% else %}
-                                <span class="badge badge-warning">
-                                    <i class="fa-solid fa-clock"></i>
-                                </span>
+                                {% badge "reconcile" "pending" %}
                             {% endif %}
                         </td>
 
@@ -155,9 +152,9 @@
                             {{ movement.amount|spanish_currency }} €
                         </td>
 
-                        <td class="text-end">
-                            <a href="{% url 'finance:edit_movement' movement.id %}" class="btn btn-sm btn-primary">
-                                <i class="fa-solid fa-eye"></i>
+                        <td class="col-actions">
+                            <a href="{% url 'finance:edit_movement' movement.id %}" class="btn btn-ghost btn-sm">
+                                {% icon "view" %}
                             </a>
                         </td>
 
@@ -170,7 +167,7 @@
     </div>
 </div>
 <div class="categories-container">
-    <a href="{% url 'finance:categories' %}" class="btn btn-primary"><i class="fa-solid fa-list"></i> Ver categorías</a>
-    <a href="{% url 'finance:new_category' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva categoría</a>
+    <a href="{% url 'finance:categories' %}" class="btn">{% icon "list" %} Ver categorías</a>
+    <a href="{% url 'finance:new_category' %}" class="btn btn-primary">{% icon "new" %} Nueva categoría</a>
 </div>
 {% endblock %}

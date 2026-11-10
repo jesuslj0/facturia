@@ -4,15 +4,8 @@
   margin-top: 20px;
 }
 
-.table-wrapper {
-  background: var(--card-bg-color);
-  border-radius: 14px;
-  padding: 22px;
-  border: 1px solid var(--border-color);
-  overflow-x: auto;
-}
-
 .table-header {
+  padding: 1rem 1rem 0.75rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -40,35 +33,6 @@
 }
 
 /* TABLA */
-
-.movements-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.movements-table thead th {
-  text-align: left;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted-color);
-  padding: 12px 10px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.movements-table tbody td {
-  padding: 12px 10px;
-  border-bottom: 1px solid var(--border-color);
-  font-size: 0.92rem;
-}
-
-.movements-table tbody tr {
-  transition: background 0.15s ease;
-}
-
-.movement-row:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
 
 .category-icon {
   margin-right: 10px;
@@ -112,13 +76,13 @@
 }
 
 .badge-success {
-  background: #dcfce7;
-  color: #16a34a;
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
+  color: var(--color-success);
 }
 
 .badge-warning {
-  background: #fef3c7;
-  color: #b45309;
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  color: var(--color-warning);
 }
 
 .receipt-link {

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load ui %}
+{% load static %}
+{% block title %}Subir documentos - FacturIA{% endblock %}
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'css/documents/document_list.css' %}">
+  <link rel="stylesheet" href="{% static 'css/documents/document_upload.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{% icon "upload" %} Subir documentos</h1>
+
+<div class="upload-card">
+  <form method="post" enctype="multipart/form-data" id="upload-form"
+        data-max-files="20" data-max-mb="{{ max_mb }}">
+    {% csrf_token %}
+    {% for error in form.non_field_errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+    {% for error in form.files.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+    {% for error in form.photos.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+
+    <label class="dropzone" id="dropzone" for="id_files">
+      <i class="fa-regular fa-file-pdf"></i>
+      <strong>Arrastra aquí tus facturas o pulsa para elegirlas</strong>
+      <span>PDF, JPG, PNG, WEBP, GIF o HEIC · hasta {{ max_mb }} MB · PDF de hasta {{ max_pages }} páginas</span>
+      <input type="file" name="files" id="id_files" multiple
+             accept="application/pdf,image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.pdf,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif">
+    </label>
+
+    <div class="upload-actions">
+      <label class="btn camera-btn" for="id_photos">{% icon "camera" %} Hacer foto</label>
+      <input type="file" name="photos" id="id_photos" accept="image/*" capture="environment" hidden>
+      <button type="submit" class="btn btn-primary" id="upload-submit" disabled>{% icon "upload" %} Subir y procesar</button>
+    </div>
+
+    <ul class="file-list" id="file-list"></ul>
+    <p class="upload-hint">Los datos se extraen automáticamente; después podrás revisarlos y aprobarlos. Los archivos repetidos se detectan y no se vuelven a procesar.</p>
+  </form>
+
+  {% if processing_count %}
+  <a class="upload-queue" href="{% url 'documents:list' %}?processing=active">
+    <i class="fa-solid fa-spinner fa-spin"></i> {{ processing_count }} documento(s) en proceso
+  </a>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'js/upload.js' %}"></script>
+{% endblock %}

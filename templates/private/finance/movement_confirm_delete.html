@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load ui %}
 {% load custom_filters %}
 {% block title %}Borrar movimiento - FacturIA{% endblock %}
 {% block styles %}
@@ -20,7 +21,7 @@
         <div class="delete-warning">
             <p>Esta accion no se puede deshacer.</p>
         </div>
-        <button type="submit" class="btn btn-danger">Confirmar borrado</button>
-        <a href="{% url 'finance:movements' %}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-danger">{% icon "delete" %} Confirmar borrado</button>
+        <a href="{% url 'finance:movements' %}" class="btn btn-ghost">Cancelar</a>
     </form>
 {% endblock %}

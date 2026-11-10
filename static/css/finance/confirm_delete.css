@@ -53,27 +53,12 @@
 
 /* BOTON DE BORRADO */
 
-.btn-danger {
-  margin-top: 6px;
-  border: 1px solid var(--border-color);
-}
-
-.btn-danger:hover {
-  color: var(--color-danger);
-  border: 1px solid var(--color-danger);
-  transition: color 0.15s ease, border 0.15s ease;
-}
-
-.btn-danger:not(:hover) {
-  transition: color 0.15s ease, border 0.15s ease;
-}
-
 /* OPCIONAL: BLOQUE DE ALERTA (mas visual para acciones destructivas) */
 
 .delete-warning {
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #f87171;
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 25%, transparent);
+  color: var(--color-danger);
   padding: 14px 16px;
   border-radius: 10px;
   margin-bottom: 18px;

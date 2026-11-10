@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}Crear movimiento - FacturIA{% endblock %}
 {% block styles %}
 {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'css/finance/movement_form.css' %}">
 {% endblock %}
 {% block content %}
-    <a href="{% url 'finance:movements' %}" class="btn btn-secondary btn-back"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+    <a href="{% url 'finance:movements' %}" class="btn btn-back">{% icon "back" %} Volver</a>
     <h1 class="page-title">
         <i class="fa-solid fa-coins"></i> 
         {% if object %}Editar movimiento{% else %}Nuevo movimiento
@@ -36,9 +37,9 @@
             {% endfor %}
             <button type="submit" class="btn btn-primary">Guardar</button>
             {% if object %}
-            <a href="{% url 'finance:delete_movement' object.pk %}" class="btn btn-secondary btn-danger">Borrar</a>
+            <a href="{% url 'finance:delete_movement' object.pk %}" class="btn btn-danger">{% icon "delete" %} Borrar</a>
             {% endif %}
-            <a href="{% url 'finance:movements' %}" class="btn btn-secondary">Cancelar</a>
+            <a href="{% url 'finance:movements' %}" class="btn btn-ghost">Cancelar</a>
         </form>
     </div>
 {% endblock %}

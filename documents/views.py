@@ -1,9 +1,11 @@
+from django.conf import settings
 from django.shortcuts import redirect, get_object_or_404
 from .models import Document
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import View, ListView, DetailView, TemplateView, FormView
 from django.contrib import messages
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.db.models.functions import Coalesce
 from django.db.models import DecimalField, Sum, Count
 from finance.models import FinancialMovement
@@ -13,7 +15,10 @@ from .services import DocumentService
 from django.contrib.auth import get_user_model
 from .filters.document_filters import get_filtered_documents, get_exportable_documents
 from documents.models import Company
-from .forms import DocumentRectificationForm
+from .forms import DocumentRectificationForm, DocumentUploadForm
+from .models import DocumentCategory, Folder, Tag
+from .services import upload as upload_service
+from django.urls import reverse
 from billing_ai.storage import private_file_response
 
 User = get_user_model()
@@ -27,6 +32,8 @@ class DocumentListView(LoginRequiredMixin, ListView):
         return get_filtered_documents(
             self.request,
             base_qs=DocumentSelector.for_client(self.request.user.client)
+            .select_related("company", "folder")
+            .prefetch_related("tags"),
         )
     
     def get_context_data(self, **kwargs):
@@ -37,7 +44,14 @@ class DocumentListView(LoginRequiredMixin, ListView):
 
         context["client"] = first_doc.client if first_doc else None
         context["document_types"] = Document.TYPE_CHOICES
-        context["companies"] = Company.objects.filter(client=self.request.user.client).order_by("name")
+        client = self.request.user.client
+        context["companies"] = Company.objects.filter(client=client).order_by("name")
+        context["folders"] = Folder.objects.filter(client=client)
+        context["tags"] = Tag.objects.filter(client=client)
+        context["categories"] = DocumentCategory.objects.filter(client=client)
+        context["quarters"] = DocumentSelector.available_quarters(client)
+        context["processing_count"] = DocumentSelector.processing_count(client)
+        context["processing_choices"] = Document.PROCESSING_CHOICES
 
         # Querystring sin page (preserva sort/order para paginación y exports)
         querydict = self.request.GET.copy()
@@ -68,6 +82,19 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         action = request.POST.get("action")
+
+        # --- Reintentar la extracción de un documento fallido ---
+        if action == "retry":
+            if upload_service.retry_processing(self.object):
+                messages.success(request, "Documento enviado de nuevo a extracción.")
+            else:
+                messages.warning(request, "Este documento no se puede reprocesar.")
+            return redirect("documents:detail", pk=self.object.pk)
+
+        # Mientras se extrae, los datos no son definitivos
+        if self.object.is_processing and action in ("approve", "reject", "save"):
+            messages.warning(request, "El documento se está procesando; espera a que termine.")
+            return redirect("documents:detail", pk=self.object.pk)
 
         # --- Aprobar ---
         if action == "approve" and self.object.status == "pending":
@@ -118,7 +145,40 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         context["root_document"] = root
         context["has_versions"] = previous_versions.exists() or next_versions.exists()
 
+        client = self.request.user.client
+        context["companies"] = Company.objects.filter(client=client).order_by("name")
+        context["folders"] = Folder.objects.filter(client=client)
+        context["categories"] = DocumentCategory.objects.filter(client=client)
+        context["document_types"] = Document.TYPE_CHOICES
+        context["tag_names"] = ", ".join(t.name for t in document.tags.all())
+        context["all_tag_names"] = list(Tag.objects.filter(client=client).values_list("name", flat=True))
+        context["tax_lines"] = document.tax_lines.all()
+        context["invoice_lines"] = document.lines.all()
+        context["issues"] = sorted(
+            document.validation_issues or [],
+            key=lambda i: {"error": 0, "warning": 1}.get(i.get("severity"), 2),
+        )
+        context["issue_fields"] = {i.get("field") for i in document.validation_issues or [] if i.get("field")}
+        context["processing_error"] = self._processing_error(document)
+        context["next_pending"] = (
+            DocumentSelector.pending(client)
+            .filter(is_archived=False, processing_status__in=("processed", "failed"))
+            .exclude(pk=document.pk)
+            .order_by("created_at", "pk")
+            .first()
+        )
+
         return context
+
+    @staticmethod
+    def _processing_error(document):
+        if document.processing_status != "failed":
+            return None
+        run = document.extraction_runs.filter(status="failed").first()
+        return {
+            "code": run.error_code if run else "",
+            "message": (run.error_message if run else "") or "No se pudo extraer el documento.",
+        }
 
 
 def approve_document(request, document):
@@ -259,6 +319,7 @@ class DocumentExportView(LoginRequiredMixin, View):
     
     
 from django.db.models import Sum, Min, Max, Avg, Count
+from .services.signs import signed_amount
 class DocumentExportPreviewView(LoginRequiredMixin, ListView):
     template_name = "private/documents/document_export_preview.html"
 
@@ -308,9 +369,9 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
             context["pdf_context"] = build_pdf_context(qs, self.request)
 
         summary = qs.aggregate(
-            base_total=Sum("base_amount"),
-            tax_total=Sum("tax_amount"),
-            grand_total=Sum("total_amount"),
+            base_total=Sum(signed_amount("base_amount")),
+            tax_total=Sum(signed_amount("tax_amount")),
+            grand_total=Sum(signed_amount("total_amount")),
             min_date=Min("issue_date"),
             max_date=Max("issue_date"),
             avg_confidence=Avg("confidence_global"),
@@ -363,15 +424,16 @@ class MetricsDashboardView(LoginRequiredMixin, TemplateView):
         end = request.GET.get("end")
         today = timezone.now().date()
 
-        if not start:
-            start = today.replace(day=1)
-        else:
-            start = timezone.datetime.strptime(start, "%Y-%m-%d").date()
+        def _date(value, default):
+            try:
+                return parse_date(value or "") or default
+            except ValueError:
+                return default
 
-        if not end:
-            end = today
-        else:
-            end = timezone.datetime.strptime(end, "%Y-%m-%d").date()
+        start = _date(start, today.replace(day=1))
+        end = _date(end, today)
+        if start > end:
+            start, end = end, start
 
         first_day_of_month = today.replace(day=1)
         is_current_month = (
@@ -476,3 +538,36 @@ class DocumentFileView(LoginRequiredMixin, View):
             client=request.user.client,
         )
         return private_file_response(document.file, download_name=document.original_name or None)
+
+
+
+class DocumentUploadView(LoginRequiredMixin, FormView):
+    """Subida multi-archivo (selector, arrastrar o cámara del móvil)."""
+    template_name = "private/documents/document_upload.html"
+    form_class = DocumentUploadForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["max_mb"] = settings.UPLOAD_MAX_FILE_MB
+        context["max_pages"] = settings.EXTRACTION_MAX_PAGES
+        context["processing_count"] = DocumentSelector.processing_count(self.request.user.client)
+        return context
+
+    def form_valid(self, form):
+        client, user = self.request.user.client, self.request.user
+        results = upload_service.upload_many(
+            client=client, user=user, files=form.cleaned_data["files"], origin="upload",
+        ) + upload_service.upload_many(
+            client=client, user=user, files=form.cleaned_data["photos"], origin="mobile",
+        )
+        created = [r for r in results if r.status == upload_service.CREATED]
+        if created:
+            messages.success(self.request, f"{len(created)} documento(s) subido(s); se están procesando.")
+        for r in results:
+            if r.status == upload_service.DUPLICATE:
+                messages.warning(self.request, f"«{r.name}»: {r.message}")
+            elif r.status == upload_service.REJECTED:
+                messages.error(self.request, f"«{r.name}»: {r.message}")
+        if created:
+            return redirect(f"{reverse('documents:list')}?processing=active")
+        return redirect("documents:upload")

@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load ui %}
 {% block title %}Nueva categoría - FacturIA{% endblock %}
 {% block styles %}
 {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'css/finance/category_form.css' %}">
 {% endblock %}
 {% block content %}
-    <a href="{% url 'finance:categories' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+    <a href="{% url 'finance:categories' %}" class="btn btn-back btn-sm">{% icon "back" %} Volver</a>
     <div class="category-header">
         {% if object %}
             <i class="{{ object.icon }} category-icon" style="color: {{ object.color }}"></i>
@@ -28,9 +29,9 @@
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Guardar</button>
                 {% if object %}
-                <a href="{% url 'finance:delete_category' object.pk %}" class="btn btn-secondary">Borrar</a>
+                <a href="{% url 'finance:delete_category' object.pk %}" class="btn btn-danger">{% icon "delete" %} Borrar</a>
                 {% endif %}
-                <a href="{% url 'finance:categories' %}" class="btn btn-secondary">Cancelar</a>
+                <a href="{% url 'finance:categories' %}" class="btn btn-ghost">Cancelar</a>
             </div>
         </form>
     </div>

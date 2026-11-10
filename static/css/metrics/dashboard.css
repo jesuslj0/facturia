@@ -50,8 +50,6 @@
     margin-bottom: 1rem;
 }
 
-
-
 /* Estilos de filtros por fecha */
 .date-filter {
     display: flex;
@@ -76,38 +74,6 @@
     border: 1px solid var(--border-color);
     background-color: var(--card-bg-color);
     color: var(--body-fg-color);
-}
-
-.date-filter form button[type="submit"] {
-    text-decoration: none;
-    border: 1px solid var(--border-color);
-    padding: 0.45rem 0.6rem;
-    border-radius: 6px;
-    background-color: var(--card-bg-color);
-    color: var(--body-fg-color);
-    cursor: pointer;
-    transition: filter 0.2s;
-}
-
-.date-filter form button[type="submit"]:hover {
-    filter: brightness(1.2);
-    text-decoration: none;
-}
-
-.date-filter form button[type="submit"]:active {
-    background-color: var(--enfasis-color-dark);
-    transition: background-color 0.2s ease;
-}
-
-.date-filter form .btn-clear {
-    font-size: 0.9rem;
-    color: var(--color-warning);
-    text-decoration: none;
-    transition: color 0.2s;
-    background-color: var(--card-bg-color);
-    padding: 0.45rem 0.6rem;
-    border-radius: 6px;
-    cursor: pointer;
 }
 
 .date-range {

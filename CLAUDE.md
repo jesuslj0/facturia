@@ -56,6 +56,14 @@ docker compose up -d redis                       # solo Redis, Django en el host
 celery -A billing_ai worker -l info              # worker (en otra terminal)
 python manage.py enqueue_extraction [--sync]     # encola documentos uploaded/failed
 
+# Lotes (Batch API, ~50 % más barato) y operación
+python manage.py submit_batch [--client N] [--limit N] [--dry-run]
+python manage.py collect_batch                   # recoger lotes terminados (periódico)
+python manage.py extraction_cost [--from F --to F]
+python manage.py purge_expired [--apply]         # retención; sin --apply solo simula
+python manage.py import_n8n <carpeta> --client N [--dry-run]
+python manage.py n8n_exit_report                 # ¿se puede apagar n8n?
+
 # Tests contra la API real de Claude (cuestan dinero; excluidos por defecto)
 pytest -m live_api -s
 
