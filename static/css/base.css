@@ -11,6 +11,8 @@
 
   --border-color-strong: rgba(255, 255, 255, 0.14);
   --surface-hover: rgba(255, 255, 255, 0.05);
+  /* superficie con degradado sutil: paneles, tarjetas, tablas, filtros */
+  --grad-surface: linear-gradient(180deg, color-mix(in srgb, var(--card-bg-color) 93%, #fff), var(--card-bg-color));
 
   /* Estados: apagados para no competir con el contenido; legibles sobre fondo oscuro */
   --color-success: #3fbf7f;

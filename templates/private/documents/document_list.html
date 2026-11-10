@@ -1,200 +1,172 @@
 {% extends "base.html" %}
-{% load ui %}
-{% load custom_filters %}
+{% load ui static custom_filters %}
 {% block styles %}
-{% load static %}
-  <link rel="stylesheet" href="{% static 'css/documents/document_list.css' %}">
-{% endblock%}
+  <link rel="stylesheet" href="{% static 'css/list-page.css' %}">
+{% endblock %}
 {% block title %}Documentos - FacturIA{% endblock %}
 
 {% block content %}
-<h1 class="page-title"><i class="fa-regular fa-file-lines"></i> Tus documentos
+<h1 class="page-title">{% icon "document" %} Tus documentos
   <a href="{% url 'documents:upload' %}" class="btn btn-primary upload-link">{% icon "upload" %} Subir</a>
 </h1>
+
 {% if processing_count %}
 <div class="processing-note" data-autorefresh="5">
   <i class="fa-solid fa-spinner fa-spin"></i> {{ processing_count }} documento(s) extrayendo datos…
   {% if request.GET.processing != "active" %}<a href="?processing=active">Ver</a>{% endif %}
 </div>
 {% endif %}
-<div class="filters-container">
-  <button type="button" id="filters-toggle" class="btn btn-sm">Ocultar filtros <i class="fa-solid fa-caret-up"></i></button>
-  <form method="get" class="filters-bar">
-    <div class="left-filters">
-      <div class="search">
-        <input
-        type="text"
-        name="q"
-        placeholder="Buscar por nombre o empresa"
-        value="{{ request.GET.q }}"
-        >
-        <button type="submit" class="btn btn-primary" aria-label="Buscar">{% icon "search" %}</button>
-      </div>
-      <select name="company">
-        <option value="">Empresa</option>
-        {% for company in companies %}
-        <option value="{{ company.name }}" {% if request.GET.company == company.name %}selected{% endif %}>{{ company.name }}</option>
-        {% endfor %}
-      </select>
-      <select name="document_type">
-        <option value="">Tipo de documento</option>
-        {% for key, value in document_types %}
-        <option value="{{ key }}" {% if request.GET.document_type == key %}selected{% endif %}>{{ value }}</option>
-        {% endfor %}
-      </select>
-      <select name="flow">
-        <option value="">Flujo</option>
-        <option value="in" {% if request.GET.flow == "in" %}selected{% endif %}>Venta (Ingreso)</option>
-        <option value="out" {% if request.GET.flow == "out" %}selected{% endif %}>Compra (Gasto)</option>
-      </select>
-      <select name="folder">
-        <option value="">Carpeta</option>
-        {% for f in folders %}
-        <option value="{{ f.pk }}" {% if request.GET.folder == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.name }}</option>
-        {% endfor %}
-      </select>
-      <select name="tag">
-        <option value="">Etiqueta</option>
-        {% for t in tags %}
-        <option value="{{ t.pk }}" {% if request.GET.tag == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.name }}</option>
-        {% endfor %}
-      </select>
-      <select name="category">
-        <option value="">Categoría</option>
-        {% for c in categories %}
-        <option value="{{ c.pk }}" {% if request.GET.category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
-        {% endfor %}
-      </select>
-      <select name="quarter">
-        <option value="">Trimestre</option>
-        {% for key, label in quarters %}
-        <option value="{{ key }}" {% if request.GET.quarter == key %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-      <select name="doc_status">
-        <option value="active" {% if request.GET.doc_status == "active" %}selected{% endif %}>Activos</option>
-        <option value="archived" {% if request.GET.doc_status == "archived" %}selected{% endif %}>Archivados</option>
-        <option value="all" {% if request.GET.doc_status == "all" %}selected{% endif %}>Todos</option>
-      </select>
-  </div>
-  
-  <div class="right-filters">
-    <div class="date-filter">
-      <label for="date_from">Desde</label>
-      <input 
-      type="date"
-      name="date_from"
-      value=
-      "{{ request.GET.date_from }}"
-      >
-    </div>
-    
-    <div class="date-filter">
-      <label for="date_to">Hasta</label>
-      <input 
-      type="date"
-      name="date_to"
-      value="{{ request.GET.date_to }}"
-      >
-    </div>
-    <select name="status">
-      <option value="">Estado</option>
-      <option value="pending" {% if request.GET.status == "pending" %}selected{% endif %}>Pendientes</option>
-      <option value="approved" {% if request.GET.status == "approved" %}selected{% endif %}>Aprobados</option>
-      <option value="rejected" {% if request.GET.status == "rejected" %}selected{% endif %}>Rechazados</option>
-    </select>
-    
-    <select name="processing">
-      <option value="">Extracción</option>
-      <option value="active" {% if request.GET.processing == "active" %}selected{% endif %}>En proceso</option>
-      <option value="failed" {% if request.GET.processing == "failed" %}selected{% endif %}>Con error</option>
-      <option value="processed" {% if request.GET.processing == "processed" %}selected{% endif %}>Procesados</option>
-    </select>
 
-    <select name="review_level">
-      <option value="">Revisión</option>
-      <option value="auto" {% if request.GET.review == "auto" %}selected{% endif %}>Auto</option>
-      <option value="manual" {% if request.GET.review == "manual" %}selected{% endif %}>Manual</option>
-      <option value="recommended" {% if request.GET.review == "recommended" %}selected{% endif %}>Recomendada</option>
-      <option value="required" {% if request.GET.review == "required" %}selected{% endif %}>Obligatoria</option>
-    </select>
-    
-    <div class="buttons">
-      <button type="submit" class="btn btn-primary">{% icon "filter" %} Filtrar</button>
-      {% if request.GET %}
-      <a href="?" class="btn btn-ghost">Limpiar</a>
-      {% endif %}
+<form method="get" class="filter-card" id="filter-form">
+  {% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}
+  {% if request.GET.sort %}<input type="hidden" name="sort" value="{{ request.GET.sort }}">{% endif %}
+  {% if request.GET.order %}<input type="hidden" name="order" value="{{ request.GET.order }}">{% endif %}
+
+  <div class="filter-top">
+    <div class="search-group">
+      <div class="search-field">
+        {% icon "search" %}
+        <input type="search" name="q" value="{{ request.GET.q }}" placeholder="Buscar por nombre o empresa" aria-label="Buscar por nombre o empresa">
+      </div>
+      <button type="submit" class="btn btn-primary">Buscar</button>
+    </div>
+
+    <nav class="status-tabs" aria-label="Estado del documento">
+      {% for t in status_tabs %}<a class="status-tab{% if t.active %} active{% endif %}" href="{{ t.url }}">{{ t.label }}</a>{% endfor %}
+    </nav>
+
+    <button type="button" class="btn" id="filters-toggle" aria-expanded="false" aria-controls="filter-panel">
+      {% icon "filter" %} Filtros{% if panel_filter_count %} <span class="count-badge">{{ panel_filter_count }}</span>{% endif %} <i class="fa-solid fa-chevron-down caret"></i>
+    </button>
+  </div>
+
+  <div class="filter-panel" id="filter-panel" hidden>
+    <div class="filter-groups">
+      <fieldset class="fgroup">
+        <legend><i class="fa-solid fa-shapes"></i> Tipo de documento</legend>
+        <div class="field"><label for="f-type">Tipo</label>
+          <select name="document_type" id="f-type"><option value="">Todos</option>
+            {% for key, value in document_types %}<option value="{{ key }}" {% if request.GET.document_type == key %}selected{% endif %}>{{ value }}</option>{% endfor %}
+          </select></div>
+        <div class="field"><label for="f-flow">Flujo</label>
+          <select name="flow" id="f-flow"><option value="">Todos</option>
+            <option value="in" {% if request.GET.flow == "in" %}selected{% endif %}>Venta (ingreso)</option>
+            <option value="out" {% if request.GET.flow == "out" %}selected{% endif %}>Compra (gasto)</option>
+          </select></div>
+        <div class="field"><label for="f-category">Categoría</label>
+          <select name="category" id="f-category"><option value="">Todas</option>
+            {% for c in categories %}<option value="{{ c.pk }}" {% if request.GET.category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+          </select></div>
+      </fieldset>
+
+      <fieldset class="fgroup">
+        <legend>{% icon "folder" %} Organización</legend>
+        <div class="field"><label for="f-company">Empresa</label>
+          <select name="company" id="f-company"><option value="">Todas</option>
+            {% for company in companies %}<option value="{{ company.name }}" {% if request.GET.company == company.name %}selected{% endif %}>{{ company.name }}</option>{% endfor %}
+          </select></div>
+        <div class="field-row">
+          <div class="field"><label for="f-folder">Carpeta</label>
+            <select name="folder" id="f-folder"><option value="">Todas</option>
+              {% for f in folders %}<option value="{{ f.pk }}" {% if request.GET.folder == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.name }}</option>{% endfor %}
+            </select></div>
+          <div class="field"><label for="f-tag">Etiqueta</label>
+            <select name="tag" id="f-tag"><option value="">Todas</option>
+              {% for t in tags %}<option value="{{ t.pk }}" {% if request.GET.tag == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.name }}</option>{% endfor %}
+            </select></div>
+        </div>
+      </fieldset>
+
+      <fieldset class="fgroup">
+        <legend><i class="fa-solid fa-circle-check"></i> Revisión y estado</legend>
+        <div class="field"><label for="f-review">Nivel de revisión</label>
+          <select name="review_level" id="f-review"><option value="">Todos</option>
+            <option value="auto" {% if request.GET.review_level == "auto" %}selected{% endif %}>Auto</option>
+            <option value="manual" {% if request.GET.review_level == "manual" %}selected{% endif %}>Manual</option>
+            <option value="recommended" {% if request.GET.review_level == "recommended" %}selected{% endif %}>Recomendada</option>
+            <option value="required" {% if request.GET.review_level == "required" %}selected{% endif %}>Obligatoria</option>
+          </select></div>
+        <div class="field"><label for="f-processing">Extracción</label>
+          <select name="processing" id="f-processing"><option value="">Todas</option>
+            <option value="active" {% if request.GET.processing == "active" %}selected{% endif %}>En proceso</option>
+            <option value="failed" {% if request.GET.processing == "failed" %}selected{% endif %}>Con error</option>
+            <option value="processed" {% if request.GET.processing == "processed" %}selected{% endif %}>Procesados</option>
+          </select></div>
+        <div class="field"><label for="f-archive">Archivo</label>
+          <select name="doc_status" id="f-archive">
+            <option value="" {% if not request.GET.doc_status %}selected{% endif %}>Activos</option>
+            <option value="archived" {% if request.GET.doc_status == "archived" %}selected{% endif %}>Archivados</option>
+            <option value="all" {% if request.GET.doc_status == "all" %}selected{% endif %}>Todos</option>
+          </select></div>
+      </fieldset>
+
+      <fieldset class="fgroup">
+        <legend><i class="fa-regular fa-calendar"></i> Fechas</legend>
+        <div class="field"><label for="f-quarter">Trimestre</label>
+          <select name="quarter" id="f-quarter"><option value="">Cualquiera</option>
+            {% for key, label in quarters %}<option value="{{ key }}" {% if request.GET.quarter == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select></div>
+        <div class="field-row">
+          <div class="field"><label for="f-from">Desde</label><input type="date" name="date_from" id="f-from" value="{{ request.GET.date_from }}"></div>
+          <div class="field"><label for="f-to">Hasta</label><input type="date" name="date_to" id="f-to" value="{{ request.GET.date_to }}"></div>
+        </div>
+      </fieldset>
+    </div>
+    <div class="filter-actions">
+      {% if active_filters %}<a href="?" class="btn btn-ghost">Limpiar todo</a>{% endif %}
+      <button type="submit" class="btn btn-primary">{% icon "filter" %} Aplicar filtros</button>
     </div>
   </div>
+
+  {% if active_filters %}
+  <div class="active-filters" aria-label="Filtros aplicados">
+    <span class="active-filters-label">Filtros:</span>
+    {% for f in active_filters %}
+    <a class="filter-chip" href="{{ f.remove_url }}" title="Quitar este filtro"><small>{{ f.label }}:</small> <span>{{ f.text }}</span> <i class="x fa-solid fa-xmark"></i></a>
+    {% endfor %}
+    <a class="btn btn-ghost btn-sm" href="?">Limpiar todo</a>
+  </div>
+  {% endif %}
 </form>
-</div>
-<div class="export-bar">
-  <div class="export-buttons">
-    <a href="{% url 'documents:export' %}?{{ request.GET.urlencode }}" class="btn btn-primary">{% icon "download" %} Exportar CSV</a>
+
+<div class="results-bar">
+  <div class="results-count">
+    {% if page_obj.paginator.count %}<strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong> de <strong>{{ page_obj.paginator.count }}</strong> documentos{% else %}Sin resultados{% endif %}
+  </div>
+  <div class="results-actions">
+    <a href="{% url 'documents:export' %}?{{ request.GET.urlencode }}" class="btn">{% icon "download" %} Exportar CSV</a>
     <a href="{% url 'documents:export_preview' %}?{{ querystring }}&format=pdf" class="btn">{% icon "view" %} Vista previa</a>
   </div>
-
-    {% if is_paginated %}
-      <div class="pagination-inline">
-  
-        {% if page_obj.has_previous %}
-          <a href="?{{ querystring }}&page=1">&laquo;</a>
-          <a href="?{{ querystring }}&page={{ page_obj.previous_page_number }}">‹</a>
-        {% endif %}
-  
-        <span class="page-info">
-          {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
-        </span>
-  
-        {% if page_obj.has_next %}
-          <a href="?{{ querystring }}&page={{ page_obj.next_page_number }}">›</a>
-          <a href="?{{ querystring }}&page={{ page_obj.paginator.num_pages }}">&raquo;</a>
-        {% endif %}
-      </div>
-    {% endif %}
-    <div class="documents-summary">
-      <span class="documents-count">
-        {{ page_obj.start_index }}–{{ page_obj.end_index }}
-      </span>
-      <span class="documents-label">
-        de {{ page_obj.paginator.count }} documentos
-      </span>
-    </div>
-
 </div>
 
 <div class="table-wrapper">
-  <table class="table">
+  <table class="table table-cards">
     <thead>
       <tr>
         <th class="sortable{% if sort == 'invoice_number' %} active-sort{% endif %}">
           <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=invoice_number&order={% if sort == 'invoice_number' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}asc{% endif %}">
-            N.º Factura
-            {% if sort == 'invoice_number' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+            N.º Factura {% if sort == 'invoice_number' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
           </a>
         </th>
         <th class="sortable{% if sort == 'name' %} active-sort{% endif %}">
           <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=name&order={% if sort == 'name' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}asc{% endif %}">
-            Nombre
-            {% if sort == 'name' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+            Nombre {% if sort == 'name' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
           </a>
         </th>
-        <th class="hide-sm">Empresa</th>
+        <th>Empresa</th>
         <th class="num sortable{% if sort == 'total' %} active-sort{% endif %}">
           <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=total&order={% if sort == 'total' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}desc{% endif %}">
-            Total (€)
-            {% if sort == 'total' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+            Total (€) {% if sort == 'total' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
           </a>
         </th>
         <th class="sortable{% if sort == 'date' %} active-sort{% endif %}">
           <a href="?{% if sort_base %}{{ sort_base }}&{% endif %}sort=date&order={% if sort == 'date' %}{% if order == 'asc' %}desc{% else %}asc{% endif %}{% else %}desc{% endif %}">
-            Fecha
-            {% if sort == 'date' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
+            Fecha {% if sort == 'date' %}{% if order == 'asc' %}<i class="fa-solid fa-sort-up sort-icon"></i>{% else %}<i class="fa-solid fa-sort-down sort-icon"></i>{% endif %}{% else %}<i class="fa-solid fa-sort sort-icon"></i>{% endif %}
           </a>
         </th>
-        <th class="hide-md">Tipo</th>
+        <th>Tipo</th>
         <th>Estado</th>
-        <th class="hide-md">Revisión</th>
+        <th>Revisión</th>
         <th></th>
       </tr>
     </thead>
@@ -202,119 +174,59 @@
     <tbody>
       {% for doc in documents %}
       <tr class="clickable-row" data-href="{% url 'documents:detail' doc.id %}">
-        <!-- N.º Factura -->
-        <td>{{ doc.document_number|default:"-" }}</td>
-
-        <!-- Nombre / enlace al archivo -->
-        <td>
-          <a href="{% url 'documents:file' doc.pk %}">
-            {{ doc.original_name }}
-          </a>
+        <td data-label="N.º factura">{{ doc.document_number|default:"—" }}</td>
+        <td class="name-cell cell-primary" data-label="Nombre">
+          <a href="{% url 'documents:file' doc.pk %}">{{ doc.original_name }}</a>
           {% if doc.folder %}<span class="chip">{% icon "folder" %} {{ doc.folder.name }}</span>{% endif %}
           {% for t in doc.tags.all %}<span class="chip">{{ t.name }}</span>{% endfor %}
         </td>
-
-        <!-- Proveedor -->
-        <td class="hide-sm">{{ doc.company.name|default:"-" }}</td>
-
-        <!-- Total con formato decimal -->
-        <td class="amount">
-          {% if doc.total_amount %}
-            {{ doc.total_amount|floatformat:2 }}
-          {% else %}
-            -
-          {% endif %}
-        </td>
-
-        <!-- Fecha formateada -->
-        <td class="issue_date">
-          {% if doc.issue_date %}
-            {{ doc.issue_date|date:"d/m/Y" }}
-          {% else %}
-            -
-          {% endif %}
-        </td>
-
-
-        <!-- tipo de documento -->
-        <td class="document_type hide-md">
-          {{ doc.get_document_type_display }}
-        </td>
-
-        <!-- Estado (status) -->
-        <td>
-          {% if doc.is_processing or doc.processing_status == "failed" %}
-            {% badge "processing" doc.processing_status %}
-          {% else %}
-            {% badge "status" doc.status %}
-          {% endif %}
+        <td class="cell-sub" data-label="Empresa">{{ doc.company.name|default:"—" }}</td>
+        <td class="amount" data-label="Total">{% if doc.total_amount %}{{ doc.total_amount|floatformat:2 }} €{% else %}—{% endif %}</td>
+        <td data-label="Fecha">{% if doc.issue_date %}{{ doc.issue_date|pretty_date }}{% else %}—{% endif %}</td>
+        <td data-label="Tipo">{{ doc.get_document_type_display }}</td>
+        <td data-label="Estado">
+          {% if doc.is_processing or doc.processing_status == "failed" %}{% badge "processing" doc.processing_status %}{% else %}{% badge "status" doc.status %}{% endif %}
           {% if doc.is_archived %}{% badge "status" "archived" %}{% endif %}
         </td>
-
-        <!-- Nivel de revisión -->
-        <td class="hide-md">
+        <td data-label="Revisión">
           {% badge "review" doc.review_key %}
           {% if doc.confidence_global %}<small class="confidence" title="Confianza de la extracción">{{ doc.confidence_global|to_percent|floatformat:0 }}%</small>{% endif %}
         </td>
-        <!-- Acción -->
-        <td class="col-actions">
-          <a class="btn btn-ghost btn-sm" href="{% url "documents:detail" doc.id %}">{% icon "view" %} Ver</a>
-        </td>
+        <td class="col-actions cell-actions"><a class="btn btn-ghost btn-sm" href="{% url 'documents:detail' doc.id %}">{% icon "view" %} Ver</a></td>
       </tr>
       {% empty %}
-      <tr>
-        <td colspan="9" class="empty">No hay documentos</td>
-      </tr>
+      <tr><td colspan="9" class="empty">
+        {% if active_filters %}Ningún documento coincide con los filtros. <a class="link" href="?">Limpiar filtros</a>{% else %}Aún no hay documentos. <a class="link" href="{% url 'documents:upload' %}">Sube el primero</a>.{% endif %}
+      </td></tr>
       {% endfor %}
     </tbody>
   </table>
+
+  {% if is_paginated %}
+  <div class="table-footer-bar">
+    <span class="results-count">Página <strong>{{ page_obj.number }}</strong> de {{ page_obj.paginator.num_pages }}</span>
+    <nav class="pager" aria-label="Paginación">
+      {% if page_obj.has_previous %}
+      <a href="?{{ querystring }}&page=1" aria-label="Primera">&laquo;</a>
+      <a href="?{{ querystring }}&page={{ page_obj.previous_page_number }}" aria-label="Anterior">&lsaquo;</a>
+      {% else %}
+      <span class="page disabled">&laquo;</span><span class="page disabled">&lsaquo;</span>
+      {% endif %}
+      {% for n in page_numbers %}{% if n == "…" %}<span class="page gap num">…</span>{% elif n == page_obj.number %}<span class="page current num" aria-current="page">{{ n }}</span>{% else %}<a class="num" href="?{{ querystring }}&page={{ n }}">{{ n }}</a>{% endif %}{% endfor %}
+      {% if page_obj.has_next %}
+      <a href="?{{ querystring }}&page={{ page_obj.next_page_number }}" aria-label="Siguiente">&rsaquo;</a>
+      <a href="?{{ querystring }}&page={{ page_obj.paginator.num_pages }}" aria-label="Última">&raquo;</a>
+      {% else %}
+      <span class="page disabled">&rsaquo;</span><span class="page disabled">&raquo;</span>
+      {% endif %}
+    </nav>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
 
 {% block scripts %}
 {{ block.super }}
-{% load static %}
-  <script src="{% static 'js/auto-refresh.js' %}"></script>
-  <script>
-      const toggleFiltersBtn = document.getElementById("filters-toggle");
-      const filtersBar = document.querySelector(".filters-bar");
-
-      const filtersStatus = localStorage.getItem("filtersStatus");
-      if (filtersStatus === "open") {
-        filtersBar.classList.add("open");
-        toggleFiltersBtn.classList.add("open");
-        toggleFiltersBtn.innerHTML = "Ocultar filtros <i class='fa-solid fa-caret-up'></i>";
-      } else {
-        filtersBar.classList.remove("open");
-        toggleFiltersBtn.classList.remove("open");
-        toggleFiltersBtn.innerHTML = "Mostrar filtros <i class='fa-solid fa-caret-down'></i>";
-      }
-
-      toggleFiltersBtn.addEventListener("click", () => {
-        if (filtersBar.classList.contains("open")) {
-          localStorage.setItem("filtersStatus", "closed");
-        } else {
-          localStorage.setItem("filtersStatus", "open");
-        }
-        toggleFiltersBtn.classList.toggle("open");
-        filtersBar.classList.toggle("open");
-        if (filtersBar.classList.contains("open")) {
-          toggleFiltersBtn.innerHTML = "Ocultar filtros <i class='fa-solid fa-caret-up'></i>";
-        } else {
-          toggleFiltersBtn.innerHTML = "Mostrar filtros <i class='fa-solid fa-caret-down'></i>";
-        }
-      });
-  </script>
-  <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    document.querySelectorAll(".clickable-row").forEach(row => {
-      row.addEventListener("click", function(e) {
-
-          if (e.target.closest("a")) return;
-
-          window.location = this.dataset.href;
-      });
-    });
-  });
-  </script>
+<script src="{% static 'js/list-page.js' %}"></script>
+<script src="{% static 'js/auto-refresh.js' %}"></script>
 {% endblock %}

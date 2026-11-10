@@ -49,8 +49,10 @@
         {% icon "document" %}<span class="nav-label">Documentos</span></a>
       <a href="{% url 'documents:upload' %}" title="Subir" {% if page == 'upload' %}class="active" aria-current="page"{% endif %}>
         {% icon "upload" %}<span class="nav-label">Subir</span></a>
-      <a href="{% url 'finance:movements' %}" title="Finanzas" {% if ns == 'finance' %}class="active" aria-current="page"{% endif %}>
-        {% icon "finance" %}<span class="nav-label">Finanzas</span></a>
+      <a href="{% url 'finance:movements' %}" title="Movimientos" {% if ns == 'finance' and page != 'categories' and 'category' not in page %}class="active" aria-current="page"{% endif %}>
+        {% icon "movements" %}<span class="nav-label">Movimientos</span></a>
+      <a href="{% url 'finance:categories' %}" title="Categorías" {% if ns == 'finance' and page == 'categories' or ns == 'finance' and 'category' in page %}class="active" aria-current="page"{% endif %}>
+        {% icon "categories" %}<span class="nav-label">Categorías</span></a>
       <a href="{% url 'metrics' %}" title="Métricas" {% if page == 'metrics' %}class="active" aria-current="page"{% endif %}>
         {% icon "metrics" %}<span class="nav-label">Métricas</span></a>
       <a href="{% url 'clients:detail' %}" title="Perfil" {% if ns == 'clients' %}class="active" aria-current="page"{% endif %}>
@@ -80,7 +82,7 @@
       <p>Saldrás de FacturIA como <strong>{{ user.get_username }}</strong>.</p>
       <div class="dialog-actions">
         <button type="button" class="btn btn-ghost" data-dialog-close>Cancelar</button>
-        <button type="submit" class="btn btn-primary" autofocus>{% icon "logout" %} Cerrar sesión</button>
+        <button type="submit" class="btn btn-primary" autofocus>{% icon "logout" %} Salir</button>
       </div>
     </form>
   </dialog>

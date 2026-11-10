@@ -3,13 +3,14 @@
 {% load static %}
 {% block title %}Subir documentos - FacturIA{% endblock %}
 {% block styles %}
-  <link rel="stylesheet" href="{% static 'css/documents/document_list.css' %}">
+  <link rel="stylesheet" href="{% static 'css/list-page.css' %}">
   <link rel="stylesheet" href="{% static 'css/documents/document_upload.css' %}">
 {% endblock %}
 
 {% block content %}
 <h1 class="page-title">{% icon "upload" %} Subir documentos</h1>
 
+<div class="upload-layout">
 <div class="upload-card">
   <form method="post" enctype="multipart/form-data" id="upload-form"
         data-max-files="20" data-max-mb="{{ max_mb }}">
@@ -19,7 +20,7 @@
     {% for error in form.photos.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
 
     <label class="dropzone" id="dropzone" for="id_files">
-      <i class="fa-regular fa-file-pdf"></i>
+      <span class="dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span>
       <strong>Arrastra aquí tus facturas o pulsa para elegirlas</strong>
       <span>PDF, JPG, PNG, WEBP, GIF o HEIC · hasta {{ max_mb }} MB · PDF de hasta {{ max_pages }} páginas</span>
       <input type="file" name="files" id="id_files" multiple
@@ -41,6 +42,46 @@
     <i class="fa-solid fa-spinner fa-spin"></i> {{ processing_count }} documento(s) en proceso
   </a>
   {% endif %}
+</div>
+
+<aside class="upload-side">
+  <section class="side-panel">
+    <h2>{% icon "extract" %} Cómo funciona</h2>
+    <ol class="steps">
+      <li><span class="step-n">1</span><div><strong>Sube tus archivos</strong><small>Facturas, tickets, presupuestos o albaranes. Puedes elegir varios a la vez.</small></div></li>
+      <li><span class="step-n">2</span><div><strong>Extracción automática</strong><small>Se leen el emisor, el NIF, las fechas, los importes y las líneas.</small></div></li>
+      <li><span class="step-n">3</span><div><strong>Revisa y aprueba</strong><small>Corrige lo que haga falta; los avisos te indican qué mirar primero.</small></div></li>
+    </ol>
+  </section>
+
+  <section class="side-panel">
+    <h2><i class="fa-solid fa-circle-info"></i> Requisitos</h2>
+    <ul class="requirements">
+      <li><i class="fa-regular fa-file"></i> PDF, JPG, PNG, WEBP, GIF o HEIC</li>
+      <li><i class="fa-solid fa-weight-hanging"></i> Hasta {{ max_mb }} MB por archivo</li>
+      <li><i class="fa-regular fa-copy"></i> PDF de hasta {{ max_pages }} páginas</li>
+      <li><i class="fa-solid fa-layer-group"></i> Hasta 20 archivos por subida</li>
+      <li><i class="fa-solid fa-fingerprint"></i> Los duplicados se detectan solos</li>
+    </ul>
+  </section>
+
+  <section class="side-panel">
+    <h2>{% icon "history" %} Últimos documentos</h2>
+    {% if recent_documents %}
+    <ul class="recent">
+      {% for doc in recent_documents %}
+      <li>
+        <a class="recent-name" href="{% url 'documents:detail' doc.pk %}">{{ doc.original_name }}</a>
+        {% if doc.is_processing or doc.processing_status == "failed" %}{% badge "processing" doc.processing_status %}{% else %}{% badge "status" doc.status %}{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    <a class="btn btn-ghost btn-sm" href="{% url 'documents:list' %}">Ver todos {% icon "next" %}</a>
+    {% else %}
+    <p class="muted-note">Todavía no has subido ningún documento.</p>
+    {% endif %}
+  </section>
+</aside>
 </div>
 {% endblock %}
 

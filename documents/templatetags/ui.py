@@ -37,6 +37,13 @@ ICONS = {
     "document": "fa-regular fa-file-lines",
     "folder": "fa-regular fa-folder",
     "history": "fa-solid fa-clock-rotate-left",
+    "extract": "fa-solid fa-wand-magic-sparkles",
+    "income": "fa-solid fa-arrow-trend-up",
+    "expense": "fa-solid fa-arrow-trend-down",
+    "balance": "fa-solid fa-scale-balanced",
+    "movements": "fa-solid fa-money-bill-transfer",
+    "categories": "fa-solid fa-tags",
+    "caret": "fa-solid fa-chevron-down",
     "home": "fa-solid fa-house",
     "finance": "fa-solid fa-coins",
     "metrics": "fa-solid fa-chart-line",
@@ -100,3 +107,11 @@ def pretty_date(value):
     if not value:
         return ""
     return f"{MONTHS_ES[value.month - 1]}. {value.day:02d} de {value.year}"
+
+
+@register.simple_tag
+def badge_icon(spec, extra=""):
+    """Icono de un badge a partir de «tipo:valor» (p. ej. 'review:required'); mismo icono que el badge."""
+    kind, _, value = spec.partition(":")
+    entry = BADGES.get(kind, {}).get(value)
+    return format_html('<i class="{} {}" aria-hidden="true"></i>', entry[0] if entry else "fa-solid fa-circle", extra)

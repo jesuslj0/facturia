@@ -1,0 +1,7 @@
+{# Campo de formulario: {% include "components/field.html" with field=form.x %} #}
+<div class="fld{% if field.errors %} has-error{% endif %}">
+  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+  {{ field }}
+  {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
+  {% if field.errors %}<ul class="fld-errors">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+</div>

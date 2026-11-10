@@ -4,7 +4,7 @@
 {% load static %}
 {% block title %}Vista previa de Exportación - FacturIA{% endblock %}
 {% block styles %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/documents/document_list.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/list-page.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/documents/export_preview.css' %}">
 {% endblock %}
 {% block content %}
@@ -170,7 +170,7 @@
             <td><a href="{% url 'documents:file' doc.pk %}">{{ doc.original_name }}</a></td>
             <td>{{ doc.company.name|default:"-" }}</td>
             <td class="amount">{% if doc.total_amount %}{{ doc.total_amount|floatformat:2 }}{% else %}-{% endif %}</td>
-            <td><span class="status {{ doc.status }}">{{ doc.get_status_display }}</span></td>
+            <td>{% badge "status" doc.status %}</td>
             <td>
                 <a class="btn btn-ghost btn-sm" href="{% url 'documents:detail' doc.id %}" aria-label="Ver detalle del documento {{ doc.document_number }}">
                     <i class="fa-solid fa-arrow-up-right-from-square"></i>

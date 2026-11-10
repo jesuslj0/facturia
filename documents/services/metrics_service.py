@@ -105,11 +105,13 @@ class MetricsService:
 
         signed = signed_amount
 
+        months_es = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+
         def get_granularity(start, end):
             delta = (end - start).days
             if delta <= 31:
-                return TruncDay, "%d %b"  # etiquetas tipo 1 Feb
-            return TruncMonth, "%b %Y"  # etiquetas tipo Feb 2026
+                return TruncDay, lambda d: f"{d.day} {months_es[d.month - 1]}"       # 1 Feb
+            return TruncMonth, lambda d: f"{months_es[d.month - 1]} {d.year}"       # Feb 2026
 
         income_totals = income_queryset.aggregate(
             total_amount=Sum(signed("total_amount")),
@@ -139,7 +141,7 @@ class MetricsService:
         )
 
         # Datos mensuales (dentro del rango)
-        trunc_func, date_format_str = get_granularity(start, end)
+        trunc_func, label_for = get_granularity(start, end)
 
         monthly_data = (
             billing_queryset
@@ -153,7 +155,7 @@ class MetricsService:
         chart_result = defaultdict(lambda: {"income": 0, "expense": 0})
 
         for row in monthly_data:
-            key = row["period"].strftime(date_format_str)
+            key = label_for(row["period"])
             if row["flow"] == "in":
                 chart_result[key]["income"] += float(row["total"] or 0)
             elif row["flow"] == "out":

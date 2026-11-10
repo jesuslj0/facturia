@@ -13,7 +13,7 @@
 
 /* Cards */
 .client-card {
-  background: var(--card-bg-color);
+  background: var(--grad-surface);
   border: 1px solid var(--border-color);
   border-radius: 10px;
   padding: 1.5rem;

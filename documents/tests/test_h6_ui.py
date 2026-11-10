@@ -276,7 +276,7 @@ class TestSharedUi:
 
     @pytest.mark.parametrize("name,expected", [
         ("documents:list", "Documentos"), ("documents:upload", "Subir"), ("dashboard", "Inicio"),
-        ("metrics", "Métricas"), ("finance:movements", "Finanzas"), ("clients:detail", "Perfil"),
+        ("metrics", "Métricas"), ("finance:movements", "Movimientos"), ("finance:categories", "Categorías"), ("finance:new_movement", "Movimientos"), ("finance:new_category", "Categorías"), ("clients:detail", "Perfil"),
     ])
     def test_sidebar_marks_active_page(self, auth_client, name, expected):
         import re
@@ -313,3 +313,34 @@ class TestLogoutConfirmation:
     def test_logout_still_works_via_post(self, auth_client):
         assert auth_client.post(reverse("logout")).status_code == 302
         assert auth_client.get(reverse("documents:list")).status_code == 302
+
+
+class TestFinanceSeparateEntries:
+    def test_movements_and_categories_are_separate_top_level_links(self, auth_client):
+        body = auth_client.get(reverse("dashboard")).content.decode()
+        assert "nav-group" not in body and "nav-sub" not in body
+        nav = body.split('class="sidebar-nav"')[1].split("</nav>")[0]
+        assert nav.count("<a ") == 7
+        assert nav.index("Documentos") < nav.index("Movimientos") < nav.index("Categorías") < nav.index("Métricas")
+
+    def test_edit_category_keeps_categories_active(self, auth_client, user):
+        import re
+        from finance.models import MovementCategory
+        c = MovementCategory.objects.create(client=user.client, name="X", type="expense")
+        body = auth_client.get(reverse("finance:edit_category", kwargs={"pk": c.pk})).content.decode()
+        active = re.findall(r'<a [^>]*class="active"[^>]*>.*?<span class="nav-label">(.*?)</span>', body, re.S)
+        assert active == ["Categorías"]
+
+
+class TestUploadPageLayout:
+    def test_side_panels_and_recent_documents(self, auth_client, user, other_user):
+        f.DocumentFactory(client=user.client, original_name="mia.pdf")
+        f.DocumentFactory(client=other_user.client, original_name="ajena.pdf")
+        r = auth_client.get(reverse("documents:upload"))
+        body = r.content.decode()
+        for text in ("Cómo funciona", "Requisitos", "Últimos documentos", "Hasta 20 archivos por subida"):
+            assert text in body
+        assert "mia.pdf" in body and "ajena.pdf" not in body and len(r.context["recent_documents"]) == 1
+
+    def test_empty_account_message(self, auth_client):
+        assert "Todavía no has subido ningún documento" in auth_client.get(reverse("documents:upload")).content.decode()

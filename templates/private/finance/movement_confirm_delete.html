@@ -1,27 +1,29 @@
 {% extends "base.html" %}
-{% load ui %}
-{% load custom_filters %}
+{% load ui static custom_filters %}
 {% block title %}Borrar movimiento - FacturIA{% endblock %}
 {% block styles %}
-{% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/finance/confirm_delete.css' %}">
+    <link rel="stylesheet" href="{% static 'css/form-page.css' %}">
 {% endblock %}
 {% block content %}
-    <h1 class="page-title"><i class="fa-solid fa-trash-can"></i> Borrar movimiento</h1>
-    <p class="page-description">¿Estas seguro de querer borrar este movimiento?</p>
-    <div class="movement-details">
-        <ul>
-            <li><strong>Fecha:</strong> {{ object.date }}</li>
-            <li><strong>Concepto:</strong> {{ object.description }}</li>
-            <li><strong>Importe:</strong> {{ object.amount|spanish_currency }} €</li>
-        </ul>
+<div class="form-head">
+  <a href="{% url 'finance:edit_movement' object.pk %}" class="btn btn-back btn-sm">{% icon "back" %} Volver</a>
+</div>
+<div class="form-card confirm-card">
+  <span class="dialog-icon tone-danger">{% icon "delete" %}</span>
+  <h2>Borrar movimiento</h2>
+  <ul class="detail-list">
+    <li><span>Fecha</span><strong>{{ object.date|date:"d/m/Y" }}</strong></li>
+    <li><span>Categoría</span><strong>{{ object.category.name }}</strong></li>
+    <li><span>Concepto</span><strong>{{ object.description|default:"—" }}</strong></li>
+    <li><span>Importe</span><strong>{{ object.amount|spanish_currency }} €</strong></li>
+  </ul>
+  <form method="post" style="width:100%">
+    {% csrf_token %}
+    <div class="delete-warning">Esta acción no se puede deshacer.</div>
+    <div class="form-actions-bar" style="margin-top:1rem">
+      <button type="submit" class="btn btn-danger">{% icon "delete" %} Confirmar borrado</button>
+      <a href="{% url 'finance:edit_movement' object.pk %}" class="btn btn-ghost">Cancelar</a>
     </div>
-    <form method="post">
-        {% csrf_token %}
-        <div class="delete-warning">
-            <p>Esta accion no se puede deshacer.</p>
-        </div>
-        <button type="submit" class="btn btn-danger">{% icon "delete" %} Confirmar borrado</button>
-        <a href="{% url 'finance:movements' %}" class="btn btn-ghost">Cancelar</a>
-    </form>
+  </form>
+</div>
 {% endblock %}

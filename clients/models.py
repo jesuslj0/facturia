@@ -11,6 +11,13 @@ class Client(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     logo = HashedImageField(upload_to=logo_upload_to, blank=True, null=True)
     primary_color = models.CharField(max_length=7, default="#2563eb")
+    # Ficha de la empresa (todo opcional)
+    founded_date = models.DateField("Fecha de fundación", null=True, blank=True)
+    employee_count = models.PositiveIntegerField("Número de empleados", null=True, blank=True)
+    industry = models.CharField("Sector", max_length=100, blank=True, default="")
+    city = models.CharField("Localidad", max_length=100, blank=True, default="")
+    website = models.URLField("Sitio web", blank=True, default="")
+    phone = models.CharField("Teléfono", max_length=30, blank=True, default="")
     def __str__(self):
         return self.name
 
@@ -46,6 +53,8 @@ class CustomUser(AbstractUser):
         related_name="users"
     )
     roles = models.ManyToManyField(Role, blank=True)
+    city = models.CharField("Localidad", max_length=100, blank=True, default="")
+    birth_date = models.DateField("Fecha de nacimiento", null=True, blank=True)
 
     # createsuperuser pedirá el id del Client (FK obligatoria)
     REQUIRED_FIELDS = ["email", "client"]
