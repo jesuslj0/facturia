@@ -13,6 +13,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
+from kombu.exceptions import OperationalError as BrokerUnavailable
 
 from documents.models import Document, DocumentAuditLog, ExtractionRun
 from documents.services import validation
@@ -42,8 +43,19 @@ def enqueue_processing(document, *, force: bool = False) -> bool:
     )
     if not updated:
         return False
-    transaction.on_commit(lambda: process_document.delay(document.pk))
+    transaction.on_commit(lambda: _send_to_queue(process_document, document.pk))
     return True
+
+
+def _send_to_queue(task, document_id) -> None:
+    """Envía la tarea al broker. Si Redis no está disponible NO se propaga el error al usuario:
+    el documento ya está guardado y vuelve a `uploaded`, de modo que `enqueue_extraction` lo
+    recoge cuando el broker vuelva (un documento `queued` que nunca llegó a la cola quedaría colgado)."""
+    try:
+        task.delay(document_id)
+    except BrokerUnavailable:
+        logger.error("document %s: broker no disponible; queda en 'uploaded' para reencolar", document_id, exc_info=True)
+        Document.all_objects.filter(pk=document_id, processing_status="queued").update(processing_status="uploaded")
 
 
 def claim_document(document_id) -> Document | None:

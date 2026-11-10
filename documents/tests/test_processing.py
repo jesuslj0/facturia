@@ -394,3 +394,23 @@ class TestValidationIntegration:
         run(d)
         d.refresh_from_db()
         assert d.validation_issues == []
+
+
+class TestBrokerDown:
+    def test_enqueue_with_broker_down_leaves_document_uploaded_without_raising(self, client_a, django_capture_on_commit_callbacks):
+        from kombu.exceptions import OperationalError
+        d = new_doc(client_a)
+        with patch("documents.tasks.process_document.delay", side_effect=OperationalError("Connection refused")):
+            with django_capture_on_commit_callbacks(execute=True):
+                assert processing.enqueue_processing(d) is True
+        d.refresh_from_db()
+        assert d.processing_status == "uploaded"                  # recuperable con enqueue_extraction
+
+    def test_upload_view_survives_broker_down(self, auth_client, user, django_capture_on_commit_callbacks):
+        from django.urls import reverse
+        from kombu.exceptions import OperationalError
+        with patch("documents.tasks.process_document.delay", side_effect=OperationalError("x")):
+            with django_capture_on_commit_callbacks(execute=True):
+                r = auth_client.post(reverse("documents:upload"), {"files": [SimpleUploadedFile("a.pdf", pdf())]})
+        assert r.status_code == 302
+        assert Document.all_objects.get(client=user.client).processing_status == "uploaded"
