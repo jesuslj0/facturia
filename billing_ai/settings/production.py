@@ -1,4 +1,6 @@
 from .base import *
+# `import *` no trae los nombres con guion bajo: hay que importarlo explícitamente.
+from .base import _use_r2
 import os
 
 DEBUG = False
