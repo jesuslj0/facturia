@@ -1,29 +1,9 @@
-from django.db import connection
 from django.db.models import IntegerField, Value, F, ExpressionWrapper, Case, When, CharField
-from django.db.models.functions import StrIndex, Substr
-from django.db.models.expressions import RawSQL
+from django.db.models.functions import StrIndex, Substr, Cast
 from documents.selectors.document_selector import DocumentSelector
 
 _VALID_SORTS = {'name', 'total', 'date', 'invoice_number'}
 _VALID_ORDERS = {'asc', 'desc'}
-
-
-def _safe_numeric_suffix():
-    """Numeric part after '/' in document_number, or 0 if absent/non-numeric."""
-    if connection.vendor == 'postgresql':
-        return RawSQL(
-            "CASE WHEN document_number ~ '/[0-9]+$' "
-            "THEN CAST(SUBSTRING(document_number FROM '/([0-9]+)$') AS INTEGER) "
-            "ELSE 0 END",
-            [],
-            output_field=IntegerField(),
-        )
-    # SQLite: CAST to INTEGER returns 0 safely for non-numeric strings
-    return RawSQL(
-        "CAST(SUBSTR(document_number, INSTR(document_number, '/') + 1) AS INTEGER)",
-        [],
-        output_field=IntegerField(),
-    )
 
 
 def apply_ordering(qs, sort, order):
@@ -41,6 +21,7 @@ def apply_ordering(qs, sort, order):
     elif sort == 'date':
         return qs.order_by(f'{direction}issue_date')
     elif sort == 'invoice_number':
+        # Ordenación natural: prefijo alfabético + sufijo numérico (ej: FAC2026/1, FAC2026/2, FAC2026/10)
         qs = qs.annotate(
             _slash_pos=StrIndex('document_number', Value('/'))
         ).annotate(
@@ -56,7 +37,20 @@ def apply_ordering(qs, sort, order):
                 default=F('document_number'),
                 output_field=CharField(),
             ),
-            _inv_num=_safe_numeric_suffix(),
+            _inv_num=Case(
+                When(
+                    _slash_pos__gt=0,
+                    then=Cast(
+                        Substr(
+                            'document_number',
+                            ExpressionWrapper(F('_slash_pos') + Value(1), output_field=IntegerField()),
+                        ),
+                        output_field=IntegerField(),
+                    )
+                ),
+                default=Value(0),
+                output_field=IntegerField(),
+            ),
         )
         return qs.order_by(f'{direction}_inv_prefix', f'{direction}_inv_num')
 
