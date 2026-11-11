@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Perfil del cliente - FacturIA{% endblock %}
+{% load ui %}
+{% block title %}Cuenta - FacturIA{% endblock %}
 
 {% block styles %}
 {% load static %}
@@ -9,60 +10,150 @@
 {% block content %}
 
 <div class="page-header">
-  <h1><i class="fa-solid fa-house-user"></i> {{ client.name }}</h1>
+  <h1><i class="fa-solid fa-user"></i> Cuenta</h1>
   <a href="{% url 'dashboard' %}" class="btn btn-back">
     <i class="fa-solid fa-arrow-left"></i> Volver
   </a>
 </div>
 
+<nav class="account-tabs" aria-label="Secciones de la cuenta">
+  <a class="account-tab{% if tab == 'perfil' %} active{% endif %}" href="?tab=perfil"{% if tab == 'perfil' %} aria-current="page"{% endif %}><i class="fa-solid fa-circle-user"></i> Mi perfil</a>
+  <a class="account-tab{% if tab == 'empresa' %} active{% endif %}" href="?tab=empresa"{% if tab == 'empresa' %} aria-current="page"{% endif %}><i class="fa-solid fa-building"></i> Mi empresa</a>
+</nav>
+
 <div class="client-layout">
 
-  <!-- Info general -->
-  <div class="client-card">
-    <h2><i class="fa-solid fa-circle-info"></i> Información del cliente</h2>
-    <div class="info-grid">
+{% if tab == 'perfil' %}
+  <!-- ===================== MI PERFIL ===================== -->
+  <p class="tab-intro">Datos del usuario con el que has iniciado sesión.</p>
 
-      <div class="info-field">
-        <span class="info-label">Nombre</span>
-        <span class="info-value">{{ client.name }}</span>
+  <div class="client-card client-card-full" data-editable{% if account_form.errors %} data-start-editing="account"{% elif password_form.errors %} data-start-editing="password"{% endif %}>
+    <h2><i class="fa-solid fa-id-card"></i> Datos personales</h2>
+
+    <!-- Lectura -->
+    <div class="view-mode">
+      <div class="info-grid info-grid-cols">
+        <div class="info-field"><span class="info-label">Usuario</span><span class="info-value">{{ user.username }}</span></div>
+        <div class="info-field"><span class="info-label">Nombre</span>
+          {% if user.first_name or user.last_name %}<span class="info-value">{{ user.get_full_name }}</span>{% else %}<span class="info-value muted">No especificado</span>{% endif %}</div>
+        <div class="info-field"><span class="info-label">Correo electrónico</span>
+          {% if user.email %}<span class="info-value">{{ user.email }}</span>{% else %}<span class="info-value muted">No especificado</span>{% endif %}</div>
+        <div class="info-field"><span class="info-label">Localidad</span>
+          {% if user.city %}<span class="info-value">{{ user.city }}</span>{% else %}<span class="info-value muted">No especificada</span>{% endif %}</div>
+        <div class="info-field"><span class="info-label">Fecha de nacimiento</span>
+          {% if user.birth_date %}<span class="info-value">{{ user.birth_date|pretty_date }}</span>{% else %}<span class="info-value muted">No especificada</span>{% endif %}</div>
+        <div class="info-field"><span class="info-label">Alta en la empresa</span>
+          <span class="info-value">{{ user.date_joined|pretty_date }} <span class="muted">· hace {{ user.date_joined|timesince }}</span></span></div>
+        <div class="info-field"><span class="info-label">Roles</span>
+          <div>{% for role in my_roles %}<span class="role-tag">{{ role.name }}</span>{% empty %}<span class="info-value muted">Sin roles</span>{% endfor %}</div></div>
       </div>
-
-      <div class="info-field">
-        <span class="info-label">CIF / NIF</span>
-        {% if client.tax_id %}
-          <span class="info-value">{{ client.tax_id }}</span>
-        {% else %}
-          <span class="info-value muted">No especificado</span>
-        {% endif %}
+      <div class="form-actions">
+        <button type="button" class="btn" data-edit="account">{% icon "edit" %} Editar</button>
+        <button type="button" class="btn" data-edit="password"><i class="fa-solid fa-key"></i> Cambiar contraseña</button>
       </div>
-
-      <div class="info-field">
-        <span class="info-label">Estado</span>
-        {% if client.is_active %}
-          <span class="status-badge active">
-            <i class="fa-solid fa-circle-check"></i> Activo
-          </span>
-        {% else %}
-          <span class="status-badge inactive">
-            <i class="fa-solid fa-circle-xmark"></i> Inactivo
-          </span>
-        {% endif %}
-      </div>
-
-      <div class="info-field">
-        <span class="info-label">Miembro desde</span>
-        <span class="info-value">{{ client.created_at|date:"d/m/Y" }}</span>
-      </div>
-
-      <div class="info-field">
-        <span class="info-label">Color principal</span>
-        <div class="color-preview-row">
-          <div class="color-swatch" style="background-color: {{ client.primary_color }};"></div>
-          <span class="info-value" style="font-family: monospace;">{{ client.primary_color }}</span>
-        </div>
-      </div>
-
     </div>
+
+    <!-- Edición de datos -->
+    <form method="post" id="account-form" data-panel="account">
+      {% csrf_token %}
+      <input type="hidden" name="form_name" value="account">
+      <div class="form-grid">
+      {% for field in account_form %}
+      <div class="form-group">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}<ul class="form-errors"><li>{{ error }}</li></ul>{% endfor %}
+      </div>
+      {% endfor %}
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{% icon "save" %} Guardar datos</button>
+        <button type="button" class="btn btn-ghost" data-cancel>Cancelar</button>
+      </div>
+    </form>
+
+    <!-- Cambio de contraseña -->
+    <form method="post" id="password-form" data-panel="password">
+      {% csrf_token %}
+      <input type="hidden" name="form_name" value="password">
+      {% if password_form.non_field_errors %}
+        <ul class="form-errors">{% for error in password_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+      {% endif %}
+      <div class="form-grid">
+      {% for field in password_form %}
+      <div class="form-group">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}<ul class="form-errors"><li>{{ error }}</li></ul>{% endfor %}
+        {% if field.help_text and field.name == 'new_password1' %}<small class="info-value muted">{{ field.help_text|safe }}</small>{% endif %}
+      </div>
+      {% endfor %}
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{% icon "save" %} Guardar contraseña</button>
+        <button type="button" class="btn btn-ghost" data-cancel>Cancelar</button>
+      </div>
+    </form>
+  </div>
+
+{% endif %}
+
+{% if tab == 'empresa' %}
+  <!-- ===================== MI EMPRESA ===================== -->
+  <p class="tab-intro"><strong>{{ client.name }}</strong> · datos compartidos por todos los usuarios de la empresa.</p>
+
+  <!-- Ficha de la empresa -->
+  <div class="client-card client-card-full" data-editable{% if info_form.errors %} data-start-editing="company"{% endif %}>
+    <h2><i class="fa-solid fa-circle-info"></i> Información de la empresa</h2>
+
+    <div class="view-mode">
+      <div class="info-grid info-grid-cols">
+        <div class="info-field"><span class="info-label">Nombre</span><span class="info-value">{{ client.name }}</span></div>
+        <div class="info-field"><span class="info-label">CIF / NIF</span>
+          {% if client.tax_id %}<span class="info-value">{{ client.tax_id }}</span>{% else %}<span class="info-value muted">No especificado</span>{% endif %}</div>
+        <div class="info-field"><span class="info-label">Estado</span>
+          {% if client.is_active %}<span class="badge-status tone-success"><i class="fa-solid fa-circle-check"></i><span>Activo</span></span>
+          {% else %}<span class="badge-status tone-danger"><i class="fa-solid fa-circle-xmark"></i><span>Inactivo</span></span>{% endif %}</div>
+        <div class="info-field"><span class="info-label">Sector</span>
+          {% if client.industry %}<span class="info-value">{{ client.industry }}</span>{% else %}<span class="info-value muted">No especificado</span>{% endif %}</div>
+        <div class="info-field"><span class="info-label">Localidad</span>
+          {% if client.city %}<span class="info-value">{{ client.city }}</span>{% else %}<span class="info-value muted">No especificada</span>{% endif %}</div>
+        <div class="info-field"><span class="info-label">Fecha de fundación</span>
+          {% if client.founded_date %}<span class="info-value">{{ client.founded_date|pretty_date }} <span class="muted">· hace {{ client.founded_date|timesince }}</span></span>
+          {% else %}<span class="info-value muted">No especificada</span>{% endif %}</div>
+        <div class="info-field"><span class="info-label">Empleados</span>
+          {% if client.employee_count is not None %}<span class="info-value">{{ client.employee_count }}</span>{% else %}<span class="info-value muted">No especificado</span>{% endif %}</div>
+        <div class="info-field"><span class="info-label">Sitio web</span>
+          {% if client.website %}<a class="link" href="{{ client.website }}" target="_blank" rel="noopener noreferrer">{{ client.website }}</a>{% else %}<span class="info-value muted">No especificado</span>{% endif %}</div>
+        <div class="info-field"><span class="info-label">Teléfono</span>
+          {% if client.phone %}<a class="link" href="tel:{{ client.phone }}">{{ client.phone }}</a>{% else %}<span class="info-value muted">No especificado</span>{% endif %}</div>
+        <div class="info-field"><span class="info-label">Miembro desde</span><span class="info-value">{{ client.created_at|pretty_date }}</span></div>
+        <div class="info-field"><span class="info-label">Usuarios</span><span class="info-value">{{ users|length }}</span></div>
+        <div class="info-field"><span class="info-label">Documentos</span><span class="info-value">{{ documents_count }}</span></div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn" data-edit="company">{% icon "edit" %} Editar</button>
+      </div>
+    </div>
+
+    <form method="post" id="company-info-form" data-panel="company">
+      {% csrf_token %}
+      <input type="hidden" name="form_name" value="company_info">
+      <div class="form-grid">
+      {% for field in info_form %}
+      <div class="form-group">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}<ul class="form-errors"><li>{{ error }}</li></ul>{% endfor %}
+      </div>
+      {% endfor %}
+      </div>
+      <p class="info-value muted">El nombre y el CIF/NIF no se pueden cambiar desde aquí.</p>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{% icon "save" %} Guardar</button>
+        <button type="button" class="btn btn-ghost" data-cancel>Cancelar</button>
+      </div>
+    </form>
   </div>
 
   <!-- Formulario de edición -->
@@ -71,6 +162,7 @@
 
     <form method="post" enctype="multipart/form-data" id="profile-form">
       {% csrf_token %}
+      <input type="hidden" name="form_name" value="company">
 
       <!-- Logo -->
       <div class="form-group">
@@ -78,7 +170,7 @@
 
         <div class="logo-preview" id="logo-preview-container">
           {% if client.logo %}
-            <img src="{{ client.logo.url }}" id="logo-preview-img" alt="Logo actual">
+            <img src="{% url 'clients:logo' %}" id="logo-preview-img" alt="Logo actual">
           {% else %}
             <div class="logo-placeholder" id="logo-placeholder">
               <i class="fa-regular fa-image"></i>
@@ -126,7 +218,7 @@
   <div class="client-card client-card-full">
     <h2><i class="fa-solid fa-users"></i> Usuarios ({{ users|length }})</h2>
     {% if users %}
-      <table class="users-table">
+      <div class="table-wrapper"><table class="table">
         <thead>
           <tr>
             <th>Usuario</th>
@@ -137,8 +229,8 @@
         </thead>
         <tbody>
           {% for user in users %}
-          <tr>
-            <td>{{ user.username }}</td>
+          <tr{% if user.pk == request.user.pk %} class="is-me"{% endif %}>
+            <td>{{ user.username }}{% if user.pk == request.user.pk %} <span class="badge-status tone-info">Tú</span>{% endif %}</td>
             <td>
               {% if user.get_full_name %}
                 {{ user.get_full_name }}
@@ -163,7 +255,7 @@
           </tr>
           {% endfor %}
         </tbody>
-      </table>
+      </table></div>
     {% else %}
       <p class="empty-state">No hay usuarios registrados para este cliente.</p>
     {% endif %}
@@ -194,12 +286,15 @@
     {% endif %}
   </div>
 
+{% endif %}
+
 </div>
 
 {% endblock %}
 
 {% block scripts %}
 {{ block.super }}
+<script src="{% static 'js/edit-toggle.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 

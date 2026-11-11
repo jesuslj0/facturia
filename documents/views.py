@@ -1,19 +1,29 @@
+from django.conf import settings
 from django.shortcuts import redirect, get_object_or_404
 from .models import Document
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import View, ListView, DetailView, TemplateView, FormView
 from django.contrib import messages
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.db.models.functions import Coalesce
 from django.db.models import DecimalField, Sum, Count
 from finance.models import FinancialMovement
 from datetime import datetime
 from .selectors.document_selector import DocumentSelector
 from .services import DocumentService
+from .services.dashboard_service import DashboardService
+from .services.metrics_page import build_page, presets, previous_period
+from datetime import date
 from django.contrib.auth import get_user_model
 from .filters.document_filters import get_filtered_documents, get_exportable_documents
 from documents.models import Company
-from .forms import DocumentRectificationForm
+from .forms import DocumentRectificationForm, DocumentUploadForm
+from .models import DocumentCategory, Folder, Tag
+from .services import upload as upload_service
+from billing_ai import listing
+from django.urls import reverse
+from billing_ai.storage import private_file_response
 
 User = get_user_model()
 
@@ -26,6 +36,8 @@ class DocumentListView(LoginRequiredMixin, ListView):
         return get_filtered_documents(
             self.request,
             base_qs=DocumentSelector.for_client(self.request.user.client)
+            .select_related("company", "folder")
+            .prefetch_related("tags"),
         )
     
     def get_context_data(self, **kwargs):
@@ -36,7 +48,15 @@ class DocumentListView(LoginRequiredMixin, ListView):
 
         context["client"] = first_doc.client if first_doc else None
         context["document_types"] = Document.TYPE_CHOICES
-        context["companies"] = Company.objects.filter(client=self.request.user.client).order_by("name")
+        client = self.request.user.client
+        context["companies"] = Company.objects.filter(client=client).order_by("name")
+        context["folders"] = Folder.objects.filter(client=client)
+        context["tags"] = Tag.objects.filter(client=client)
+        context["categories"] = DocumentCategory.objects.filter(client=client)
+        context["quarters"] = DocumentSelector.available_quarters(client)
+        context["processing_count"] = DocumentSelector.processing_count(client)
+        context["processing_choices"] = Document.PROCESSING_CHOICES
+        context.update(self._filter_ui(context))
 
         # Querystring sin page (preserva sort/order para paginación y exports)
         querydict = self.request.GET.copy()
@@ -56,6 +76,40 @@ class DocumentListView(LoginRequiredMixin, ListView):
     
     
 
+    def _filter_ui(self, context):
+        """Pestañas de estado, chips de filtros activos y paginación para la plantilla."""
+        request = self.request
+        names = lambda qs: {str(o.pk): o.name for o in qs}  # noqa: E731
+        types = dict(Document.TYPE_CHOICES)
+        quarter_labels = {k: v for k, v in context["quarters"]}
+        spec = [
+            ("q", "Búsqueda", None, False),
+            ("status", "Estado", {"pending": "Pendientes", "approved": "Aprobados", "rejected": "Rechazados"}, False),
+            ("document_type", "Tipo", types, True),
+            ("flow", "Flujo", {"in": "Venta", "out": "Compra", "unknown": "Por revisar"}, True),
+            ("category", "Categoría", names(context["categories"]), True),
+            ("company", "Empresa", None, True),
+            ("folder", "Carpeta", names(context["folders"]), True),
+            ("tag", "Etiqueta", names(context["tags"]), True),
+            ("quarter", "Trimestre", quarter_labels, True),
+            ("review_level", "Revisión", {"auto": "Auto", "manual": "Manual", "recommended": "Recomendada", "required": "Obligatoria"}, True),
+            ("processing", "Extracción", {"active": "En proceso", "failed": "Con error", "processed": "Procesados"}, True),
+            ("doc_status", "Archivo", {"archived": "Archivados", "all": "Todos (con archivados)"}, True),
+            ("date_from", "Desde", listing.pretty, True),
+            ("date_to", "Hasta", listing.pretty, True),
+        ]
+        filters = listing.active_filters(request, spec)
+        page_obj = context.get("page_obj")
+        return {
+            "status_tabs": listing.status_tabs(request, [
+                ("", "Todos"), ("pending", "Pendientes"), ("approved", "Aprobados"), ("rejected", "Rechazados"),
+            ]),
+            "active_filters": filters,
+            "panel_filter_count": sum(1 for f in filters if f["in_panel"]),
+            "page_numbers": listing.page_window(page_obj) if page_obj and page_obj.paginator.num_pages > 1 else [],
+        }
+
+
 class DocumentDetailView(LoginRequiredMixin, DetailView):
     template_name = "private/documents/document_detail.html"
     context_object_name = "document"
@@ -67,6 +121,19 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         action = request.POST.get("action")
+
+        # --- Reintentar la extracción de un documento fallido ---
+        if action == "retry":
+            if upload_service.retry_processing(self.object):
+                messages.success(request, "Documento enviado de nuevo a extracción.")
+            else:
+                messages.warning(request, "Este documento no se puede reprocesar.")
+            return redirect("documents:detail", pk=self.object.pk)
+
+        # Mientras se extrae, los datos no son definitivos
+        if self.object.is_processing and action in ("approve", "reject", "save"):
+            messages.warning(request, "El documento se está procesando; espera a que termine.")
+            return redirect("documents:detail", pk=self.object.pk)
 
         # --- Aprobar ---
         if action == "approve" and self.object.status == "pending":
@@ -117,7 +184,40 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         context["root_document"] = root
         context["has_versions"] = previous_versions.exists() or next_versions.exists()
 
+        client = self.request.user.client
+        context["companies"] = Company.objects.filter(client=client).order_by("name")
+        context["folders"] = Folder.objects.filter(client=client)
+        context["categories"] = DocumentCategory.objects.filter(client=client)
+        context["document_types"] = Document.TYPE_CHOICES
+        context["tag_names"] = ", ".join(t.name for t in document.tags.all())
+        context["all_tag_names"] = list(Tag.objects.filter(client=client).values_list("name", flat=True))
+        context["tax_lines"] = document.tax_lines.all()
+        context["invoice_lines"] = document.lines.all()
+        context["issues"] = sorted(
+            document.validation_issues or [],
+            key=lambda i: {"error": 0, "warning": 1}.get(i.get("severity"), 2),
+        )
+        context["issue_fields"] = {i.get("field") for i in document.validation_issues or [] if i.get("field")}
+        context["processing_error"] = self._processing_error(document)
+        context["next_pending"] = (
+            DocumentSelector.pending(client)
+            .filter(is_archived=False, processing_status__in=("processed", "failed"))
+            .exclude(pk=document.pk)
+            .order_by("created_at", "pk")
+            .first()
+        )
+
         return context
+
+    @staticmethod
+    def _processing_error(document):
+        if document.processing_status != "failed":
+            return None
+        run = document.extraction_runs.filter(status="failed").first()
+        return {
+            "code": run.error_code if run else "",
+            "message": (run.error_message if run else "") or "No se pudo extraer el documento.",
+        }
 
 
 def approve_document(request, document):
@@ -154,64 +254,15 @@ def unarchive_document(request, document):
     messages.warning(request, "Documento desarchivado correctamente.")
     return redirect("documents:detail", pk=document.pk)
 
-class DashboardView(LoginRequiredMixin,TemplateView):
-    template_name="private/dashboard.html"
+class DashboardView(LoginRequiredMixin, TemplateView):
+    template_name = "private/dashboard.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        client = self.request.user.client
-        client = client if client else None
-
-        qs = DocumentSelector.pending(client)
-        today = timezone.now().date()
-        month_start = today.replace(day=1)
-
-        movement_qs = FinancialMovement.objects.filter(
-            client=client,
-            date__gte=month_start,
-            date__lte=today,
-            is_active=True,
-        )
-
-        pending_count = qs.count()
-        required_count = qs.filter(review_level="required").count() or 0
-        recommended_count = qs.filter(review_level="recommended").count() or 0
-
-        income_total = movement_qs.filter(movement_type="income").aggregate(
-            total=Coalesce(Sum("amount"), 0, output_field=DecimalField(max_digits=12, decimal_places=2))
-        )["total"]
-        expense_total = movement_qs.filter(movement_type="expense").aggregate(
-            total=Coalesce(Sum("amount"), 0, output_field=DecimalField(max_digits=12, decimal_places=2))
-        )["total"]
-        balance = income_total - expense_total
-
-        unreconciled_count = movement_qs.filter(is_reconciled=False).count()
-
-        top_expense_categories = (
-            movement_qs.filter(movement_type="expense")
-            .values("category__name", "category__icon")
-            .annotate(total=Sum("amount"))
-            .order_by("-total")[:3]
-        )
-
-        context = {
-            "pending_documents": qs.order_by("-created_at")[:10],
-            "pending_count": pending_count,
-            "required_review_count": required_count,
-            "recommended_review_count": recommended_count,
-            "client": client,
-            "finance_period_label": f"{month_start.strftime('%d/%m/%Y')} - {today.strftime('%d/%m/%Y')}",
-            "finance_income_total": income_total,
-            "finance_expense_total": expense_total,
-            "finance_balance": balance,
-            "unreconciled_movements_count": unreconciled_count,
-            "recent_movements": movement_qs.select_related("category")[:5],
-            "top_expense_categories": top_expense_categories,
-        }
-
+        context.update(DashboardService.build(self.request.user))
         return context
-    
+
+
 from .utils import export_invoices_to_pdf, export_to_csv, export_to_excel, build_pdf_context
 class DocumentExportView(LoginRequiredMixin, View):
 
@@ -258,6 +309,7 @@ class DocumentExportView(LoginRequiredMixin, View):
     
     
 from django.db.models import Sum, Min, Max, Avg, Count
+from .services.signs import signed_amount
 class DocumentExportPreviewView(LoginRequiredMixin, ListView):
     template_name = "private/documents/document_export_preview.html"
 
@@ -307,9 +359,9 @@ class DocumentExportPreviewView(LoginRequiredMixin, ListView):
             context["pdf_context"] = build_pdf_context(qs, self.request)
 
         summary = qs.aggregate(
-            base_total=Sum("base_amount"),
-            tax_total=Sum("tax_amount"),
-            grand_total=Sum("total_amount"),
+            base_total=Sum(signed_amount("base_amount")),
+            tax_total=Sum(signed_amount("tax_amount")),
+            grand_total=Sum(signed_amount("total_amount")),
             min_date=Min("issue_date"),
             max_date=Max("issue_date"),
             avg_confidence=Avg("confidence_global"),
@@ -362,15 +414,16 @@ class MetricsDashboardView(LoginRequiredMixin, TemplateView):
         end = request.GET.get("end")
         today = timezone.now().date()
 
-        if not start:
-            start = today.replace(day=1)
-        else:
-            start = timezone.datetime.strptime(start, "%Y-%m-%d").date()
+        def _date(value, default):
+            try:
+                return parse_date(value or "") or default
+            except ValueError:
+                return default
 
-        if not end:
-            end = today
-        else:
-            end = timezone.datetime.strptime(end, "%Y-%m-%d").date()
+        start = _date(start, today.replace(day=1))
+        end = _date(end, today)
+        if start > end:
+            start, end = end, start
 
         first_day_of_month = today.replace(day=1)
         is_current_month = (
@@ -412,6 +465,17 @@ class MetricsDashboardView(LoginRequiredMixin, TemplateView):
         }
         context["historical_metrics"] = historical_metrics
 
+        # Presentación: héroe, desglose por origen, IVA, embudo, automatización, gráficos
+        start, end = metrics["period"]["start"], metrics["period"]["end"]
+        previous = None
+        if isinstance(start, date) and isinstance(end, date):
+            p_start, p_end = previous_period(start, end)
+            previous = MetricsService.get_user_metrics(user=self.request.user, start=p_start, end=p_end)
+        page = build_page(metrics, historical_metrics, context["period"], previous)
+        if isinstance(start, date) and isinstance(end, date):
+            page["presets"] = presets(timezone.now().date(), start, end)
+        context.update(page)
+
         return context
 
 
@@ -431,13 +495,18 @@ class DocumentRectifyView(LoginRequiredMixin, FormView):
 
         return super().dispatch(request, *args, **kwargs)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["client"] = self.request.user.client
+        return kwargs
+
     def get_initial(self):
         initial = {
             "base_amount": self.document.base_amount,
             "tax_amount": self.document.tax_amount,
             "tax_percentage": self.document.tax_percentage,
             "total_amount": self.document.total_amount,
-            "issue_date": self.document.issue_date.strftime("%Y-%m-%d"),
+            "issue_date": self.document.issue_date.strftime("%Y-%m-%d") if self.document.issue_date else None,
             "document_number": self.document.document_number,
             "company": self.document.company,
         }
@@ -459,3 +528,49 @@ class DocumentRectifyView(LoginRequiredMixin, FormView):
         context["document"] = self.document
         context["is_rectification"] = True
         return context
+
+class DocumentFileView(LoginRequiredMixin, View):
+    """Entrega el archivo original solo si pertenece al cliente del usuario."""
+
+    def get(self, request, pk):
+        document = get_object_or_404(
+            Document.all_objects.only("id", "client_id", "file", "original_name"),
+            pk=pk,
+            client=request.user.client,
+        )
+        return private_file_response(document.file, download_name=document.original_name or None)
+
+
+
+class DocumentUploadView(LoginRequiredMixin, FormView):
+    """Subida multi-archivo (selector, arrastrar o cámara del móvil)."""
+    template_name = "private/documents/document_upload.html"
+    form_class = DocumentUploadForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["max_mb"] = settings.UPLOAD_MAX_FILE_MB
+        context["max_pages"] = settings.EXTRACTION_MAX_PAGES
+        client = self.request.user.client
+        context["processing_count"] = DocumentSelector.processing_count(client)
+        context["recent_documents"] = DocumentSelector.for_client(client).order_by("-created_at", "-pk")[:5]
+        return context
+
+    def form_valid(self, form):
+        client, user = self.request.user.client, self.request.user
+        results = upload_service.upload_many(
+            client=client, user=user, files=form.cleaned_data["files"], origin="upload",
+        ) + upload_service.upload_many(
+            client=client, user=user, files=form.cleaned_data["photos"], origin="mobile",
+        )
+        created = [r for r in results if r.status == upload_service.CREATED]
+        if created:
+            messages.success(self.request, f"{len(created)} documento(s) subido(s); se están procesando.")
+        for r in results:
+            if r.status == upload_service.DUPLICATE:
+                messages.warning(self.request, f"«{r.name}»: {r.message}")
+            elif r.status == upload_service.REJECTED:
+                messages.error(self.request, f"«{r.name}»: {r.message}")
+        if created:
+            return redirect(f"{reverse('documents:list')}?processing=active")
+        return redirect("documents:upload")

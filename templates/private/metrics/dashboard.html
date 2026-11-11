@@ -1,485 +1,234 @@
 {% extends 'base.html' %}
-{% load custom_filters %}
+{% load ui static custom_filters %}
 {% block title %}Métricas - FacturIA{% endblock %}
-{% load static %}
 {% block styles %}
-<link rel="stylesheet" href="{% static "css/dashboard.css" %}" />
-<link rel="stylesheet" href="{% static "css/metrics/dashboard.css" %}" />
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+<link rel="stylesheet" href="{% static 'css/metrics/metrics.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="container dashboard">
+<div class="home metrics">
 
-  <div class="dashboard-header">
-    <h1>
-      <i class="fa-solid fa-chart-line"></i>
-      Métricas · <span class="client-name">{{ client.name }}</span>
-    </h1>
-    <p>Resumen financiero del negocio</p>
-  </div>
-  
-  <div class="period-header">
-    <div>
-      <h2 class="section-title mt-5">
-        <i class="section-icon fa-solid fa-calendar-check"></i> 
-        Periodo seleccionado
-      </h2>
-      <small class="section-subtitle">
-        {% if period.is_current_month %}
-          Este mes
-        {% else %}
-          Rango: {{ period.start_formatted }} - {{ period.end_formatted }}
-        {% endif %}
-      </small>
+  <!-- Cabecera + selector de periodo -->
+  <header class="hero rise">
+    <div class="hero-text">
+      <p class="hero-eyebrow"><a class="link" href="{% url 'clients:detail' %}">{{ client.name }}</a></p>
+      <h1>Métricas</h1>
+      <p class="hero-sub">
+        {% if period.is_current_month %}Este mes{% else %}{{ period.start_formatted }} – {{ period.end_formatted }}{% endif %}
+        <span class="hero-dot">·</span> facturas aprobadas y movimientos del periodo
+      </p>
     </div>
-    <div class="date-filter">
-      <form method="get">
-        <div class="date-range">
-          <div class="date-input-container">
-            <label>Desde:</label>
-            <input type="date" name="start" value="{{ period.start|date:'Y-m-d' }}">
-          </div>
-          <div class="date-input-container">
-            <label>Hasta:</label>
-            <input type="date" name="end" value="{{ period.end|date:'Y-m-d' }}">
-          </div>
-          </div>
-        <div class="buttons">
-          <button type="submit" class="btn">Ver</button>
-          {% if request.GET %}
-            <a href="?" class="btn-clear">Limpiar</a>
-          {% endif %}
-        </div>
+    <div class="period">
+      <div class="presets" role="group" aria-label="Periodos rápidos">
+        {% for p in presets %}<a class="preset{% if p.active %} active{% endif %}" href="{{ p.query }}">{{ p.label }}</a>{% endfor %}
+      </div>
+      <form method="get" class="range">
+        <input type="date" name="start" value="{{ period.start|date:'Y-m-d' }}" aria-label="Desde">
+        <span>→</span>
+        <input type="date" name="end" value="{{ period.end|date:'Y-m-d' }}" aria-label="Hasta">
+        <button type="submit" class="btn btn-primary btn-sm">Ver</button>
       </form>
     </div>
-  </div>
+  </header>
 
-  <h2 class="section-title mt-4">
-    <i class="section-icon fa-solid fa-file-invoice"></i>
-    Resumen de facturación
-  </h2>
-  <small class="section-subtitle">
-    Facturas y Movimientos
-  </small>
-
-  <div class="dashboard-cards summary-cards">
-
-    <div class="card total-income">
-      <h3><i class="fa-solid fa-arrow-up"></i> Ingresos totales</h3>
-      <span class="kpi text-success">
-        {{ financials.combined.income|spanish_currency }} €
-      </span>
-    </div>
-
-    <div class="card total-expense">
-      <h3><i class="fa-solid fa-arrow-down"></i> Gastos totales</h3>
-      <span class="kpi text-danger">
-        {{ financials.combined.expense|spanish_currency }} €
-      </span>
-    </div>
-
-    <div class="card total-profit">
-      <h3><i class="fa-solid fa-dollar-sign"></i> Beneficio total</h3>
-      <span class="kpi {% if financials.combined.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
-        {{ financials.combined.profit|spanish_currency }} €
-      </span>
-      <small class="kpi-info">
-        Margen {{ financials.combined.profit_margin|floatformat:2 }} %
-      </small>
-    </div>
-
-  </div>
-
-  <h2 class="section-title mt-4">
-    <i class="section-icon fa-solid fa-file-contract"></i>
-    Resumen de documentos
-  </h2>
-  <small class="section-subtitle">
-    Facturas aprobadas · Abonos descontados
-  </small>
-
-  <div class="dashboard-cards">
-    
-    <div class="card">
-      <h3><i class="fa-solid fa-arrow-up"></i> Ingresos <small>(sin IVA)</small></h3>
-      <span class="kpi text-success">
-        {{ financials.documents.income|spanish_currency }} €
-      </span>
-    </div>
-
-    <div class="card">
-      <h3><i class="fa-solid fa-arrow-down"></i> Gastos <small>(sin IVA)</small></h3>
-      <span class="kpi text-danger">
-        {{ financials.documents.expense|spanish_currency }} €
-      </span>
-    </div>
-
-    <div class="card">
-      <h3><i class="fa-solid fa-dollar-sign"></i> Beneficio</h3>
-      <span class="kpi {% if financials.documents.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
-        {{ financials.documents.profit|spanish_currency }} €
-      </span>
-      <small class="kpi-info">
-        Margen {{ financials.documents.profit_margin|floatformat:2 }} %
-      </small>
-    </div>
-
-    <div class="card">
-      <a href="{% url 'documents:list' %}?date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
-        <h3><i class="fa-regular fa-file-lines"></i> Documentos</h3>
-        <span class="kpi">
-          {{ documents.total }}
+  <!-- Protagonista: beneficio + evolución -->
+  <section class="grid-feature">
+    <article class="panel hero-kpi tone-{{ hero.tone }} rise" style="--i:1">
+      <div class="kpi-head">
+        <span class="kpi-icon">{% icon "balance" %}</span>
+        <span class="kpi-label">Beneficio del periodo</span>
+        {% if hero.delta_profit %}
+        <span class="delta tone-{{ hero.delta_profit.tone }}" title="Frente al periodo anterior de la misma duración">
+          <i class="fa-solid {% if hero.delta_profit.dir == 'up' %}fa-caret-up{% elif hero.delta_profit.dir == 'down' %}fa-caret-down{% else %}fa-minus{% endif %}"></i> {{ hero.delta_profit.label }}
         </span>
-        <small class="kpi-info">
-          <span class="dot dot-approved"></span>
-          <strong>{{ documents.approved }}</strong> aprobados
-        </small>
-      </a>
-    </div>
-
-  </div>
-
-  <h2 class="section-title mt-4">
-    <i class="section-icon fa-solid fa-receipt"></i> 
-    IVA del periodo
-  </h2>
-
-  <div class="dashboard-cards">
-
-    <div class="card">
-      <h3>IVA repercutido</h3>
-      <span class="kpi text-success">
-        {{ financials.documents.vat.collected|spanish_currency }} €
-      </span>
-    </div>
-
-    <div class="card">
-      <h3>IVA soportado</h3>
-      <span class="kpi text-danger">
-        {{ financials.documents.vat.paid|spanish_currency }} €
-      </span>
-    </div>
-
-    <div class="card">
-      <h3>Saldo IVA</h3>
-      <span class="kpi {% if financials.documents.vat.balance >= 0 %}text-danger{% else %}text-success{% endif %}">
-        {{ financials.documents.vat.balance|spanish_currency }} €
-      </span>
-      <small class="kpi-info">
-        {% if financials.documents.vat.balance >= 0 %}
-          A pagar
-        {% else %}
-          A compensar
         {% endif %}
-      </small>
-    </div>
-
-  </div>
-
-  <h2 class="section-title mt-4">
-    <i class="section-icon fa-solid fa-coins"></i> 
-    Finanzas
-  </h2>
-  <small class="section-subtitle">
-    Solo movimientos del periodo 
-  </small>
-
-  <div class="dashboard-cards">
-    <div class="card">
-      <h3><i class="fa-solid fa-arrow-up"></i> Ingresos</h3>
-      <span class="kpi text-success">
-        {{ financials.movements.income|spanish_currency }} €
-      </span>
-    </div>
-
-    <div class="card">
-      <h3><i class="fa-solid fa-arrow-down"></i> Gastos</h3>
-      <span class="kpi text-danger">
-        {{ financials.movements.expense|spanish_currency }} €
-      </span>
-    </div>
-
-    <div class="card">
-      <h3><i class="fa-solid fa-dollar-sign"></i> Beneficio</h3>
-      <span class="kpi {% if financials.movements.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
-        {{ financials.movements.profit|spanish_currency }} €
-      </span>
-      <small class="kpi-info">
-        Margen {{ financials.movements.profit_margin|floatformat:2 }} %
-      </small>
-    </div>
-
-    <div class="card">
-      <a href="{% url 'finance:movements' %}?date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
-        <h3><i class="fa-solid fa-wallet"></i> Movimientos</h3>
-        <span class="kpi">
-          {{ financials.movements.count }}
-        </span>
-      </a>
-    </div>
-  </div>
-    
-  <h2 class="section-title mt-5"><i class="section-icon fa-solid fa-chart-column"></i> Facturación</h2>
-  <small class="section-subtitle">Solo facturas aprobadas · Abonos descontados</small>
-  <div class="chart-container line-chart">
-    <h3 class="chart-title">Ingresos vs Gastos</h3>
-    <canvas id="incomeExpenseChart"></canvas>
-  </div>
-    
-  <div class="automation-header">
-    <h2 class="section-title mt-5">
-      <i class="section-icon fa-solid fa-gears"></i>
-      Automatización
-    </h2>
-    <small class="section-subtitle">
-      Rendimiento del sistema de revisión inteligente
-    </small>
-  </div>
-  <div class="automation-section">
-    <div class="chart-container donut-chart">
-      <h3 class="chart-title">Distribución de decisiones</h3>
-      <canvas id="autoApprovalChart"></canvas>
-    </div>
-
-    <div class="dashboard-cards">
-      <div class="card">
-        <h3>Confianza media de extracción</h3>
-        <span class="kpi text-success">
-          {{ documents.confidence_average|floatformat:1 }} %
-        </span>
       </div>
+      <div class="hero-value" data-count="{{ hero.profit|stringformat:'.2f' }}" data-format="currency">{{ hero.profit|spanish_currency }} €</div>
+      <p class="hero-meta">Margen <strong>{{ hero.margin|floatformat:1 }} %</strong></p>
 
-      <div class="card">
-        <h3>Tasa aprobación automática</h3>
-        <span class="kpi text-success">
-          {{ documents.auto_approval_rate|floatformat:1 }} %
-        </span>
+      <div class="split" role="img" aria-label="Proporción entre ingresos y gastos">
+        <span class="split-in" style="--w:{{ hero.income_pct }}"></span>
+        <span class="split-out" style="--w:{{ hero.expense_pct }}"></span>
       </div>
+      <ul class="split-legend">
+        <li class="tone-success">
+          <span class="legend-dot"></span> Ingresos <strong>{{ hero.income|spanish_currency }} €</strong>
+          {% if hero.delta_income %}<small class="tone-{{ hero.delta_income.tone }}">{% if hero.delta_income.dir == 'up' %}▲{% elif hero.delta_income.dir == 'down' %}▼{% endif %} {{ hero.delta_income.label }}</small>{% endif %}
+        </li>
+        <li class="tone-danger">
+          <span class="legend-dot"></span> Gastos <strong>{{ hero.expense|spanish_currency }} €</strong>
+          {% if hero.delta_expense %}<small class="tone-{{ hero.delta_expense.tone }}">{% if hero.delta_expense.dir == 'up' %}▲{% elif hero.delta_expense.dir == 'down' %}▼{% endif %} {{ hero.delta_expense.label }}</small>{% endif %}
+        </li>
+      </ul>
+    </article>
 
-      <div class="card">
-        <h3>Tasa revisión manual</h3>
-        <span class="kpi text-info">
-          {{ documents.manual_approval_rate|floatformat:1 }} %
-        </span>
+    <article class="panel rise" style="--i:2">
+      <header class="panel-head">
+        <h2>{% icon "metrics" %} Ingresos, gastos y beneficio</h2>
+        <span class="panel-note">Solo facturas aprobadas · abonos descontados</span>
+      </header>
+      {% if has_monthly %}
+      <div class="chart-box tall"><canvas id="evolutionChart" aria-label="Evolución de ingresos, gastos y beneficio"></canvas></div>
+      {% else %}<p class="empty">No hay facturas aprobadas en este periodo.</p>{% endif %}
+    </article>
+  </section>
+
+  <!-- Desglose por origen (pestañas) + IVA -->
+  <section class="grid-main">
+    <article class="panel rise" style="--i:3" data-tabs>
+      <header class="panel-head">
+        <h2>{% icon "finance" %} Desglose por origen</h2>
+        <div class="segmented" role="tablist">
+          {% for s in sources %}<button type="button" role="tab" class="seg{% if forloop.first %} active{% endif %}" data-tab="{{ s.key }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">{{ s.label }}</button>{% endfor %}
+        </div>
+      </header>
+      {% for s in sources %}
+      <div class="tab-panel" role="tabpanel" data-panel="{{ s.key }}"{% if not forloop.first %} hidden{% endif %}>
+        <div class="stat-grid">
+          <div class="stat tone-success"><span class="stat-label">Ingresos</span><span class="stat-value">{{ s.income|spanish_currency }} €</span></div>
+          <div class="stat tone-danger"><span class="stat-label">Gastos</span><span class="stat-value">{{ s.expense|spanish_currency }} €</span></div>
+          <div class="stat {% if s.profit >= 0 %}tone-success{% else %}tone-danger{% endif %}"><span class="stat-label">Beneficio</span><span class="stat-value">{{ s.profit|spanish_currency }} €</span></div>
+          <div class="stat tone-info"><span class="stat-label">Margen</span><span class="stat-value">{{ s.margin|floatformat:1 }} %</span></div>
+        </div>
+        {% if s.extra_label %}<p class="tab-foot">{{ s.extra_label }}: <strong>{{ s.extra_value }}</strong>
+          {% if s.key == 'documents' %}<a class="link" href="{% url 'documents:list' %}?status=approved&date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">Ver facturas</a>
+          {% else %}<a class="link" href="{% url 'finance:movements' %}?date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">Ver movimientos</a>{% endif %}</p>{% endif %}
       </div>
-    </div>
-  </div>
-  
-  <h2 class="section-title mt-4"><i class="section-icon fa-solid fa-file-lines"></i> Actividad de documentos</h2>
-  <small class="section-subtitle">En el periodo seleccionado</small>
-  <div class="dashboard-cards">
-    <div class="card">
-      <a href="{% url 'documents:list' %}?date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
-        <h3>Total documentos</h3>
-        <span class="kpi">{{ documents.total|default:0 }}</span>
-      </a>
-    </div>
+      {% endfor %}
+    </article>
 
-    <div class="card">
-      <a href="{% url 'documents:list' %}?status=approved&date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
-        <h3>Aprobados</h3>
-        <span class="kpi text-success">
-          {{ documents.approved|default:0 }}
-        </span>
-      </a>
-    </div>
+    <article class="panel rise" style="--i:4">
+      <header class="panel-head">
+        <h2><i class="fa-solid fa-receipt"></i> IVA del periodo</h2>
+      </header>
+      <div class="vat-bars">
+        <div class="vat-row tone-success">
+          <div class="vat-line"><span>Repercutido</span><strong>{{ vat.collected|spanish_currency }} €</strong></div>
+          <div class="bar"><span style="--pct:{{ vat.collected_pct }}%; --bar:var(--color-success)"></span></div>
+        </div>
+        <div class="vat-row tone-danger">
+          <div class="vat-line"><span>Soportado</span><strong>{{ vat.paid|spanish_currency }} €</strong></div>
+          <div class="bar"><span style="--pct:{{ vat.paid_pct }}%; --bar:var(--color-danger)"></span></div>
+        </div>
+      </div>
+      <div class="vat-balance tone-{{ vat.tone }}">
+        <span class="bubble"><i class="fa-solid {% if vat.to_pay %}fa-arrow-up-right-from-square{% else %}fa-rotate-left{% endif %}"></i></span>
+        <div>
+          <small>Saldo de IVA · {% if vat.to_pay %}a pagar{% else %}a compensar{% endif %}</small>
+          <strong>{{ vat.abs_balance|spanish_currency }} €</strong>
+        </div>
+      </div>
+      {% if vat.has_extras %}
+      <ul class="mini-list">
+        {% if vat.withholding_suffered %}<li><span>Retenciones que te practican</span><strong>{{ vat.withholding_suffered|spanish_currency }} €</strong></li>{% endif %}
+        {% if vat.withholding_applied %}<li><span>Retenciones que practicas</span><strong>{{ vat.withholding_applied|spanish_currency }} €</strong></li>{% endif %}
+        {% if vat.surcharge_collected %}<li><span>Recargo de equivalencia cobrado</span><strong>{{ vat.surcharge_collected|spanish_currency }} €</strong></li>{% endif %}
+        {% if vat.surcharge_paid %}<li><span>Recargo de equivalencia pagado</span><strong>{{ vat.surcharge_paid|spanish_currency }} €</strong></li>{% endif %}
+      </ul>
+      {% endif %}
+    </article>
+  </section>
 
-    <div class="card">
-      <a href="{% url 'documents:list' %}?status=pending&date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
-        <h3>Pendientes</h3>
-        <span class="kpi text-warning">
-          {{ documents.pending|default:0 }}
-        </span>
-      </a>
-    </div>
+  <!-- Trimestres + terceros -->
+  <section class="grid-half">
+    <article class="panel rise" style="--i:5">
+      <header class="panel-head">
+        <h2><i class="fa-solid fa-chart-column"></i> Por trimestre</h2>
+        <span class="panel-note">Base imponible</span>
+      </header>
+      {% if has_quarters %}
+      <div class="chart-box"><canvas id="quartersChart" aria-label="Ingresos y gastos por trimestre"></canvas></div>
+      {% else %}<p class="empty">Sin facturas aprobadas para agrupar.</p>{% endif %}
+    </article>
 
-    <div class="card">
-      <a href="{% url 'documents:list' %}?status=rejected&date_from={{ period.start|date:'Y-m-d' }}&date_to={{ period.end|date:'Y-m-d' }}">
-        <h3>Rechazados</h3>
-        <span class="kpi text-danger">
-          {{ documents.rejected|default:0 }}
-        </span>
-      </a>
-    </div>
-  </div>
+    <article class="panel rise" style="--i:6">
+      <header class="panel-head">
+        <h2><i class="fa-solid fa-building"></i> Principales terceros</h2>
+        <span class="panel-note">Por volumen</span>
+      </header>
+      {% if companies %}
+      <ul class="bars">
+        {% for c in companies %}
+        <li style="--pct:{{ c.pct }}%; --bar:var(--color-{{ c.tone }})">
+          <div class="bars-row">
+            <span class="bars-name">{{ c.name }} <small class="muted">· {{ c.count }} doc.</small></span>
+            <strong>{{ c.net|spanish_currency }} €</strong>
+          </div>
+          <div class="bar"><span></span></div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="empty">Sin terceros en este periodo.</p>{% endif %}
+    </article>
+  </section>
 
-  <h2 class="section-title mt-4"><i class="section-icon fa-solid fa-history"></i> Histórico de documentos</h2>
-  <small class="section-subtitle">Desde {{ historical_metrics.first_document_date }} hasta hoy</small>
-  <div class="dashboard-cards">
-    <div class="card">
-      <h3>Total</h3>
-      <span class="kpi">{{ historical_metrics.total }}</span>
-    </div>
-    <div class="card">
-      <h3>Aprobados</h3>
-      <span class="kpi text-success">{{ historical_metrics.approved }}</span>
-    </div>
+  <!-- Documentos + automatización -->
+  <section class="grid-half">
+    <article class="panel rise" style="--i:7">
+      <header class="panel-head">
+        <h2>{% icon "document" %} Documentos del periodo</h2>
+        <span class="panel-note">{{ funnel_total }} en total</span>
+      </header>
+      {% if funnel_total %}
+      <div class="funnel" role="img" aria-label="Documentos por estado">
+        {% for s in funnel %}{% if s.count %}<a class="funnel-seg tone-{{ s.tone }} card-link" style="--w:{{ s.pct }}" href="{{ s.url }}" title="{{ s.label }}: {{ s.count }}"></a>{% endif %}{% endfor %}
+      </div>
+      <ul class="funnel-legend">
+        {% for s in funnel %}
+        <li class="tone-{{ s.tone }}{% if not s.count %} is-zero{% endif %}"><a class="card-link" href="{{ s.url }}">
+          <span class="legend-dot"></span>{% badge_icon s.icon %} {{ s.label }} <strong>{{ s.count }}</strong><small>{{ s.pct|floatformat:0 }} %</small></a></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="empty">No hay documentos en este periodo.</p>{% endif %}
 
-    <div class="card">
-      <h3>Rechazados</h3>
-      <span class="kpi text-danger">{{ historical_metrics.rejected }}</span>
-    </div>
+      {% if historical.total %}
+      <div class="history">
+        <span class="history-label">{% icon "history" %} Histórico</span>
+        <span><strong>{{ historical.total }}</strong> documentos{% if historical.first_document_date %} desde {{ historical.first_document_date|pretty_date }}{% endif %}</span>
+        <span class="badge-status tone-{% if historical.approval_rate >= 50 %}success{% else %}warning{% endif %}"><span>{{ historical.approval_rate }} % aprobados</span></span>
+      </div>
+      {% endif %}
+    </article>
 
-    <div class="card">
-      <h3>Pendientes</h3>
-      <span class="kpi text-warning">{{ historical_metrics.pending }}</span>
-    </div>
+    <article class="panel rise" style="--i:8">
+      <header class="panel-head">
+        <h2><i class="fa-solid fa-gears"></i> Automatización</h2>
+        <span class="panel-note">Revisión inteligente</span>
+      </header>
+      <div class="automation">
+        <div class="donut-box">
+          {% if automation.has_decisions %}
+          <canvas id="decisionsChart" aria-label="Distribución de decisiones"></canvas>
+          <div class="donut-center" id="donutCenter"></div>
+          {% else %}<p class="empty">Sin decisiones en el periodo.</p>{% endif %}
+        </div>
+        <ul class="gauges">
+          <li class="tone-info"><div class="gauge-line"><span>Confianza media</span><strong>{{ automation.confidence|floatformat:1 }} %</strong></div>
+            <div class="bar"><span style="--pct:{{ automation.confidence }}%; --bar:var(--color-info)"></span></div></li>
+          <li class="tone-success"><div class="gauge-line"><span>Aprobación automática</span><strong>{{ automation.auto_rate|floatformat:1 }} %</strong></div>
+            <div class="bar"><span style="--pct:{{ automation.auto_rate }}%; --bar:var(--color-success)"></span></div></li>
+          <li class="tone-warning"><div class="gauge-line"><span>Revisión manual</span><strong>{{ automation.manual_rate|floatformat:1 }} %</strong></div>
+            <div class="bar"><span style="--pct:{{ automation.manual_rate }}%; --bar:var(--color-warning)"></span></div></li>
+        </ul>
+      </div>
+      {% if automation.extraction %}
+      <div class="history">
+        <span class="history-label">{% icon "extract" %} Extracción</span>
+        <span><strong>{{ automation.extraction.documents }}</strong> documentos · {{ automation.extraction.runs }} llamadas</span>
+        <span class="muted">{{ automation.extraction.cost_usd|floatformat:2 }} US$ · {{ automation.extraction.cost_per_document|floatformat:3 }} US$/doc</span>
+      </div>
+      {% endif %}
+    </article>
+  </section>
 
-    <div class="card">
-      <h3>% aprobación</h3>
-      <span class="kpi {% if historical_metrics.approval_rate >= 50 %}text-success{% else %}text-danger{% endif %}">
-        {{ historical_metrics.approval_rate }} %
-      </span>
-    </div>
-  </div>
+  {{ chart_data|json_script:"metrics-data" }}
 </div>
 {% endblock %}
+
 {% block scripts %}
 {{ block.super }}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  // ====== Preparar datos para Chart.js ======
-  const rawData = {{ charts.income_expense_monthly|safe }};
-
-  // Labels y datos
-  const labels = rawData.map(item => item.period); // "1 Feb", "Feb 2026", etc.
-  const incomeData = rawData.map(item => item.income);
-  const expenseData = rawData.map(item => item.expense);
-  const profitData = rawData.map(item => item.profit); // opcional para línea de beneficio
-
-  new Chart(document.getElementById('incomeExpenseChart'), {
-      type: 'line',
-      data: {
-          labels: labels,
-          datasets: [
-              {
-                  label: 'Ingresos',
-                  data: incomeData,
-                  borderColor: '#22c55e',
-                  backgroundColor: 'rgba(34,197,94,0.1)',
-                  tension: 0.4,
-                  fill: true
-              },
-              {
-                  label: 'Gastos',
-                  data: expenseData,
-                  borderColor: '#ef4444',
-                  backgroundColor: 'rgba(239,68,68,0.1)',
-                  tension: 0.4,
-                  fill: true
-              },
-              // Línea opcional de beneficio
-              {
-                  label: 'Beneficio',
-                  data: profitData,
-                  borderColor: '#3b82f6',
-                  backgroundColor: 'rgba(59,130,246,0.1)',
-                  tension: 0.4,
-                  fill: true,
-                  borderDash: [5, 5]
-              }
-          ]
-      },
-      options: {
-          responsive: true,
-          plugins: {
-              legend: { position: 'top' },
-              tooltip: {
-                  callbacks: {
-                      label: function(context) {
-                          return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} €`;
-                      }
-                  }
-              }
-          },
-          scales: {
-              y: { beginAtZero: true },
-              x: { ticks: { autoSkip: false } }
-          }
-      }
-  });
-
-  // ====== Gráfico Distribución de estados ======
-  const statusData = {{ status_distribution|safe }};
-  const statusLabels = Object.keys(statusData);
-
-  const statusLabelsFormatted = statusLabels.map(label => {
-    switch (label) {
-      case 'auto_approved':
-          return 'Aprobados (auto)';
-      case 'pending':
-          return 'Pendientes';
-      case 'rejected':
-          return 'Rechazados';
-      case 'manual_approved':
-          return 'Aprobados (manual)';
-      default:
-          return label;
-    }
-  })
-
-  const statusValues = Object.values(statusData);
-
-  const ctx = document.getElementById('autoApprovalChart');
-  const chart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-          labels: statusLabelsFormatted,
-          datasets: [{
-              data: statusValues,
-              backgroundColor: ['#22c55e', '#ef4444', '#6c757d', '#3b82f6'],
-              borderWidth: 1,
-              cutout: '65%',
-          }]
-      },
-      options: {
-          responsive: true,
-          plugins: {
-              legend: { position: 'bottom' },
-              tooltip: {
-                  callbacks: {
-                      label: function(context) {
-                          const value = context.parsed;
-                          const total = context.dataset.data.reduce((a,b)=>a+b,0);
-                          const percentage = ((value/total)*100).toFixed(1);
-                          return `${context.label}: ${value} (${percentage}%)`;
-                      }
-                  }
-              }
-          }
-      }
-  });
-
-  // Div central dinámico para doughnut
-  ctx.parentNode.style.position = 'relative';
-  const centerDiv = document.createElement('div');
-  centerDiv.style.position = 'absolute';
-  centerDiv.style.top = '50%';
-  centerDiv.style.left = '50%';
-  centerDiv.style.transform = 'translate(-50%, -50%)';
-  centerDiv.style.fontSize = '1rem';
-  centerDiv.style.fontWeight = '600';
-  centerDiv.style.color = '#f8fafc';
-  centerDiv.style.pointerEvents = 'none';
-  ctx.parentNode.appendChild(centerDiv);
-
-  function updateCenterText(activeIndex = null) {
-      let total;
-      if (activeIndex !== null) {
-          total = chart.data.datasets[0].data[activeIndex];
-          const label = chart.data.labels[activeIndex];
-          centerDiv.innerText = `${total} ${label}`;
-      } else {
-          total = chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
-          centerDiv.innerText = `${total} documentos`;
-      }
-  }
-  updateCenterText();
-  ctx.addEventListener('mousemove', (evt) => {
-      const points = chart.getElementsAtEventForMode(evt, 'nearest', {intersect:true}, true);
-      if (points.length) updateCenterText(points[0].index);
-      else updateCenterText();
-  });
-</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/chart-kit.js' %}"></script>
+<script src="{% static 'js/metrics.js' %}"></script>
 {% endblock %}
-

@@ -1,103 +1,39 @@
 {% extends "base.html" %}
-{% block title %}Categorias - FacturIA{% endblock %}
+{% load ui static %}
+{% block title %}Categorías - FacturIA{% endblock %}
 {% block styles %}
-{% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/finance/category_list.css' %}">
+    <link rel="stylesheet" href="{% static 'css/list-page.css' %}">
+    <link rel="stylesheet" href="{% static 'css/finance/category_list.css' %}">
 {% endblock %}
 {% block content %}
-<a href="{% url 'finance:movements' %}" class="btn btn-primary btn-back"><i class="fa-solid fa-arrow-left"></i> Volver</a>
-<div class="page-header">
-    <h1 class="page-title"><i class="fa-solid fa-list"></i> Tus categorías</h1>
-    <a href="{% url 'finance:new_category' %}" class="btn btn-primary">
-        <i class="fa-solid fa-plus"></i> Nueva categoría
-    </a>
-</div>
+<a href="{% url 'finance:movements' %}" class="btn btn-back btn-sm">{% icon "back" %} Volver a movimientos</a>
+<h1 class="page-title"><i class="fa-solid fa-tags"></i> Tus categorías
+  <span class="page-actions"><a href="{% url 'finance:new_category' %}" class="btn btn-primary">{% icon "new" %} Nueva categoría</a></span>
+</h1>
 
-<h2 class="section-title">Gastos</h2>
-<div class="category-grid">
-    {% for category in expense_categories %}
-        <a href="{% url 'finance:edit_category' category.pk %}" 
-        class="category-card income"
-        style="--color:{{ category.color }}"
-        >
-            <div class="category-card-body">
-                <i class="{{ category.icon }} category-icon" style="color: {{ category.color }}"></i>
-                <div>
-                    <h3 class="category-name">{{ category.name }}</h3>
-                    <span class="category-movements">
-                        {{ category.movements.count }} 
-                        {{ category.movements.count|pluralize:"movimiento,movimientos" }}
-                    </span>
-                </div>
-            </div>
-        </a>
+{% for group in groups %}
+<section class="cat-group tone-{% if group.key == 'expense' %}danger{% elif group.key == 'income' %}success{% elif group.key == 'investment' %}info{% else %}warning{% endif %}">
+  <header class="cat-group-head">
+    <h2><span class="group-icon"><i class="{{ group.icon }}"></i></span> {{ group.label }}
+      <small>{{ group.items|length }} categoría{{ group.items|length|pluralize }} · {{ group.movements }} movimiento{{ group.movements|pluralize }}</small></h2>
+    <a class="btn btn-ghost btn-sm" href="{% url 'finance:new_category' %}?type={{ group.key }}">{% icon "new" %} Añadir</a>
+  </header>
+  <div class="category-grid">
+    {% for category in group.items %}
+    <article class="category-card" style="--color:{{ category.color|default:'#64748b' }}">
+      <a href="{% url 'finance:edit_category' category.pk %}" class="cat-link card-link">
+        <span class="cat-icon"><i class="{{ category.icon|default:'fa-solid fa-tag' }}"></i></span>
+        <span class="cat-info">
+          <strong class="category-name">{{ category.name }}</strong>
+          <small class="category-movements">{{ category.movement_count }} movimiento{{ category.movement_count|pluralize }}</small>
+        </span>
+      </a>
+      <a href="{% url 'finance:new_movement' %}?category={{ category.pk }}" class="btn btn-sm cat-add" title="Nuevo movimiento de {{ category.name }}" aria-label="Nuevo movimiento de {{ category.name }}">{% icon "new" %}</a>
+    </article>
     {% empty %}
-        <p class="empty-state">No tienes categorías de gasto todavía.</p>
+    <p class="empty-state">Aún no tienes categorías de {{ group.label|lower }}. <a class="link" href="{% url 'finance:new_category' %}?type={{ group.key }}">Crea la primera</a>.</p>
     {% endfor %}
-</div>
-
-<h2 class="section-title">Ingresos</h2>
-<div class="category-grid">
-    {% for category in income_categories %}
-        <a href="{% url 'finance:edit_category' category.pk %}" 
-        class="category-card income"
-        style="--color:{{ category.color }}"
-        >
-            <div class="category-card-body">
-                <i class="{{ category.icon }} category-icon" style="color: {{ category.color }}"></i>
-                <div>
-                    <h3 class="category-name">{{ category.name }}</h3>
-                    <span class="category-movements">
-                        {{ category.movements.count }} 
-                        {{ category.movements.count|pluralize:"movimiento,movimientos" }}
-                    </span>
-                </div>
-            </div>
-        </a>
-    {% empty %}
-        <p class="empty-state">No tienes categorías de ingreso todavía.</p>
-    {% endfor %}
-</div>
-
-<h2 class="section-title">Inversión</h2>
-<div class="category-grid">
-    {% for category in investment_categories %}
-        <a href="{% url 'finance:edit_category' category.pk %}" 
-        class="category-card income"
-        style="--color:{{ category.color }}"
-        >
-            <div class="category-card-body">
-                <i class="{{ category.icon }} category-icon" style="color: {{ category.color }}"></i>
-                <div>
-                    <h3 class="category-name">{{ category.name }}</h3>
-                    <span class="category-movements">
-                        {{ category.movements.count }} 
-                        {{ category.movements.count|pluralize:"movimiento,movimientos" }}
-                    </span>
-                </div>
-            </div>
-        </a>
-    {% endfor %}
-</div>
-
-<h2 class="section-title">Pŕestamos</h2>
-<div class="category-grid">
-    {% for category in loan_categories %}
-        <a href="{% url 'finance:edit_category' category.pk %}" 
-        class="category-card income"
-        style="--color:{{ category.color }}"
-        >
-            <div class="category-card-body">
-                <i class="{{ category.icon }} category-icon" style="color: {{ category.color }}"></i>
-                <div>
-                    <h3 class="category-name">{{ category.name }}</h3>
-                    <span class="category-movements">
-                        {{ category.movements.count }} 
-                        {{ category.movements.count|pluralize:"movimiento,movimientos" }}
-                    </span>
-                </div>
-            </div>
-        </a>
-    {% endfor %}
-</div>
+  </div>
+</section>
+{% endfor %}
 {% endblock %}

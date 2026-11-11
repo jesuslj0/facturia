@@ -15,7 +15,7 @@ class ApiKey(models.Model):
     name = models.CharField(max_length=100)
 
     # Parte visible para lookup rápido
-    prefix = models.CharField(max_length=32, db_index=True)
+    prefix = models.CharField(max_length=32)
 
     # Parte secreta hasheada
     key_hash = models.CharField(max_length=128)

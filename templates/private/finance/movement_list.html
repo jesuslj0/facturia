@@ -1,176 +1,160 @@
 {% extends "base.html" %}
-{% load custom_filters %}
+{% load ui static custom_filters %}
 {% block title %}Movimientos - FacturIA{% endblock %}
 {% block styles %}
-{% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/finance/movement_list.css' %}">
+    <link rel="stylesheet" href="{% static 'css/list-page.css' %}">
+    <link rel="stylesheet" href="{% static 'css/finance/movement_list.css' %}">
 {% endblock %}
+
 {% block content %}
-<h1 class="page-title"><i class="fa-solid fa-coins"></i> Tus movimientos</h1>
-<div class="movements-container">
-    <form method="get" class="filters-bar">
-        <div class="search-bar-container">
-            <input type="text" name="q" placeholder="Concepto o categoría" value="{{ request.GET.q }}" class="search-bar">
-            <input type="submit" value="Buscar" class="btn btn-primary">
-        </div>
-        <div class="filters-container top-right">
-            <label for="start">Desde</label>
-            <input type="date" name="start" value="{{ request.GET.start }}" class="date-filter">
-            <label for="end">Hasta</label>
-            <input type="date" name="end" value="{{ request.GET.end }}" class="date-filter">
-            <button type="submit" class="btn btn-primary">Filtrar</button>
-            {% if request.GET %}
-                <a href="{% url 'finance:movements' %}" class="btn btn-secondary">Limpiar</a>
-            {% endif %}
-        </div>
-        <div class="filters-container bottom-left">
-            <div>
-                <label for="category">Categoría</label>
-                <select name="category" class="category-filter">
-                    <option value="">Todas</option>
-                    {% for category in categories %}
-                        <option value="{{ category.id }}" {% if request.GET.category == category.id %}selected{% endif %}>
-                            {{ category.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label for="method">Método de pago</label>
-                <select name="method" class="method-filter">
-                    <option value="">Todos</option>
-                    {% for id, name in payment_methods %}
-                        <option value="{{ id }}" {% if request.GET.method == id %}selected{% endif %}>{{ name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        <div class="filters-container bottom-right">
-            <div style="display: flex;">
-                <label for="is_reconciled">Conciliados</label>
-                <input type="checkbox" name="is_reconciled" id="is_reconciled" {% if request.GET.is_reconciled %}checked{% endif %}>
-            </div>
-            <div>
-                <label for="has_receipt">Con recibo</label>
-                <input type="checkbox" name="has_receipt" id="has_receipt" {% if request.GET.has_receipt %}checked{% endif %}>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <label for="min_amount">Importe mín.</label>
-                <input type="number" decimals+="2" step="0.10" name="min_amount" id="min_amount" value="{{ request.GET.min_amount }}" placeholder="0.00€" class="amount-filter">
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <label for="max_amount">Importe máx.</label>
-                <input type="number" decimals="2" step="0.10" name="max_amount" id="max_amount" value="{{ request.GET.max_amount }}" placeholder="0.00€" class="amount-filter">
-            </div>
-        </div>
-    </form>
-    <div class="table-wrapper">
-        <div class="table-header">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <h3><i class="fa-solid fa-money-bill-wave"></i> Movimientos</h3>
-                <span class="results">
-                    {% if request.GET %}
-                        ({{ movements|length }} {% if movements|length == 1 %}resultado{% else %}resultados{% endif %})
-                    {% endif%}
-                </span>
-            </div>
-            <a href="{% url 'finance:new_movement' %}" class="btn btn-primary">
-                <i class="fa-solid fa-plus"></i> Nuevo movimiento
-            </a>
-        </div>
+<h1 class="page-title">{% icon "finance" %} Tus movimientos
+  <span class="page-actions">
+    <a href="{% url 'finance:new_movement' %}" class="btn btn-primary">{% icon "new" %} Nuevo movimiento</a>
+  </span>
+</h1>
 
-        <table class="movements-table">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Categoría</th>
-                    <th>Concepto</th>
-                    <th>Método</th>
-                    <th>Recibo</th>
-                    <th>Estado</th>
-                    <th class="text-end">Importe</th>
-                    <th></th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {% if movements|length == 0 %}
-                    <tr>
-                        <td colspan="8" class="empty-row">
-                            <i class="fa-regular fa-folder-open"></i>
-                            No hay movimientos todavía
-                        </td>
-                    </tr>
-                {% else %}
-
-                    {% for movement in movements %}
-                    <tr class="movement-row {{ movement.movement_type }}">
-
-                        <td class="date">
-                            {{ movement.date|date:"d/m/Y" }}
-                        </td>
-
-                        <td class="category">
-                            <i class="{{ movement.category.icon }} category-icon" style="color: {{ movement.category.color }}"></i>{{ movement.category.name }} 
-                        </td>
-
-                        <td class="description">
-                            {{ movement.description|default:"—" }}
-                        </td>
-
-                        <td class="payment-method">
-                            {% if movement.payment_method %}
-                                <span class="badge-method">
-                                    <i class="fa solid {{ movement.payment_icon }}"></i>
-                                    {{ movement.get_payment_method_display }}
-                                </span>
-                            {% else %}
-                                —
-                            {% endif %}
-                        </td>
-
-                        <td class="receipt">
-                            {% if movement.has_receipt %}
-                                <a href="{{ movement.receipt.url }}" target="_blank" class="receipt-link">
-                                    <i class="fa-solid fa-paperclip"></i>
-                                </a>
-                            {% else %}
-                                —
-                            {% endif %}
-                        </td>
-
-                        <td class="status">
-                            {% if movement.is_reconciled %}
-                                <span class="badge badge-success">
-                                    <i class="fa-solid fa-check"></i>
-                                </span>
-                            {% else %}
-                                <span class="badge badge-warning">
-                                    <i class="fa-solid fa-clock"></i>
-                                </span>
-                            {% endif %}
-                        </td>
-
-                        <td class="amount {% if movement.movement_type == 'income' %}income{% else %}expense{% endif %}">
-                            {{ movement.amount|spanish_currency }} €
-                        </td>
-
-                        <td class="text-end">
-                            <a href="{% url 'finance:edit_movement' movement.id %}" class="btn btn-sm btn-primary">
-                                <i class="fa-solid fa-eye"></i>
-                            </a>
-                        </td>
-
-                    </tr>
-                    {% endfor %}
-
-                {% endif %}
-            </tbody>
-        </table>
+<form method="get" class="filter-card" id="filter-form">
+  <div class="filter-top">
+    <div class="search-group">
+      <div class="search-field">
+        {% icon "search" %}
+        <input type="search" name="q" value="{{ request.GET.q }}" placeholder="Buscar por concepto o categoría" aria-label="Buscar por concepto o categoría">
+      </div>
+      <button type="submit" class="btn btn-primary">Buscar</button>
     </div>
+
+    <button type="button" class="btn" id="filters-toggle" aria-expanded="false" aria-controls="filter-panel">
+      {% icon "filter" %} Filtros{% if panel_filter_count %} <span class="count-badge">{{ panel_filter_count }}</span>{% endif %} <i class="fa-solid fa-chevron-down caret"></i>
+    </button>
+  </div>
+
+  <div class="filter-panel" id="filter-panel" hidden>
+    <div class="filter-groups">
+      <fieldset class="fgroup">
+        <legend><i class="fa-solid fa-tags"></i> Clasificación</legend>
+        <div class="field"><label for="f-category">Categoría</label>
+          <select name="category" id="f-category"><option value="">Todas</option>
+            {% for category in categories %}<option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>{% endfor %}
+          </select></div>
+        <div class="field"><label for="f-method">Método de pago</label>
+          <select name="method" id="f-method"><option value="">Todos</option>
+            {% for id, name in payment_methods %}<option value="{{ id }}" {% if request.GET.method == id %}selected{% endif %}>{{ name }}</option>{% endfor %}
+          </select></div>
+      </fieldset>
+
+      <fieldset class="fgroup">
+        <legend><i class="fa-regular fa-calendar"></i> Fechas</legend>
+        <div class="field"><label for="f-start">Desde</label><input type="date" name="start" id="f-start" value="{{ request.GET.start }}"></div>
+        <div class="field"><label for="f-end">Hasta</label><input type="date" name="end" id="f-end" value="{{ request.GET.end }}"></div>
+      </fieldset>
+
+      <fieldset class="fgroup">
+        <legend><i class="fa-solid fa-euro-sign"></i> Importe</legend>
+        <div class="field-row">
+          <div class="field"><label for="min_amount">Mínimo</label><input type="number" step="0.01" min="0" name="min_amount" id="min_amount" value="{{ request.GET.min_amount }}" placeholder="0,00"></div>
+          <div class="field"><label for="max_amount">Máximo</label><input type="number" step="0.01" min="0" name="max_amount" id="max_amount" value="{{ request.GET.max_amount }}" placeholder="0,00"></div>
+        </div>
+      </fieldset>
+
+      <fieldset class="fgroup">
+        <legend><i class="fa-solid fa-circle-check"></i> Estado</legend>
+        <div class="check"><input type="checkbox" name="is_reconciled" id="is_reconciled" {% if request.GET.is_reconciled %}checked{% endif %}><label for="is_reconciled">Solo conciliados</label></div>
+        <div class="check"><input type="checkbox" name="has_receipt" id="has_receipt" {% if request.GET.has_receipt %}checked{% endif %}><label for="has_receipt">Solo con recibo</label></div>
+      </fieldset>
+    </div>
+    <div class="filter-actions">
+      {% if active_filters %}<a href="{% url 'finance:movements' %}" class="btn btn-ghost">Limpiar todo</a>{% endif %}
+      <button type="submit" class="btn btn-primary">{% icon "filter" %} Aplicar filtros</button>
+    </div>
+  </div>
+
+  {% if active_filters %}
+  <div class="active-filters" aria-label="Filtros aplicados">
+    <span class="active-filters-label">Filtros:</span>
+    {% for f in active_filters %}
+    <a class="filter-chip" href="{{ f.remove_url }}" title="Quitar este filtro"><small>{{ f.label }}:</small> <span>{{ f.text }}</span> <i class="x fa-solid fa-xmark"></i></a>
+    {% endfor %}
+    <a class="btn btn-ghost btn-sm" href="{% url 'finance:movements' %}">Limpiar todo</a>
+  </div>
+  {% endif %}
+</form>
+
+<div class="summary-strip">
+  <div class="summary-chip tone-success"><span>Ingresos{% if active_filters %} (filtrados){% endif %}</span><strong>{{ totals.income|spanish_currency }} €</strong></div>
+  <div class="summary-chip tone-danger"><span>Gastos{% if active_filters %} (filtrados){% endif %}</span><strong>{{ totals.expense|spanish_currency }} €</strong></div>
+  <div class="summary-chip {% if totals.balance >= 0 %}tone-success{% else %}tone-danger{% endif %}"><span>Balance</span><strong>{{ totals.balance|spanish_currency }} €</strong></div>
 </div>
-<div class="categories-container">
-    <a href="{% url 'finance:categories' %}" class="btn btn-primary"><i class="fa-solid fa-list"></i> Ver categorías</a>
-    <a href="{% url 'finance:new_category' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nueva categoría</a>
+
+<div class="results-bar">
+  <div class="results-count">
+    {% if page_obj.paginator.count %}<strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong> de <strong>{{ page_obj.paginator.count }}</strong> movimientos{% else %}Sin resultados{% endif %}
+  </div>
+  <div class="results-actions">
+    <a href="{% url 'finance:categories' %}" class="btn">{% icon "list" %} Categorías</a>
+    <a href="{% url 'finance:new_category' %}" class="btn">{% icon "new" %} Nueva categoría</a>
+  </div>
 </div>
+
+<div class="table-wrapper">
+  <table class="table table-cards movements-table">
+    <thead>
+      <tr>
+        <th>Fecha</th><th>Categoría</th><th>Concepto</th><th>Método</th><th>Recibo</th><th>Estado</th><th class="num">Importe</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for movement in movements %}
+      <tr class="movement-row {{ movement.movement_type }}">
+        <td class="date" data-label="Fecha">{{ movement.date|pretty_date }}</td>
+        <td class="category cell-sub" data-label="Categoría">
+          <i class="{{ movement.category.icon }} category-icon" style="color: {{ movement.category.color }}"></i>{{ movement.category.name }}
+        </td>
+        <td class="description cell-primary" data-label="Concepto">{{ movement.description|default:"—" }}</td>
+        <td class="payment-method" data-label="Método">
+          {% if movement.payment_method %}<span class="badge-method"><i class="fa-solid {{ movement.payment_icon }}"></i> {{ movement.get_payment_method_display }}</span>{% else %}—{% endif %}
+        </td>
+        <td class="receipt" data-label="Recibo">
+          {% if movement.has_receipt %}<a href="{% url 'finance:receipt' movement.pk %}" target="_blank" rel="noopener" class="receipt-link"><i class="fa-solid fa-paperclip"></i> Ver recibo</a>{% else %}—{% endif %}
+        </td>
+        <td data-label="Estado">{% if movement.is_reconciled %}{% badge "reconcile" "reconciled" %}{% else %}{% badge "reconcile" "pending" %}{% endif %}</td>
+        <td class="amount cell-highlight {% if movement.movement_type == 'income' %}income{% else %}expense{% endif %}" data-label="Importe">
+          {% if movement.movement_type == 'income' %}+{% else %}−{% endif %}{{ movement.amount|spanish_currency }} €
+        </td>
+        <td class="col-actions cell-actions"><a href="{% url 'finance:edit_movement' movement.id %}" class="btn btn-ghost btn-sm" aria-label="Editar movimiento">{% icon "edit" %}<span class="only-cards"> Editar</span></a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="empty">
+        <i class="fa-regular fa-folder-open"></i>
+        {% if active_filters %}Ningún movimiento coincide con los filtros. <a class="link" href="{% url 'finance:movements' %}">Limpiar filtros</a>{% else %}No hay movimientos todavía. <a class="link" href="{% url 'finance:new_movement' %}">Crea el primero</a>.{% endif %}
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if is_paginated %}
+  <div class="table-footer-bar">
+    <span class="results-count">Página <strong>{{ page_obj.number }}</strong> de {{ page_obj.paginator.num_pages }}</span>
+    <nav class="pager" aria-label="Paginación">
+      {% if page_obj.has_previous %}
+      <a href="?{{ querystring }}&page=1" aria-label="Primera">&laquo;</a>
+      <a href="?{{ querystring }}&page={{ page_obj.previous_page_number }}" aria-label="Anterior">&lsaquo;</a>
+      {% else %}
+      <span class="page disabled">&laquo;</span><span class="page disabled">&lsaquo;</span>
+      {% endif %}
+      {% for n in page_numbers %}{% if n == "…" %}<span class="page gap num">…</span>{% elif n == page_obj.number %}<span class="page current num" aria-current="page">{{ n }}</span>{% else %}<a class="num" href="?{{ querystring }}&page={{ n }}">{{ n }}</a>{% endif %}{% endfor %}
+      {% if page_obj.has_next %}
+      <a href="?{{ querystring }}&page={{ page_obj.next_page_number }}" aria-label="Siguiente">&rsaquo;</a>
+      <a href="?{{ querystring }}&page={{ page_obj.paginator.num_pages }}" aria-label="Última">&raquo;</a>
+      {% else %}
+      <span class="page disabled">&rsaquo;</span><span class="page disabled">&raquo;</span>
+      {% endif %}
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'js/list-page.js' %}"></script>
 {% endblock %}

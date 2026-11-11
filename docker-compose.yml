@@ -1,0 +1,87 @@
+# Desarrollo local: Django runserver (con autoreload) + PostgreSQL
+#
+# Uso:
+#   docker compose up --build          # http://localhost:8000
+#   docker compose exec web python manage.py createsuperuser
+#   docker compose exec web pytest
+#
+# Solo Redis (Django en el host con venv):   docker compose up -d redis
+# Worker de extracción en el host:           celery -A billing_ai worker -l info
+#
+# Producción: ver docker-compose.prod.yml
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: billing_ai
+      POSTGRES_USER: billing_ai
+      POSTGRES_PASSWORD: billing_ai
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      # Para conectar con DBeaver/pgAdmin desde el host (5433 para no chocar con un Postgres local)
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U billing_ai -d billing_ai"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      # Solo accesible desde tu máquina (Django/Celery en el host usan localhost:6379)
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build: .
+    image: billing_ai:dev
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    environment:
+      DJANGO_SETTINGS_MODULE: billing_ai.settings.docker_dev
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+    volumes:
+      # Código montado: los cambios se recargan sin reconstruir la imagen
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    # Procesa la extracción de documentos (OCR con Claude). Sin autoreload:
+    # reiniciar con `docker compose restart worker` tras cambiar código.
+    image: billing_ai:dev
+    command: celery -A billing_ai worker -l info --concurrency 2
+    environment:
+      DJANGO_SETTINGS_MODULE: billing_ai.settings.docker_dev
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:

@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 
 from django.contrib.auth import get_user_model
+from billing_ai.storage import HashedFileField, document_upload_to
 User = get_user_model()
 
 class Company(models.Model):
@@ -16,6 +17,10 @@ class Company(models.Model):
     )
     name = models.CharField(max_length=255)
     tax_id = models.CharField(max_length=50, null=True, blank=True)
+    address = models.CharField(max_length=255, blank=True, default="")
+    postal_code = models.CharField(max_length=20, blank=True, default="")
+    city = models.CharField(max_length=100, blank=True, default="")
+    country = models.CharField(max_length=2, default="ES", help_text="ISO 3166-1 alpha-2")
     is_provider = models.BooleanField(default=False, db_index=True)
     is_customer = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -42,6 +47,9 @@ class Company(models.Model):
                     
                 )
             )
+        if not self.tax_id:
+            # "" violaría la unicidad (client, tax_id); sin NIF se guarda NULL.
+            self.tax_id = None
         if self.name: 
             self.name = self.name.strip()
         super().save(*args, **kwargs)
@@ -64,6 +72,8 @@ class Document(models.Model):
         ("delivery", "Albarán"),
         ("corrected_invoice", "Factura rectificativa"),
         ("delivery_credit_note", "Abono de albarán"),
+        ("receipt", "Ticket"),
+        ("quote", "Presupuesto"),
     ]
 
     TOTAL_SOURCE_CHOICES = [
@@ -122,6 +132,15 @@ class Document(models.Model):
         return self.extension in [".jpg", ".jpeg", ".png", ".webp"]
     
     @property
+    def review_key(self):
+        """Clave de nivel de revisión efectiva (la que muestran los badges)."""
+        if self.status == "rejected" or (self.status == "approved" and self.approved_at):
+            return "manual"
+        if self.status == "approved" and not self.approved_at:
+            return "auto"
+        return self.review_level
+
+    @property
     def display_review_level(self):
         if self.status == "rejected" or (self.status == "approved" and self.approved_at):
             return "Manual"
@@ -137,9 +156,14 @@ class Document(models.Model):
             return "Revisión obligatoria"
         return "-"
 
+    @property
+    def is_processing(self):
+        """Extracción en curso: los datos aún no son definitivos (no editar ni aprobar)."""
+        return self.processing_status in ("uploaded", "queued", "processing", "batched")
+
     @property 
     def is_editable(self):
-        return self.status == "pending" and not self.is_archived
+        return self.status == "pending" and not self.is_archived and not self.is_processing
     
     @property
     def has_rectifications(self):
@@ -196,11 +220,12 @@ class Document(models.Model):
     company = models.ForeignKey(
         Company, on_delete=models.SET_NULL, 
         related_name="documents",
-        null=True
+        null=True,
+        blank=True,
     )
     external_id = models.CharField(max_length=255, null=True, blank=True)
     original_name = models.CharField(max_length=255)
-    file = models.FileField(upload_to="documents/")
+    file = HashedFileField(upload_to=document_upload_to)
     document_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     document_number = models.CharField(max_length=255, null=True, blank=True)
     confidence = models.JSONField(default=dict)
@@ -277,6 +302,46 @@ class Document(models.Model):
     orc_snapshot = models.JSONField(default=dict, blank=True)
     amount_snapshot = models.JSONField(default=dict, blank=True)
 
+    # --- H1: procesado, origen y organización --------------------------------
+    PROCESSING_CHOICES = [
+        ("uploaded", "Subido"),
+        ("queued", "En cola"),
+        ("processing", "Procesando"),
+        ("batched", "En lote (diferido)"),
+        ("processed", "Procesado"),
+        ("failed", "Error"),
+    ]
+    SOURCE_CHOICES = [
+        ("n8n", "n8n (API de ingesta)"),
+        ("upload", "Subida en la app"),
+        ("import", "Importación"),
+    ]
+    processing_status = models.CharField(
+        max_length=12, choices=PROCESSING_CHOICES, default="processed", db_index=True
+    )
+    processing_started_at = models.DateTimeField(null=True, blank=True)
+    # Resultado de la validación determinista: [{code, severity, message, field, model_fixable}]
+    validation_issues = models.JSONField(default=list, blank=True)
+    source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default="n8n")
+    currency = models.CharField(max_length=3, default="EUR")
+    iban = models.CharField(max_length=34, blank=True, default="")
+    category = models.ForeignKey(
+        "DocumentCategory", null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="documents",
+    )
+    folder = models.ForeignKey(
+        "Folder", null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="documents",
+    )
+    tags = models.ManyToManyField("Tag", blank=True, related_name="documents")
+
+    @property
+    def quarter(self):
+        """Trimestre natural de la fecha de emisión, p. ej. '2026-T1' (None si no hay fecha)."""
+        if not self.issue_date:
+            return None
+        return f"{self.issue_date.year}-T{(self.issue_date.month - 1) // 3 + 1}"
+
     objects = ActiveDocumentManager() #Queryset Documentos activos
     all_objects = models.Manager() #Queryset Documentos archivados y activos
 
@@ -287,6 +352,9 @@ class Document(models.Model):
             models.Index(fields=["client", "review_level"]),
             models.Index(fields=["client", "created_at"]),
             models.Index(fields=["client", "company"]),
+            models.Index(fields=["client", "is_current"], name="doc_client_current_idx"),
+            models.Index(fields=["client", "issue_date"], name="doc_client_issue_idx"),
+            models.Index(fields=["client", "processing_status"], name="doc_client_proc_idx"),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -313,6 +381,7 @@ class Document(models.Model):
     def can_be_approved(self): 
         return (
             self.status == "pending" 
+            and not self.is_processing
             and self.total_amount is not None
             and self.issue_date is not None
         )
@@ -437,3 +506,273 @@ class Document(models.Model):
             )
 
         return new_doc
+
+
+
+# ---------------------------------------------------------------------------
+# H1 — organización
+# ---------------------------------------------------------------------------
+
+class DocumentCategory(models.Model):
+    """Categoría contable de un documento (distinta de finance.MovementCategory)."""
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="document_categories")
+    name = models.CharField(max_length=100)
+    color = models.CharField(max_length=7, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name_plural = "document categories"
+        constraints = [
+            models.UniqueConstraint(fields=["client", "name"], name="unique_doc_category_per_client"),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class Folder(models.Model):
+    """Carpeta virtual (solo en base de datos; el bucket no cambia al mover documentos)."""
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="folders")
+    name = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(fields=["client", "name"], name="unique_folder_per_client"),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class Tag(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="tags")
+    name = models.CharField(max_length=50)
+    color = models.CharField(max_length=7, blank=True, default="")
+
+    class Meta:
+        ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(fields=["client", "name"], name="unique_tag_per_client"),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+# ---------------------------------------------------------------------------
+# H1 — archivo original y extracción
+# ---------------------------------------------------------------------------
+
+class DocumentFile(models.Model):
+    """Metadatos del archivo original.
+
+    Un registro por documento *original*. Las rectificaciones (`parent_document`)
+    reutilizan el archivo del original y no tienen `DocumentFile` propio.
+    `unique(client, sha256)` impide guardar dos veces el mismo contenido por tenant.
+    """
+    ORIGIN_CHOICES = [
+        ("n8n", "n8n"),
+        ("upload", "Subida web"),
+        ("mobile", "Foto móvil"),
+        ("import", "Importación"),
+    ]
+
+    document = models.OneToOneField(Document, on_delete=models.CASCADE, related_name="stored_file")
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="document_files")
+    sha256 = models.CharField(max_length=64)
+    mime_type = models.CharField(max_length=100, blank=True, default="")
+    size_bytes = models.PositiveBigIntegerField(default=0)
+    page_count = models.PositiveSmallIntegerField(null=True, blank=True)
+    origin = models.CharField(max_length=10, choices=ORIGIN_CHOICES, default="upload")
+    uploaded_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL, related_name="uploaded_files"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["client", "sha256"], name="unique_file_hash_per_client"),
+        ]
+        indexes = [models.Index(fields=["client", "created_at"])]
+
+    def __str__(self):
+        return f"{self.sha256[:12]} ({self.size_bytes} B)"
+
+    def save(self, *args, **kwargs):
+        if self.document_id and self.client_id and self.document.client_id != self.client_id:
+            raise ValueError("DocumentFile must belong to the same client as its document.")
+        super().save(*args, **kwargs)
+
+
+class ExtractionBatch(models.Model):
+    """Lote enviado a la Batch API de Anthropic (procesado diferido, ~50 % más barato)."""
+    STATUS_CHOICES = [
+        ("submitted", "Enviado"),
+        ("collected", "Recogido"),
+    ]
+
+    provider_batch_id = models.CharField(max_length=100, unique=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="submitted", db_index=True)
+    model = models.CharField(max_length=100, blank=True, default="")
+    request_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    collected_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.provider_batch_id} ({self.status})"
+
+
+class ExtractionRun(models.Model):
+    """Una llamada de extracción (OCR/estructuración) sobre un documento."""
+    STATUS_CHOICES = [
+        ("pending", "Pendiente"),
+        ("running", "En curso"),
+        ("succeeded", "Correcta"),
+        ("failed", "Fallida"),
+    ]
+
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="extraction_runs")
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="extraction_runs")
+    batch = models.ForeignKey(
+        "ExtractionBatch", null=True, blank=True, on_delete=models.SET_NULL, related_name="runs"
+    )
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
+    provider = models.CharField(max_length=30, default="anthropic")
+    model = models.CharField(max_length=100, blank=True, default="")
+    prompt_version = models.CharField(max_length=30, blank=True, default="")
+    is_fallback = models.BooleanField(default=False)
+    attempt = models.PositiveSmallIntegerField(default=1)
+    raw_response = models.JSONField(default=dict, blank=True)
+    confidence = models.DecimalField(max_digits=5, decimal_places=4, null=True, blank=True)
+    error_code = models.CharField(max_length=50, blank=True, default="")
+    error_message = models.TextField(blank=True, default="")
+    input_tokens = models.PositiveIntegerField(default=0)
+    output_tokens = models.PositiveIntegerField(default=0)
+    cache_read_tokens = models.PositiveIntegerField(default=0)
+    cache_creation_tokens = models.PositiveIntegerField(default=0)
+    cost_usd = models.DecimalField(max_digits=10, decimal_places=6, null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["document", "-created_at"], name="extrun_doc_created_idx"),
+            models.Index(fields=["client", "created_at"], name="extrun_client_created_idx"),
+            models.Index(fields=["client", "status"], name="extrun_client_status_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.model or 'run'} #{self.attempt} ({self.status})"
+
+    def save(self, *args, **kwargs):
+        if self.document_id and self.client_id and self.document.client_id != self.client_id:
+            raise ValueError("ExtractionRun must belong to the same client as its document.")
+        super().save(*args, **kwargs)
+
+
+# ---------------------------------------------------------------------------
+# H1 — contenido de la factura
+# ---------------------------------------------------------------------------
+
+class InvoiceLine(models.Model):
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="lines")
+    position = models.PositiveSmallIntegerField(default=1)
+    description = models.CharField(max_length=500, blank=True, default="")
+    quantity = models.DecimalField(max_digits=12, decimal_places=4, default=1)
+    unit_price = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+
+    class Meta:
+        ordering = ["document_id", "position"]
+        constraints = [
+            models.UniqueConstraint(fields=["document", "position"], name="unique_line_position_per_document"),
+            models.CheckConstraint(
+                condition=Q(tax_rate__isnull=True) | (Q(tax_rate__gte=0) & Q(tax_rate__lte=100)),
+                name="invoice_line_tax_rate_0_100",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.position}. {self.description[:40]}"
+
+
+class TaxBreakdown(models.Model):
+    """Desglose de impuestos y retenciones por tipo.
+
+    Importes siempre positivos. Total = base + IVA + recargo − retención
+    (ver `documents.services.taxes.expected_total`).
+    """
+    VAT = "vat"
+    SURCHARGE = "surcharge"
+    WITHHOLDING = "withholding"
+    KIND_CHOICES = [
+        (VAT, "IVA"),
+        (SURCHARGE, "Recargo de equivalencia"),
+        (WITHHOLDING, "Retención (IRPF)"),
+    ]
+
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="tax_lines")
+    kind = models.CharField(max_length=12, choices=KIND_CHOICES)
+    rate = models.DecimalField(max_digits=5, decimal_places=2)
+    base = models.DecimalField(max_digits=12, decimal_places=2)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+
+    class Meta:
+        ordering = ["document_id", "kind", "-rate"]
+        constraints = [
+            models.UniqueConstraint(fields=["document", "kind", "rate"], name="unique_tax_line_per_document"),
+            models.CheckConstraint(
+                condition=Q(rate__gte=0) & Q(rate__lte=100), name="tax_line_rate_0_100"
+            ),
+            models.CheckConstraint(condition=Q(amount__gte=0), name="tax_line_amount_non_negative"),
+        ]
+
+    def __str__(self):
+        return f"{self.get_kind_display()} {self.rate}% = {self.amount}"
+
+
+# ---------------------------------------------------------------------------
+# H1 — auditoría
+# ---------------------------------------------------------------------------
+
+class DocumentAuditLog(models.Model):
+    """Registro de cambios (solo se añade; no se edita)."""
+    ACTION_CHOICES = [
+        ("created", "Creado"),
+        ("extracted", "Extraído"),
+        ("edited", "Editado"),
+        ("approved", "Aprobado"),
+        ("rejected", "Rechazado"),
+        ("archived", "Archivado"),
+        ("unarchived", "Desarchivado"),
+        ("rectified", "Rectificado"),
+    ]
+
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="audit_logs")
+    user = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL, related_name="document_audit_logs"
+    )
+    action = models.CharField(max_length=12, choices=ACTION_CHOICES)
+    changes = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+        indexes = [models.Index(fields=["document", "created_at"], name="audit_doc_created_idx")]
+
+    def __str__(self):
+        return f"{self.action} @ {self.created_at:%Y-%m-%d %H:%M}"
+
+    def save(self, *args, **kwargs):
+        if self.pk is not None:
+            raise ValueError("DocumentAuditLog es de solo añadir.")
+        super().save(*args, **kwargs)

@@ -21,7 +21,7 @@
     margin-left: 0.5rem;
     padding: 0.15rem 0.55rem;
     border-radius: 999px;
-    background: rgba(239, 68, 68, 0.12);
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
     color: var(--color-danger);
     font-size: 0.75rem;
     font-weight: 600;
@@ -165,19 +165,6 @@
     flex-shrink: 0;
 }
 
-.export-bar .btn.btn-primary {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    white-space: nowrap;
-    background-color: var(--enfasis-color-dark);
-    border-color: var(--border-color-btn);
-}
-
-.export-bar .btn.btn-primary:hover {
-    filter: brightness(1.25);
-}
-
 /* ---------- Preview iframe PDF ---------- */
 
 /*
@@ -282,11 +269,6 @@
 
     .export-bar__divider {
         display: none;
-    }
-
-    .export-bar .btn.btn-primary {
-        width: 100%;
-        justify-content: center;
     }
 
     .export-bar select {

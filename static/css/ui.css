@@ -1,0 +1,269 @@
+/* ==========================================================================
+   Componentes compartidos: enlaces, botones, formularios, badges.
+   Cargado tras base.css. Las hojas de cada página NO deben redefinirlos.
+   ========================================================================== */
+
+/* ---------- Enlaces ---------- */
+.app-main a:not([class]),
+a.link {
+  color: var(--enfasis-color);
+  text-decoration: none;
+}
+.app-main a:not([class]):hover,
+a.link:hover { text-decoration: underline; }
+
+/* ---------- Botones ----------
+   .btn            neutro (acción secundaria)
+   .btn-primary    acción principal de la pantalla
+   .btn-success / .btn-danger / .btn-warning / .btn-info   acciones con significado
+   .btn-ghost      sin caja (acciones de fila, "Volver", "Limpiar")
+   .btn-sm         compacto                                              */
+.btn {
+  box-sizing: border-box;   /* sin esto, width:100% + padding + borde se sale del contenedor (los <a> son content-box) */
+  --tone: var(--body-fg-color);
+  --btn-bg: var(--card-bg-color);
+  --btn-bd: var(--border-color-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--btn-bd);
+  background: var(--btn-bg);
+  color: var(--body-fg-color);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.btn:hover { background: color-mix(in srgb, var(--btn-bg) 85%, #fff); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--enfasis-color); outline-offset: 2px; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  --btn-bg: var(--enfasis-color-dark);
+  --btn-bd: var(--border-color-btn);
+}
+.btn-primary:hover { background: color-mix(in srgb, var(--enfasis-color-dark) 80%, #fff); }
+
+.btn-secondary { /* alias explícito del neutro */ }
+
+.btn-success, .btn-danger, .btn-warning, .btn-info {
+  color: var(--tone);
+  --btn-bg: color-mix(in srgb, var(--tone) 10%, transparent);
+  --btn-bd: color-mix(in srgb, var(--tone) 35%, transparent);
+}
+.btn-success:hover, .btn-danger:hover, .btn-warning:hover, .btn-info:hover {
+  background: color-mix(in srgb, var(--tone) 18%, transparent);
+}
+.btn-success { --tone: var(--color-success); }
+.btn-danger  { --tone: var(--color-danger); }
+.btn-warning { --tone: var(--color-warning); }
+.btn-info    { --tone: var(--color-info); }
+
+.btn-ghost, .btn-back, .btn-clear, .btn-action {
+  --btn-bg: transparent;
+  --btn-bd: transparent;
+  color: var(--muted-color);
+}
+.btn-ghost:hover, .btn-back:hover, .btn-clear:hover, .btn-action:hover {
+  background: var(--surface-hover);
+  color: var(--body-fg-color);
+}
+.btn-back { margin-bottom: 1rem; }
+
+.btn-sm { padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 6px; }
+.btn-block { width: 100%; white-space: normal; text-align: center; }
+
+/* ---------- Formularios (especificidad 0: las páginas pueden afinar) ---------- */
+:where(.app-main) :is(select, textarea, input:not([type="checkbox"], [type="radio"], [type="file"], [type="hidden"], [type="submit"], [type="color"], [type="range"])) {
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color-strong);
+  background: var(--body-bg-color);
+  color: var(--body-fg-color);
+  font: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.15s;
+}
+:where(.app-main) :is(select, textarea, input):focus {
+  outline: none;
+  border-color: var(--enfasis-color);
+}
+
+/* ---------- Badges de estado (ver documents/templatetags/ui.py) ---------- */
+.badge-status {
+  --tone: var(--muted-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone) 38%, transparent);
+}
+.badge-status i { font-size: 0.75em; }
+/* Tonos de estado. Clase duplicada a propósito (especificidad 0,2,0): los componentes definen su
+   propio `--tone` por defecto en hojas que se cargan después (.kpi-card, .hero-kpi, .delta…) y, con
+   una sola clase, ese valor por defecto ganaba y todo salía del mismo color (p. ej. beneficio negativo en verde). */
+.tone-success.tone-success { --tone: var(--color-success); }
+.tone-warning.tone-warning { --tone: var(--color-warning); }
+.tone-danger.tone-danger   { --tone: var(--color-danger); }
+.tone-info.tone-info       { --tone: var(--color-info); }
+.tone-neutral.tone-neutral { --tone: var(--muted-color); }
+
+.badge-status .confidence { opacity: 0.8; font-weight: 400; }
+
+/* Chips neutros (etiquetas, carpetas) */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0 0.25rem 0.25rem 0;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  color: var(--muted-color);
+  border: 1px solid var(--border-color);
+}
+
+/* ---------- Tablas ----------
+   <div class="table-wrapper"><table class="table">…
+   .num / td.amount   cifras alineadas a la derecha
+   .col-actions       última columna con acciones
+   .hide-md / .hide-sm   columnas secundarias que se ocultan en pantallas estrechas */
+.table-wrapper {
+  container: tablewrap / inline-size;     /* permite pasar a tarjetas según el ancho REAL disponible */
+  background: var(--grad-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.table { width: 100%; border-collapse: collapse; }
+
+.table thead th {
+  padding: 0.7rem 1rem;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted-color);
+  background: color-mix(in srgb, var(--body-bg-color) 55%, var(--card-bg-color));
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table td {
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
+  color: var(--body-fg-color);
+  vertical-align: middle;
+  border-top: 1px solid var(--border-color);
+}
+.table tbody tr:first-child td { border-top: none; }
+.table tbody tr { transition: background 0.15s; }
+.table tbody tr:hover { background: var(--surface-hover); }
+.table .clickable-row { cursor: pointer; }
+
+.table .num, .table td.amount { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.table .col-actions { text-align: right; white-space: nowrap; width: 1%; }
+.table td.muted { color: var(--muted-color); }
+
+.table a:not(.btn) { color: var(--enfasis-color); text-decoration: none; font-weight: 500; }
+.table a:not(.btn):hover { text-decoration: underline; }
+
+.table td.empty, .table td.table__empty { text-align: center; color: var(--muted-color); padding: 2rem 1rem; }
+
+.table-footer { display: flex; justify-content: flex-end; padding: 0.6rem 1rem; border-top: 1px solid var(--border-color); }
+
+@media (max-width: 900px) { .hide-md { display: none; } }
+@media (max-width: 640px) {
+  .hide-sm { display: none; }
+  .table thead th, .table td { padding: 0.6rem 0.65rem; }
+}
+
+/* Enlaces que envuelven una tarjeta/KPI entero: sin color ni subrayado de enlace */
+.card-link, .card-link:hover, .card-link:visited { color: inherit; text-decoration: none; }
+.card-link:focus-visible { outline: 2px solid var(--enfasis-color); outline-offset: 4px; border-radius: 6px; }
+
+/* ---------- Diálogo de confirmación (<dialog>) ---------- */
+.dialog {
+  width: min(92vw, 380px);
+  padding: 1.5rem;
+  border: 1px solid var(--border-color-strong);
+  border-radius: 14px;
+  background: var(--grad-surface);
+  color: var(--body-fg-color);
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+.dialog::backdrop { background: rgba(2, 6, 23, 0.65); backdrop-filter: blur(2px); }
+.dialog h3 { margin: 0.75rem 0 0.35rem; font-size: 1.05rem; }
+.dialog p { margin: 0 0 1.25rem; color: var(--muted-color); font-size: 0.9rem; }
+.dialog p strong { color: var(--body-fg-color); }
+.dialog-icon {
+  --tone: var(--muted-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 16%, transparent);
+}
+.dialog-actions { display: flex; justify-content: center; gap: 0.6rem; }
+
+
+/* ---------- Tabla -> tarjetas (móvil y tablet) ----------
+   <table class="table table-cards">; cada <td data-label="..."> se muestra con su etiqueta.
+   .cell-primary  título de la tarjeta (sin etiqueta, primero)
+   .cell-sub      subtítulo (sin etiqueta, segundo)
+   .cell-highlight cifra destacada (sin etiqueta, tercera)
+   .cell-actions  acciones a todo el ancho
+   Se activa cuando el CONTENEDOR mide menos de 760px (cuenta el sidebar). */
+@container tablewrap (max-width: 760px) {
+  .table-cards, .table-cards tbody { display: block; }
+  .table-cards thead { display: none; }
+  .table-cards tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem 1rem;
+    padding: 0.9rem 1rem;
+    border-top: 1px solid var(--border-color);
+  }
+  .table-cards tbody tr:first-child { border-top: none; }
+  .table-cards tbody tr:hover { background: var(--surface-hover); }
+  .table-cards td, .table-cards td:first-child, .table-cards td:last-child {
+    display: flex; flex-direction: column; gap: 0.1rem;
+    padding: 0; border: none; width: auto; text-align: left; white-space: normal; min-width: 0;
+  }
+  .table-cards td::before {
+    content: attr(data-label);
+    font-size: 0.68rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted-color);
+  }
+  .table-cards td[data-label=""]::before, .table-cards td:not([data-label])::before { display: none; }
+  .table-cards .hide-sm, .table-cards .hide-md { display: flex; }          /* en tarjetas se ve todo */
+  .table-cards td.num, .table-cards td.amount { text-align: left; }
+  .table-cards .cell-primary { grid-column: 1 / -1; order: -4; font-weight: 600; font-size: 0.98rem; }
+  .table-cards .cell-primary::before, .table-cards .cell-sub::before, .table-cards .cell-highlight::before, .table-cards .cell-actions::before { display: none; }
+  .table-cards .cell-sub { grid-column: 1 / -1; order: -3; color: var(--muted-color); font-size: 0.85rem; }
+  .table-cards .cell-highlight { grid-column: 1 / -1; order: -2; font-size: 1.15rem; font-weight: 700; }
+  .table-cards .cell-actions { grid-column: 1 / -1; order: 99; flex-direction: row; justify-content: flex-end; }
+  .table-cards td.empty { grid-column: 1 / -1; }
+  .table-cards tr:has(td.empty) { display: block; }
+}

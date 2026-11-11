@@ -1,6 +1,9 @@
+from django.conf import settings
+from django.urls import reverse
 from rest_framework import serializers
 
 from documents.models import Document
+from documents.services.preprocess import detect_mime
 from documents.selectors.document_selector import DocumentSelector
 
 
@@ -26,6 +29,18 @@ class DocumentIngestSerializer(serializers.ModelSerializer):
 
     # Confianza / revisión
     confidence = serializers.JSONField(default=dict)
+
+    def validate_file(self, value):
+        max_bytes = settings.UPLOAD_MAX_FILE_MB * 1024 * 1024
+        if value.size > max_bytes:
+            raise serializers.ValidationError(
+                f"El archivo supera el máximo de {settings.UPLOAD_MAX_FILE_MB} MB."
+            )
+        head = value.read(16)
+        value.seek(0)
+        if detect_mime(head) is None:
+            raise serializers.ValidationError("Tipo de archivo no permitido (PDF, JPG, PNG, WEBP, GIF o HEIC).")
+        return value
 
     def validate_external_id(self, value):
         client = self.context.get("client")
@@ -80,5 +95,5 @@ class DocumentListSerializer(serializers.ModelSerializer):
     def get_file_url(self, obj):
         request = self.context.get("request")
         if obj.file and request:
-            return request.build_absolute_uri(obj.file.url)
+            return request.build_absolute_uri(reverse("documents:file", args=[obj.pk]))
         return None

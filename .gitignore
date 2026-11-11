@@ -12,6 +12,7 @@ venv
 .env
 .env.example
 .env.local
+.env.prod
 .env.test
 .env.travis
 .env.development
@@ -56,3 +57,7 @@ wheels
 .claude/agent-memory/
 .claude/settings.local.json
 
+
+# Cobertura
+.coverage
+htmlcov/

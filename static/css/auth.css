@@ -10,11 +10,6 @@
   min-height: 90vh;
 }
 
-.app-header {
-  background: transparent;
-  border: none;
-}
-
 /*Contenedor principal */
 .login-container {
   display: flex;
@@ -48,7 +43,6 @@
   background: var(--card-bg-color);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
-
 
 /* Título */
 .login-form legend {
@@ -93,7 +87,6 @@
   transition: border-color 0.2s, box-shadow 0.2s ease;
 }
 
-
 .login-form input:focus {
   outline: none;
   border-color: var(--enfasis-color);
@@ -101,27 +94,6 @@
 }
 
 /* Botón */
-.login-form .btn {
-  width: 100%;
-  margin-top: 0.5rem;
-  padding: 0.65rem;
-  border-radius: 8px;
-  border: none;
-  background: var(--enfasis-color);
-  color: #020617;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.05s ease, box-shadow 0.2s ease;
-}
-
-.login-form .btn:hover {
-  background: var(--enfasis-color-dark);
-  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.25);
-}
-
-.login-form .btn:active {
-  transform: translateY(1px);
-}
 
 /* Password toggle */
 .login-form .password-toggle {
@@ -213,7 +185,6 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
-
 
 /* Media query movil */
 

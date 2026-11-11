@@ -1,182 +1,234 @@
 {% extends 'base.html' %}
+{% load ui static custom_filters %}
 {% block title %}Inicio - FacturIA{% endblock %}
-{% load static %}
-{% load custom_filters %}
-{% block styles %}<link rel="stylesheet" href="{% static "css/dashboard.css" %}" />{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/home.css' %}">{% endblock %}
+
 {% block content %}
-<div class="container dashboard home">
-  <div class="dashboard-header">
-    <h1><i class="fa-solid fa-house"></i> Inicio · <span class="client-name"><a href="{% url 'clients:detail' %}">{{ client.name }}</a></span></h1>
-    <p>Tienes {{ pending_count }} documentos por revisar</p>
-  </div>
+<div class="home"{% if processing_count %} data-autorefresh="6"{% endif %}>
+
+  <!-- Cabecera -->
+  <header class="hero rise">
+    <div class="hero-text">
+      <p class="hero-eyebrow"><a class="link" href="{% url 'clients:detail' %}?tab=empresa">{{ client.name }}</a></p>
+      <h1>{{ greeting }}, {{ first_name }}</h1>
+      <p class="hero-sub">
+        {% if pending_count %}
+          Tienes <strong>{{ pending_count }}</strong> documento{{ pending_count|pluralize }} esperando revisión{% if processing_count %} y <strong>{{ processing_count }}</strong> procesándose{% endif %}.
+        {% elif processing_count %}
+          <strong>{{ processing_count }}</strong> documento{{ processing_count|pluralize }} procesándose ahora mismo.
+        {% else %}
+          Todo al día. No hay documentos pendientes.
+        {% endif %}
+      </p>
+    </div>
+    <div class="hero-actions">
+      <a href="{% url 'documents:upload' %}" class="btn btn-primary">{% icon "upload" %} Subir documentos</a>
+      {% if pending_count %}<a href="{% url 'documents:list' %}?status=pending" class="btn">{% icon "view" %} Revisar pendientes</a>{% endif %}
+    </div>
+  </header>
 
   <!-- KPIs -->
-  <div class="dashboard-cards">
-    <div class="card">
-      <a href="{% url 'documents:list' %}?status=pending">
-        <h3>Pendientes</h3>
-        <span class="kpi">{% if pending_count %}{{ pending_count }}{% else %}0{% endif %}</span>
-      </a>
-    </div>
-    
-    <div class="card">
-      <a href="{% url 'documents:list' %}?status=pending&review_level=recommended">
-        <h3>Recomendados</h3>
-        <span class="kpi text-warning">{% if recommended_review_count %}{{ recommended_review_count }}{% else %}0{% endif %}</span>
-      </a>
-    </div>
-
-    <div class="card">
-      <a href="{% url 'documents:list' %}?status=pending&review_level=required">
-        <h3>Revisión obligatoria</h3>
-        <span class="kpi text-danger">{% if required_review_count %}{{ required_review_count }}{% else %}0{% endif %}</span>
-      </a>
-    </div>
-  </div>
-
-  <!-- Resumen financiero -->
-  <div class="card mt-4 finance-summary">
-    <div class="section-header">
-      <h2><i class="fa-solid fa-chart-line"></i> Resumen financiero mensual</h2>
-      <a href="{% url 'finance:movements' %}" class="link-inline">Ver movimientos</a>
-    </div>
-    <p class="text-muted period-label">Periodo: {{ finance_period_label }}</p>
-
-    <div class="dashboard-cards finance-cards">
-      <div class="card">
-        <a href="{% url 'finance:movements' %}">
-          <h3>Ingresos</h3>
-          <span class="kpi text-success">{{ finance_income_total|spanish_currency }} €</span>
-        </a>
+  <section class="kpi-grid" aria-label="Resumen del mes">
+    <a class="kpi-card tone-info rise card-link" style="--i:1" href="{% url 'documents:list' %}?status=pending">
+      <div class="kpi-head">
+        <span class="kpi-icon">{% badge_icon "status:pending" %}</span>
+        <span class="kpi-label">Por revisar</span>
       </div>
-      <div class="card">
-        <a href="{% url 'finance:movements' %}">
-          <h3>Gastos</h3>
-          <span class="kpi text-danger">{{ finance_expense_total|spanish_currency }} €</span>
-        </a>
-      </div>
-      <div class="card">
-        <a href="{% url 'finance:movements' %}">
-          <h3>Balance</h3>
-          <span class="kpi {% if finance_balance < 0 %}text-danger{% else %}text-success{% endif %}">
-            {{ finance_balance|spanish_currency }} €
-          </span>
-        </a>
-      </div>
-      <div class="card">
-        <a href="{% url 'finance:movements' %}">
-          <h3>Sin conciliar</h3>
-          <span class="kpi text-warning">{{ unreconciled_movements_count }}</span>
-        </a>
-      </div>
-    </div>
+      <div class="kpi-value" data-count="{{ pending_count }}" data-format="int">{{ pending_count }}</div>
+      <div class="kpi-foot">{% if processing_count %}{{ processing_count }} procesándose{% else %}documentos pendientes{% endif %}</div>
+    </a>
 
-    <div class="table-wrapper">
+    {% for k in kpis %}
+    <a class="kpi-card tone-{{ k.tone }} rise card-link" style="--i:{{ forloop.counter|add:1 }}" href="{% if k.key == 'balance' %}{% url 'metrics' %}{% else %}{% url 'finance:movements' %}{% endif %}">
+      <div class="kpi-head">
+        <span class="kpi-icon">{% icon k.icon %}</span>
+        <span class="kpi-label">{{ k.label }}</span>
+        {% if k.delta %}
+        <span class="delta tone-{{ k.delta.tone }}" title="Frente al mismo periodo del mes anterior">
+          <i class="fa-solid {% if k.delta.dir == 'up' %}fa-caret-up{% elif k.delta.dir == 'down' %}fa-caret-down{% else %}fa-minus{% endif %}"></i> {{ k.delta.label }}
+        </span>
+        {% endif %}
+      </div>
+      <div class="kpi-value" data-count="{{ k.value|stringformat:'.2f' }}" data-format="currency">{{ k.value|spanish_currency }} €</div>
+      {% if k.spark %}
+      <svg class="spark" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"><polyline points="{{ k.spark }}"/></svg>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </section>
+  <p class="period-note">{{ period_label }}</p>
+
+  <!-- Gráfico + atención -->
+  <section class="grid-main">
+    <article class="panel rise" style="--i:5">
+      <header class="panel-head">
+        <h2>{% icon "metrics" %} Ingresos y gastos</h2>
+        <span class="panel-note">Últimos 6 meses</span>
+      </header>
+      <div class="chart-box"><canvas id="homeChart" aria-label="Gráfico de ingresos y gastos"></canvas></div>
+    </article>
+
+    <article class="panel rise" style="--i:6">
+      <header class="panel-head">
+        <h2><i class="fa-solid fa-bell"></i> Requiere tu atención</h2>
+      </header>
+      {% if attention %}
+      <ul class="attention">
+        {% for a in attention %}
+        <li class="tone-{{ a.tone }}">
+          <span class="bubble">{% badge_icon a.icon %}</span>
+          <span class="att-text"><strong>{{ a.count }}</strong> {{ a.label|lower }}</span>
+          <a class="btn btn-sm btn-ghost" href="{{ a.url }}">{{ a.cta }} {% icon "next" %}</a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="all-clear tone-success"><span class="bubble"><i class="fa-solid fa-circle-check"></i></span><p>Todo al día. No hay nada que requiera tu atención.</p></div>
+      {% endif %}
+    </article>
+  </section>
+
+  <!-- Embudo de documentos -->
+  <section class="panel rise" style="--i:7">
+    <header class="panel-head">
+      <h2>{% icon "document" %} Estado de los documentos</h2>
+      <span class="panel-note">{{ funnel_total }} en total (sin archivados)</span>
+    </header>
+    {% if funnel_total %}
+    <div class="funnel" role="img" aria-label="Distribución de documentos por estado">
+      {% for s in funnel %}{% if s.count %}
+      <a class="funnel-seg tone-{{ s.tone }} card-link" style="--w:{{ s.pct }}" href="{{ s.url }}" title="{{ s.label }}: {{ s.count }}"></a>
+      {% endif %}{% endfor %}
+    </div>
+    <ul class="funnel-legend">
+      {% for s in funnel %}
+      <li class="tone-{{ s.tone }}{% if not s.count %} is-zero{% endif %}">
+        <a class="card-link" href="{{ s.url }}">
+          <span class="legend-dot"></span>{% badge_icon s.icon %} {{ s.label }}
+          <strong>{{ s.count }}</strong><small>{{ s.pct|floatformat:0 }} %</small>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty">Aún no hay documentos. <a class="link" href="{% url 'documents:upload' %}">Sube el primero</a>.</p>
+    {% endif %}
+  </section>
+
+  <!-- Top gastos + actividad -->
+  <section class="grid-half">
+    <article class="panel rise" style="--i:8">
+      <header class="panel-head">
+        <h2><i class="fa-solid fa-chart-pie"></i> Top gastos del mes</h2>
+        <a class="btn btn-ghost btn-sm" href="{% url 'finance:movements' %}">Ver movimientos {% icon "next" %}</a>
+      </header>
+      {% if top_expenses %}
+      <ul class="bars">
+        {% for c in top_expenses %}
+        <li style="--pct:{{ c.pct }}%; --bar:{{ c.color|default:'var(--enfasis-color)' }}">
+          <div class="bars-row">
+            <span class="bars-name">{% if c.icon %}<i class="{{ c.icon }}"></i>{% endif %} {{ c.name }}</span>
+            <strong>{{ c.total|spanish_currency }} €</strong>
+          </div>
+          <div class="bar"><span></span></div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty">Sin gastos registrados este mes.</p>
+      {% endif %}
+    </article>
+
+    <article class="panel rise" style="--i:9">
+      <header class="panel-head">
+        <h2>{% icon "history" %} Actividad reciente</h2>
+      </header>
+      {% if activity %}
+      <ol class="timeline">
+        {% for a in activity %}
+        <li class="tone-{{ a.tone }}">
+          <span class="bubble">{% icon a.icon %}</span>
+          <div>
+            <p>{{ a.verb }} <a class="link" href="{% url 'documents:detail' a.document.pk %}">{{ a.label }}</a></p>
+            <small>{{ a.who }} · hace {{ a.created_at|timesince }}</small>
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <p class="empty">Todavía no hay actividad.</p>
+      {% endif %}
+    </article>
+  </section>
+
+  <!-- Documentos pendientes -->
+  <section class="panel rise" style="--i:10">
+    <header class="panel-head">
+      <h2>{% icon "document" %} Documentos pendientes</h2>
+      <a class="btn btn-ghost btn-sm" href="{% url 'documents:list' %}?status=pending">Ver todos {% icon "next" %}</a>
+    </header>
+    {% if pending_documents %}
+    <div class="table-wrapper flat">
       <table class="table">
         <thead>
           <tr>
-            <th>Fecha</th>
-            <th>Categoría</th>
-            <th>Concepto</th>
-            <th>Importe</th>
+            <th>Proveedor</th><th>Fecha</th><th class="hide-sm">Tipo</th><th class="hide-md">Revisión</th><th class="num">Total</th><th></th>
           </tr>
         </thead>
         <tbody>
-          {% if recent_movements %}
-            {% for movement in recent_movements %}
-              <tr>
-                <td>{{ movement.date|date:"d/m/Y" }}</td>
-                <td>{{ movement.category.name }}</td>
-                <td>{{ movement.description|default:"—" }}</td>
-                <td class="amount {% if movement.movement_type == 'income' %}text-success{% else %}text-danger{% endif %}">
-                  {{ movement.amount|spanish_currency }} €
-                </td>
-              </tr>
-            {% endfor %}
-          {% else %}
-            <tr><td colspan="4">No hay movimientos financieros este mes.</td></tr>
-          {% endif %}
+          {% for doc in pending_documents %}
+          <tr class="clickable-row" data-href="{% url 'documents:detail' doc.id %}">
+            <td>{{ doc.company.name|default:"—" }}</td>
+            <td>{{ doc.issue_date|pretty_date|default:"—" }}</td>
+            <td class="hide-sm">{{ doc.get_document_type_display|default:"—" }}</td>
+            <td class="hide-md">{% if doc.is_processing or doc.processing_status == "failed" %}{% badge "processing" doc.processing_status %}{% else %}{% badge "review" doc.review_key %}{% endif %}</td>
+            <td class="amount">{% if doc.total_amount %}{{ doc.total_amount|floatformat:2 }} €{% else %}—{% endif %}</td>
+            <td class="col-actions"><a href="{% url 'documents:detail' doc.id %}" class="btn btn-ghost btn-sm">{% icon "view" %} Ver</a></td>
+          </tr>
+          {% endfor %}
         </tbody>
       </table>
     </div>
-
-    <div class="top-categories">
-      <h3>Top gastos por categoría</h3>
-      {% if top_expense_categories %}
-        <ul>
-          {% for item in top_expense_categories %}
-            <li>
-              <span>{{ item.category__name }} <i class="{{ item.category__icon }} category-icon"></i></span>
-              <strong>{{ item.total|spanish_currency }} €</strong>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="text-muted">Sin gastos registrados en el periodo actual.</p>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- Lista de documentos -->
-  <div class="card mt-4">
-    <h2 style="margin: 0px">Documentos pendientes</h2>
-
-    {% if pending_documents %}
-      <div class="table-wrapper">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Proveedor</th>
-              <th>Fecha</th>
-              <th>Tipo</th>
-              <th>Total</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if pending_documents|length == 0 %}
-              <tr><td colspan="5">No hay documentos pendientes.</td></tr>
-            {% else %}
-              {% for doc in pending_documents %}
-                  <tr class="clickable-row" data-href="{% url 'documents:detail' doc.id %}">
-                    <td>{{ doc.company.name|default:"—" }} </td>
-                    <td>{{ doc.issue_date|date:"d/m/Y"|default:"—" }}</td>
-                    <td>{{ doc.get_document_type_display|default:"—" }}</td>
-                    <td class="amount">{% if doc.total_amount %}{{ doc.total_amount|floatformat:2 }}{% else %}—{% endif %} €</td>
-                    <td class="text-end">
-                      <a href="{% url 'documents:detail' doc.id %}" class="btn btn-sm btn-primary">
-                        Ver
-                      </a>
-                    </td>
-                  </tr>
-              {% endfor %}
-            {% endif %}
-          </tbody>
-        </table>
-        <div class="table-footer">
-          <a href="{% url 'documents:list' %}?status=pending">
-            Ver todos
-          </a>
-        </div>
-      </div>
     {% else %}
-      <p class="text-muted">No hay documentos pendientes.</p>
+    <p class="empty">No hay documentos pendientes.</p>
     {% endif %}
-  </div>
+  </section>
+
+  <!-- Últimos movimientos -->
+  <section class="panel rise" style="--i:11">
+    <header class="panel-head">
+      <h2>{% icon "finance" %} Últimos movimientos</h2>
+      <a class="btn btn-ghost btn-sm" href="{% url 'finance:movements' %}">Ver todos {% icon "next" %}</a>
+    </header>
+    {% if recent_movements %}
+    <div class="table-wrapper flat">
+      <table class="table">
+        <thead><tr><th>Fecha</th><th class="hide-sm">Categoría</th><th>Concepto</th><th class="num">Importe</th></tr></thead>
+        <tbody>
+          {% for m in recent_movements %}
+          <tr>
+            <td>{{ m.date|pretty_date }}</td>
+            <td class="hide-sm">{{ m.category.name }}</td>
+            <td>{{ m.description|default:"—" }}</td>
+            <td class="amount {% if m.movement_type == 'income' %}pos{% else %}neg{% endif %}">{% if m.movement_type == 'income' %}+{% else %}−{% endif %}{{ m.amount|spanish_currency }} €</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty">No hay movimientos todavía.</p>
+    {% endif %}
+  </section>
+
+  {{ chart|json_script:"home-chart" }}
+</div>
 {% endblock %}
 
 {% block scripts %}
 {{ block.super }}
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    document.querySelectorAll(".clickable-row").forEach(row => {
-      row.addEventListener("click", function(e) {
-
-          if (e.target.closest("a")) return;
-
-          window.location = this.dataset.href;
-      });
-    });
-  });
-</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/chart-kit.js' %}"></script>
+<script src="{% static 'js/home.js' %}"></script>
+<script src="{% static 'js/auto-refresh.js' %}"></script>
 {% endblock %}

@@ -151,78 +151,8 @@ select.editable-field {
   margin-bottom: 1rem;
 }
 
-/* Botón */
-.data-form .actions button {
-  flex: 1;
-  padding: 0.4rem;
-  border-radius: 8px;
-  background-color: var(--card-bg-color);
-  border: 1px solid var(--border-color);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.05s;
-}
 
-.data-form .actions button:active {
-  transform: scale(0.95);
-}
 
-.data-form .actions button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-/* Botones de acción */
-.actions .btn {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.6rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: #f8fafc;
-  text-decoration: none;
-  font-size: 0.85rem;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.actions .btn-save {
-  color: var(--body-fg-color);
-}
-
-.actions .btn-approve {
-  color: var(--color-success);
-}
-
-.actions .btn-reject {
-  color: var(--color-danger);
-}
-
-.data button:hover {
-  filter: brightness(0.8);
-}
-
-/* Link aprobar */
-.data a {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.6rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: #f8fafc;
-  text-decoration: none;
-  font-size: 0.85rem;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.data a:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.4);
-}
 
 /* Responsive */
 @media (max-width: 1024px) {
@@ -234,7 +164,6 @@ select.editable-field {
     min-height: 60vh;
   }
 }
-
 
 /* Toolbar general */
 .pdf-toolbar {
@@ -270,7 +199,8 @@ select.editable-field {
 
 /* Zoom buttons un poco más destacados */
 .pdf-toolbar #zoom-in, .pdf-toolbar #zoom-out {
-  background: #3b82f6; /* azul coherente con enlaces y highlights */
+  background: var(--color-info);
+  color: #020617;
   color: #f8fafc;
   border: none;
 }
@@ -334,47 +264,9 @@ select.editable-field {
   color: #cbd5f5;
 }
 
-.badge.approved, .badge.success {
-  background: rgba(34, 197, 94, 0.15);
-  color: var(--color-success);
-}
-
-.badge.rejected, .badge.danger {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--color-danger);
-}
-
-.badge.pending, .badge.info {
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--color-info);
-}
-
 /* Badges de nivel de revisión */
-.badge.review {
-  display: inline-block;
-  padding: 0.25rem 0.6rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  border-radius: 12px;
-  color: #fff;
-  text-transform: uppercase;
-  max-width: fit-content;
-}
-
 
 /* Colores según tipo */
-.badge.review.required {
-  background-color: #ef4444; /* rojo */
-}
-.badge.review.recommended {
-  background-color: #f59e0b; /* naranja */
-}
-.badge.review.auto {
-  background-color: #22c55e; /* verde */
-}
-.badge.review.manual {
-  background-color: #3b82f6; /* azul */
-}
 
 /* Contenedor común */
 .review-level,
@@ -414,13 +306,13 @@ select.editable-field {
 
 /* Colores según confianza */
 .confidence-value.high {
-  color: #22c55e; /* verde */
+  color: var(--color-success);
 }
 .confidence-value.medium {
-  color: #f59e0b; /* naranja */
+  color: var(--color-warning);
 }
 .confidence-value.low {
-  color: #ef4444; /* rojo */
+  color: var(--color-danger);
 }
 
 /* Barra de progreso */
@@ -440,13 +332,13 @@ select.editable-field {
 
 /* Colores de la barra */
 .confidence-fill.high {
-  background-color: #22c55e;
+  background-color: var(--color-success);
 }
 .confidence-fill.medium {
-  background-color: #f59e0b;
+  background-color: var(--color-warning);
 }
 .confidence-fill.low {
-  background-color: #ef4444;
+  background-color: var(--color-danger);
 }
 
 /* Modal acciones formulario */
@@ -643,3 +535,74 @@ select.editable-field {
   color: var(--muted-color);
   font-size: 0.85rem;
 }
+
+/* ---------- H6: procesado, incidencias, desglose, organización ---------- */
+.processing-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-info) 35%, transparent);
+  background: color-mix(in srgb, var(--color-info) 10%, transparent);
+  color: var(--body-fg-color);
+}
+
+.processing-banner > div { flex: 1; display: flex; flex-direction: column; }
+.processing-banner small { color: var(--muted-color); }
+.processing-banner.failed { border-color: color-mix(in srgb, var(--color-danger) 35%, transparent); background: color-mix(in srgb, var(--color-danger) 10%, transparent); }
+.processing-banner .inline-form { margin: 0; }
+
+.issues {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg-color);
+}
+
+.issues .label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.issues ul { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.issue { display: flex; gap: 0.5rem; font-size: 0.85rem; }
+.issue.error i { color: var(--color-danger); }
+.issue.warning i { color: var(--color-warning); }
+.issue.info i { color: var(--color-info); }
+
+.field.has-issue .editable-field,
+.field.has-issue .value { border-color: var(--color-warning); }
+
+.field .description { color: var(--muted-color); }
+#review-form .field input[name="new_folder"] { margin-top: 0.4rem; flex: none; }
+
+.breakdown { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.breakdown .label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.mini-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 0.5rem; }
+.mini-table th, .mini-table td { padding: 0.3rem 0.4rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+.mini-table th { color: var(--muted-color); font-weight: 600; }
+.mini-table td:not(:first-child), .mini-table th:not(:first-child) { text-align: right; }
+
+.next-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.75rem 0;
+  color: var(--enfasis-color);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.next-pending:hover { text-decoration: underline; }

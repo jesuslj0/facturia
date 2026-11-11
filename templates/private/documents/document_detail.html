@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load ui %}
 {% load custom_filters %}
 {% block title %}Ver documento - FacturIA{% endblock %}
 {% block styles %}
@@ -10,7 +11,7 @@
 <div class="layout">
 
     <!-- Panel PDF -->
-    <div class="pdf">
+    <div class="pdf" data-file-url="{% url 'documents:file' document.pk %}" data-file-type="{% if document.is_pdf %}pdf{% else %}image{% endif %}">
         <div class="pdf-header">
             <h3>{{ document.original_name }} 
                 {% if document.parent_document %}
@@ -32,9 +33,8 @@
             
             <div class="pdf-badges">
                 <span class="badge type">{{ document.get_document_type_display }}</span>
-                <span class="badge status {{ document.status }}">
-                    {{ document.get_status_display }}
-                </span>
+                {% badge "status" document.status %}
+                {% if document.is_archived %}{% badge "status" "archived" %}{% endif %}
             </div>
         </div>
         
@@ -54,11 +54,11 @@
             <div id="pdf-viewer" style="width:100%; height:100%; max-height:800px; overflow:auto; transition: transform 0.2s ease;"></div>
             <p id="pdf-fallback" style="display:none;">
                 No se puede visualizar el PDF.
-                <a href="{{ document.file.url }}" target="_blank">Descargar PDF</a>
+                <a href="{% url 'documents:file' document.pk %}" target="_blank">Descargar PDF</a>
             </p>
         {% elif document.is_image %}
             <div id="image-container">
-                <img  src="{{ document.file.url }}" style="max-width:100%; height: auto;transform:scale(1); transform-origin:center;" />
+                <img  src="{% url 'documents:file' document.pk %}" style="max-width:100%; height: auto;transform:scale(1); transform-origin:center;" />
             </div>
         {% else %}
             <p>No se puede visualizar el archivo</p>
@@ -66,6 +66,47 @@
     </div>
     <!-- Panel de datos con revisión editable -->
     <div class="data-form">
+        {% if document.is_processing %}
+        <div class="processing-banner" data-autorefresh="4">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <div>
+                <strong>Extrayendo datos…</strong>
+                <small>{{ document.get_processing_status_display }}. Esta página se actualiza sola.</small>
+            </div>
+        </div>
+        {% elif document.processing_status == "failed" %}
+        <div class="processing-banner failed">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <div>
+                <strong>No se pudo extraer el documento</strong>
+                <small>{{ processing_error.message }}</small>
+                {% if document.status == "pending" and not document.is_archived %}
+                <small>Puedes rellenar los datos a mano o reintentar.</small>
+                {% endif %}
+            </div>
+            {% if document.status == "pending" and not document.is_archived %}
+            <form method="post" class="inline-form">
+                {% csrf_token %}
+                <button type="submit" name="action" value="retry" class="btn">{% icon "retry" %} Reintentar</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if issues %}
+        <div class="issues">
+            <span class="label">Incidencias detectadas</span>
+            <ul>
+                {% for issue in issues %}
+                <li class="issue {{ issue.severity }}">
+                    <i class="fa-solid {% if issue.severity == 'error' %}fa-circle-xmark{% elif issue.severity == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %}"></i>
+                    <span>{{ issue.message }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
         <form method="post" id="review-form">
             {% csrf_token %}
             <div class="data">
@@ -78,9 +119,32 @@
                 </div>
     
                 <!-- Proveedor -->
-                <div class="field">
-                    <span class="label">Proveedor</span>
-                    <span class="value">{{ document.company.name }}</span>
+                <div class="field{% if 'document_type' in issue_fields %} has-issue{% endif %}">
+                    <span class="label">Tipo</span>
+                    {% if document.is_editable %}
+                        <select name="document_type" class="editable-field">
+                            {% for key, label in document_types %}
+                            <option value="{{ key }}" {% if document.document_type == key %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    {% else %}
+                        <span class="value">{{ document.get_document_type_display }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="field{% if 'counterparty_tax_id' in issue_fields or 'tax_id' in issue_fields or 'company' in issue_fields %} has-issue{% endif %}">
+                    <span class="label">Tercero</span>
+                    {% if document.is_editable %}
+                        <select name="company" class="editable-field">
+                            <option value="">— Sin tercero —</option>
+                            {% for c in companies %}
+                            <option value="{{ c.pk }}" {% if document.company_id == c.pk %}selected{% endif %}>{{ c.name }}{% if c.tax_id %} · {{ c.tax_id }}{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    {% else %}
+                        <span class="value">{{ document.company.name|default:"-" }}</span>
+                    {% endif %}
+                    {% if document.company.tax_id %}<small class="description">NIF/CIF: {{ document.company.tax_id }}</small>{% endif %}
                 </div>
     
                 <!-- CIF/NIF -->
@@ -107,7 +171,7 @@
                 </div>
 
                 <!-- Numero factura-->
-                <div class="field">
+                <div class="field{% if 'document_number' in issue_fields %} has-issue{% endif %}">
                     <span class="label">N° Documento</span>
                     {% if document.is_editable %}
                         <input type="text" name="document_number" value="{{ document.document_number }}" class="editable-field">
@@ -117,7 +181,7 @@
                 </div>
     
                 <!-- Fecha -->
-                <div class="field">
+                <div class="field{% if 'issue_date' in issue_fields %} has-issue{% endif %}">
                     <span class="label">Fecha</span>
                     {% if document.is_editable %}
                         <input type="date" name="issue_date" value="{{ document.issue_date|date:'Y-m-d' }}" class="editable-field">
@@ -157,7 +221,7 @@
                 </div>
     
                 <!-- Total -->
-                <div class="field">
+                <div class="field{% if 'total_amount' in issue_fields %} has-issue{% endif %}">
                     <span class="label">Total</span>
                     {% if document.is_editable %}
                         <input type="text" inputmode="decimal" step="0.01" name="total_amount" value="{{ document.total_amount }}" class="editable-field decimal-field">
@@ -165,44 +229,119 @@
                         <span class="value">{% if document.total_amount %}{{ document.total_amount }} €{% else %}-{% endif %}</span>
                     {% endif %}
                 </div>
+
+                <!-- Organización -->
+                <div class="field">
+                    <span class="label">Categoría</span>
+                    {% if document.is_editable %}
+                        <select name="category" class="editable-field">
+                            <option value="">— Sin categoría —</option>
+                            {% for c in categories %}
+                            <option value="{{ c.pk }}" {% if document.category_id == c.pk %}selected{% endif %}>{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    {% else %}
+                        <span class="value">{{ document.category.name|default:"-" }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <span class="label">Carpeta</span>
+                    {% if document.is_editable %}
+                        <select name="folder" class="editable-field">
+                            <option value="">— Sin carpeta —</option>
+                            {% for f in folders %}
+                            <option value="{{ f.pk }}" {% if document.folder_id == f.pk %}selected{% endif %}>{{ f.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" name="new_folder" class="editable-field" placeholder="…o crear carpeta nueva" maxlength="100">
+                    {% else %}
+                        <span class="value">{{ document.folder.name|default:"-" }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <span class="label">Etiquetas</span>
+                    {% if document.is_editable %}
+                        <input type="text" name="tags" value="{{ tag_names }}" class="editable-field" list="tag-options" placeholder="separadas por comas" autocomplete="off">
+                        <datalist id="tag-options">
+                            {% for t in all_tag_names %}<option value="{{ t }}">{% endfor %}
+                        </datalist>
+                    {% else %}
+                        <span class="value">{% for t in document.tags.all %}<span class="chip">{{ t.name }}</span>{% empty %}-{% endfor %}</span>
+                    {% endif %}
+                </div>
             </div>
+
+            {% if tax_lines or invoice_lines %}
+            <div class="breakdown">
+                {% if tax_lines %}
+                <span class="label">Impuestos y retenciones</span>
+                <table class="mini-table">
+                    <thead><tr><th>Tipo</th><th>%</th><th>Base</th><th>Importe</th></tr></thead>
+                    <tbody>
+                    {% for t in tax_lines %}
+                        <tr><td>{{ t.get_kind_display }}</td><td>{{ t.rate|floatformat:2 }}</td><td>{{ t.base|floatformat:2 }}</td><td>{{ t.amount|floatformat:2 }}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+                {% if invoice_lines %}
+                <span class="label">Líneas</span>
+                <table class="mini-table">
+                    <thead><tr><th>Descripción</th><th>Cant.</th><th>P. unit.</th><th>Importe</th></tr></thead>
+                    <tbody>
+                    {% for l in invoice_lines %}
+                        <tr><td>{{ l.description }}</td><td>{{ l.quantity|floatformat:"-2" }}</td><td>{{ l.unit_price|floatformat:2|default:"-" }}</td><td>{{ l.amount|floatformat:2|default:"-" }}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+            </div>
+            {% endif %}
             <!-- Acciones -->
             <div class="actions">
                 <!-- Guardar, Aprobar o Rechazar (pendientes) -->
-                {% if document.status == "pending" %}
-                    <button type="submit" name="action" value="save" class="btn btn-save">
-                        Guardar <i class="fa-solid fa-floppy-disk"></i>
+                {% if document.status == "pending" and not document.is_processing %}
+                    <button type="submit" name="action" value="save" class="btn btn-primary">
+                        {% icon "save" %} Guardar
                     </button>
-                    <button type="button" class="btn btn-approve confirm-action" data-action="approve">
-                        Aprobar <i class="fa-solid fa-check"></i>
+                    <button type="button" class="btn btn-success confirm-action" data-action="approve">
+                        {% icon "approve" %} Aprobar
                     </button>
-                    <button type="button" class="btn btn-reject confirm-action" data-action="reject">
-                        Rechazar <i class="fa-solid fa-xmark"></i>
+                    <button type="button" class="btn btn-danger confirm-action" data-action="reject">
+                        {% icon "reject" %} Rechazar
                     </button>
                 {% endif %}
 
                 <!-- Archivar documentos aprobados o rechazados -->
                 {% if not document.is_archived and document.status == "approved" or document.status == "rejected" %}
-                    <button type="button" class="btn btn-archive confirm-action" data-action="archive">
-                        Archivar <i class="fa-solid fa-archive"></i>
+                    <button type="button" class="btn confirm-action" data-action="archive">
+                        {% icon "archive" %} Archivar
                     </button>
                 {% endif %}
 
                 <!-- Rectificar documentos que no estén archivados y no hayan sido rectificados -->
                 {% if not document.is_archived and not document.status == "pending" %}
-                    <button type="button" class="btn btn-rectify confirm-action" data-action="rectify">
-                        Rectificar <i class="fa-solid fa-pen-to-square"></i>
+                    <button type="button" class="btn btn-warning confirm-action" data-action="rectify">
+                        {% icon "rectify" %} Rectificar
                     </button>
                 {% endif %}
 
                 <!-- Desarchivar -->
                 {% if document.is_archived %}
-                    <button type="button" class="btn btn-unarchive confirm-action" data-action="unarchive">
-                        Desarchivar <i class="fa-solid fa-archive"></i>
+                    <button type="button" class="btn confirm-action" data-action="unarchive">
+                        {% icon "unarchive" %} Desarchivar
                     </button>
                 {% endif %}
             </div>
             
+            {% if next_pending %}
+            <a class="next-pending" href="{% url 'documents:detail' next_pending.pk %}">
+                Siguiente pendiente {% icon "next" %}
+            </a>
+            {% endif %}
+
             <div class="document-info">
                 <span class="label">Estado del documento</span>
                 <span class="content">{{ document.status_message }}</span>
@@ -224,33 +363,16 @@
             <div class="review-level">
                 <span class="label">Nivel de revisión</span>
 
-                <span class="badge review
-                    {% if document.review_level == 'required' %}required
-                    {% elif document.review_level == 'recommended' %}recommended
-                    {% elif document.review_level == 'auto' %}auto
-                    {% elif document.review_level == 'manual' %}manual
-                    {% endif %}">
-
-                    {% if document.review_level == "required" %}
-                        Revisión obligatoria
-                    {% elif document.review_level == "recommended" %}
-                        Revisión recomendada
-                    {% elif document.review_level == "auto" %}
-                        Aprobado automáticamente
-                    {% elif document.review_level == "manual" %}
-                        Revisado manualmente
-                    {% endif %}
-
-                </span>
+                {% badge "review" document.review_key %}
 
                 <small class="description">
-                    {% if document.review_level == "required" %}
+                    {% if document.review_key == "required" %}
                         El sistema detectó inconsistencias que requieren validación humana.
-                    {% elif document.review_level == "recommended" %}
+                    {% elif document.review_key == "recommended" %}
                         Se recomienda validar los datos antes de continuar.
-                    {% elif document.review_level == "auto" %}
+                    {% elif document.review_key == "auto" %}
                         El documento cumple los criterios de validación automática.
-                    {% elif document.review_level == "manual" %}
+                    {% elif document.review_key == "manual" %}
                         Los datos fueron corregidos o verificados manualmente.
                     {% endif %}
                 </small>
@@ -322,7 +444,7 @@
                         ></textarea>
                     </div>
 
-                    <button type="button" id="modal-confirm" class="btn">
+                    <button type="button" id="modal-confirm" class="btn btn-primary">
                         Confirmar
                     </button>
 
@@ -370,468 +492,12 @@
 {% endblock %}
 {% block scripts %}
 {{ block.super }}
+{% load static %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        
-        const url = "{{ document.file.url }}";
-        const pdfContainer = document.getElementById('pdf-viewer');
-        const fallback = document.getElementById('pdf-fallback');
-        const imageContainer = document.getElementById('image-container');
-        
-        if (!pdfContainer) {
-            console.warn("pdf-viewer no existe en este layout");
-        }
-        
-        let pdfDoc = null;
-        let pageNum = 1;
-        let scale = 1.2;
-
-        let imageScale = 1;
-        const MIN_SCALE = 0.5;
-        const MAX_SCALE = 4;
-        let translateX = 0;
-        let translateY = 0;
-        let isDragging = false;
-        let startX = 0;
-        let startY = 0;
-        let rotation = 0;
-
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.worker.min.js";
-                    
-        function renderPage(num) {
-            if (!pdfDoc) return;
-
-            pdfDoc.getPage(num).then(page => {
-
-                const viewport = page.getViewport({
-                    scale: scale,
-                    rotation: rotation
-                });
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-
-                pdfContainer.innerHTML = '';
-                pdfContainer.appendChild(canvas);
-
-                page.render({ 
-                    canvasContext: ctx, viewport: viewport 
-                });
-
-                const pageNumEl = document.getElementById('page-num');
-                const pageCountEl = document.getElementById('page-count');
-
-                if (pageNumEl) pageNumEl.textContent = pageNum;
-                if (pageCountEl) pageCountEl.textContent = pdfDoc.numPages;
-
-            }).catch(err => {
-                console.error("Error renderizando página:", err);
-            });
-        }
-
-        function loadPDF() {
-            pdfjsLib.getDocument({ url: url}).promise
-                .then(pdf => {
-                    pdfDoc = pdf;
-                    renderPage(pageNum);
-                })
-                .catch(err => {
-                    console.warn("No es un PDF válido, mostrando imagen:", err);
-                    showImage();
-                });
-        }
-
-
-        function showImage() {
-            imageScale = 1;
-            translateX = 0;
-            translateY = 0;
-
-            imageContainer.innerHTML = `
-                <img id="zoomable-image" 
-                    src="${url}" 
-                    style="
-                        max-width:100%;
-                        height:auto;
-                        cursor: grab;
-                        user-select: none;
-                        transform-origin: center center;
-                        transition: transform 0.05s ease;
-                    "
-                />
-            `;
-
-            const img = document.getElementById("zoomable-image");
-
-            function updateTransform() {
-                img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${imageScale})`;
-            }
-
-            imageContainer.onwheel = function (e) {
-                e.preventDefault();
-
-                const zoomIntensity = 0.1;
-
-                if (e.deltaY < 0) {
-                    imageScale = Math.min(MAX_SCALE, imageScale + zoomIntensity);
-                } else {
-                    imageScale = Math.max(MIN_SCALE, imageScale - zoomIntensity);
-                }
-
-                if (imageScale === 1) {
-                    translateX = 0;
-                    translateY = 0;
-                }
-
-                updateTransform();
-            };
-
-            img.addEventListener("dragstart", (e) => {
-                e.preventDefault();
-            });
-
-            img.addEventListener("mousedown", (e) => {
-                if (imageScale <= 1) return; // solo mover si está ampliada
-
-                isDragging = true;
-                startX = e.clientX - translateX;
-                startY = e.clientY - translateY;
-
-                img.style.cursor = "grabbing";
-            });
-
-            window.addEventListener("mousemove", (e) => {
-                if (!isDragging) return;
-
-                translateX = e.clientX - startX;
-                translateY = e.clientY - startY;
-
-                updateTransform();
-            });
-
-            window.addEventListener("mouseup", () => {
-                isDragging = false;
-                img.style.cursor = "grab";
-            });
-
-            imageContainer.addEventListener("dblclick", () => {
-                imageScale = 1;
-                translateX = 0;
-                translateY = 0;
-                updateTransform();
-            });
-
-        }
-
-        // wheel zoom para pdf
-        if (pdfContainer) {
-            pdfContainer.addEventListener("wheel", function (e) {
-            e.preventDefault();
-
-            const zoomIntensity = 0.05;
-
-            if (e.deltaY < 0) {
-                scale = Math.min(MAX_SCALE, scale + zoomIntensity); // Zoom in
-            } else {
-                scale = Math.max(MIN_SCALE, scale - zoomIntensity); // Zoom out
-            }
-
-            renderPage(pageNum);
-
-            let isDragging = false;
-            let startX, startY, scrollLeft, scrollTop;
-
-            pdfContainer.addEventListener("mousedown", (e) => {
-                if (scale <= 1) return;
-                isDragging = true;
-                startX = e.pageX - pdfContainer.offsetLeft;
-                startY = e.pageY - pdfContainer.offsetTop;
-                scrollLeft = pdfContainer.scrollLeft;
-                scrollTop = pdfContainer.scrollTop;
-            });
-
-            pdfContainer.addEventListener("mousemove", (e) => {
-                if (!isDragging) return;
-                e.preventDefault();
-                const x = e.pageX - pdfContainer.offsetLeft;
-                const y = e.pageY - pdfContainer.offsetTop;
-                pdfContainer.scrollLeft = scrollLeft - (x - startX);
-                pdfContainer.scrollTop = scrollTop - (y - startY);
-            });
-
-            pdfContainer.addEventListener("mouseup", () => isDragging = false);
-            pdfContainer.addEventListener("mouseleave", () => isDragging = false);
-
-            pdfContainer.addEventListener("dblclick" , (e) => {
-                scale = 1.2;
-                renderPage(pageNum);
-            })
-        });
-        }
-
-        // Detectar extensión
-        const extension = url.split('.').pop().toLowerCase();
-
-        if (extension === "pdf") {
-            loadPDF();
-        } else {
-            showImage();
-        }
-
-        // Toolbar events (protegidos)
-        const prevBtn = document.getElementById('prev-page');
-        const nextBtn = document.getElementById('next-page');
-        const zoomInBtn = document.getElementById('zoom-in');
-        const zoomOutBtn = document.getElementById('zoom-out');
-        const rotateRightBtn = document.getElementById('rotate-right');
-        const rotateLeftBtn = document.getElementById('rotate-left');
-
-        if (prevBtn) {
-            prevBtn.addEventListener('click', () => {
-                if (pageNum > 1) {
-                    pageNum--;
-                    renderPage(pageNum);
-                }
-            });
-        }
-
-        if (nextBtn) {
-            nextBtn.addEventListener('click', () => {
-                if (pdfDoc && pageNum < pdfDoc.numPages) {
-                    pageNum++;
-                    renderPage(pageNum);
-                }
-            });
-        }
-
-        if (zoomInBtn) {
-            zoomInBtn.addEventListener('click', () => {
-                scale += 0.2;
-                renderPage(pageNum);
-            });
-        }
-
-        if (zoomOutBtn) {
-            zoomOutBtn.addEventListener('click', () => {
-                scale = Math.max(0.2, scale - 0.2);
-                renderPage(pageNum);
-            });
-        }
-
-        function rotateRight() {
-            rotation = (rotation + 90) % 360;
-            renderPage(pageNum);
-        }
-
-        function rotateLeft() {
-            rotation = (rotation - 90 + 360) % 360;
-            renderPage(pageNum);
-        }
-
-        if (rotateRightBtn) {
-            rotateRightBtn.addEventListener('click', () => {
-                rotateRight();
-            });
-        }
-
-        if (rotateLeftBtn) {
-            rotateLeftBtn.addEventListener('click', () => {
-                rotateLeft();
-            });
-        }
-
-    });
-    </script>
-
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-
-        const baseInput = document.querySelector('input[name="base_amount"]');
-        const taxPercentageInput = document.querySelector('input[name="tax_percentage"]');
-        const taxAmountInput = document.querySelector('input[name="tax_amount"]');
-        const totalInput = document.querySelector('input[name="total_amount"]');
-
-        if (!baseInput || !taxPercentageInput || !taxAmountInput || !totalInput) return;
-
-        function parseNumber(value) {
-            if (!value) return 0;
-            value = value.replace(",", ".");
-            return parseFloat(value) || 0;
-        }
-
-        function formatNumber(value) {
-            return value.toFixed(2);
-        }
-
-        function calculateFromPercentage() {
-            const base = parseNumber(baseInput.value);
-            const percentage = parseNumber(taxPercentageInput.value);
-
-            const tax = base * (percentage / 100);
-            const total = base + tax;
-
-            taxAmountInput.value = formatNumber(tax);
-            totalInput.value = formatNumber(total);
-        }
-
-        function calculateFromTaxAmount() {
-            const base = parseNumber(baseInput.value);
-            const tax = parseNumber(taxAmountInput.value);
-
-            if (base === 0) return;
-
-            const percentage = (tax / base) * 100;
-            const total = base + tax;
-
-            taxPercentageInput.value = formatNumber(percentage);
-            totalInput.value = formatNumber(total);
-        }
-
-        function calculateFromBase() {
-            const base = parseNumber(baseInput.value);
-            const percentage = parseNumber(taxPercentageInput.value);
-
-            const tax = base * (percentage / 100);
-            const total = base + tax;
-
-            taxAmountInput.value = formatNumber(tax);
-            totalInput.value = formatNumber(total);
-        }
-
-        taxPercentageInput.addEventListener("input", calculateFromPercentage);
-        taxAmountInput.addEventListener("input", calculateFromTaxAmount);
-        baseInput.addEventListener("input", calculateFromBase);
-
-    });
-    </script>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const modal = document.getElementById("confirm-modal");
-        const confirmBtn = document.getElementById("modal-confirm");
-        const form = document.getElementById("modal-form");
-        const modalReason = document.getElementById("modal-reason");
-        
-        let currentAction = null;
-        
-        document.querySelectorAll(".confirm-action").forEach(btn => {
-        btn.addEventListener("click", function () {
-            currentAction = this.dataset.action;
-
-            const docData = document.getElementById("doc-data");
-            const docName = docData.dataset.name;
-            const docType = docData.dataset.type;
-            const docTotalAmount = docData.dataset.totalAmount;
-
-
-            const docDataContent = `
-                <div class="modal-doc-summary">
-                    <strong>${docName}</strong>
-                    <div class="meta">
-                    ${docType} · ${docTotalAmount} €
-                    </div>
-                </div>
-            `;
-
-
-            const icon = document.querySelector(".modal-icon i");
-            const docInfo = document.getElementById("modal-doc-info");
-            const title = document.getElementById("modal-title");
-            const text = document.getElementById("modal-text");
-            const confirmBtn = document.getElementById("modal-confirm");
-
-            // 👉 Siempre mostrar info del documento
-            docInfo.innerHTML = docDataContent;
-
-            switch (currentAction) {
-                case "approve":
-                    icon.className = "fa-solid fa-circle-check";
-                    icon.style.color = "var(--color-success)";
-                    title.textContent = "Confirmar aprobación";
-                    text.textContent = "El documento se marcará como aprobado.";
-                    confirmBtn.textContent = "Aprobar";
-                    confirmBtn.style.color = "var(--color-success)";
-                    modalReason.classList.add("hidden");
-                    modalReason.value = "";
-                    break;
-                case "reject":
-                    icon.className = "fa-solid fa-circle-xmark";
-                    icon.style.color = "var(--color-danger)";
-                    title.textContent = "Confirmar rechazo";
-                    text.textContent = "El documento será rechazado definitivamente.";
-                    confirmBtn.textContent = "Rechazar";
-                    confirmBtn.style.color = "var(--color-danger)";   
-                
-                    modalReason.classList.remove("hidden");
-                    modalReason.placeholder = "Motivo del rechazo (opcional)";
-                    break;
-                case "archive":
-                    icon.className = "fa-solid fa-box-archive";
-                    icon.style.color = "var(--color-warning)";
-                    title.textContent = "Confirmar archivo";
-                    text.textContent = "El documento será archivado.";
-                    confirmBtn.textContent = "Archivar";
-                    confirmBtn.style.color = "var(--color-warning)";
-                    modalReason.classList.add("hidden");
-                    modalReason.value = "";
-                    break;
-                case "unarchive":
-                    icon.className = "fa-solid fa-box-archive";
-                    icon.style.color = "var(--color-warning)";
-                    title.textContent = "Confirmar desarchivo";
-                    text.textContent = "El documento volverá a estar activo.";
-                    confirmBtn.textContent = "Desarchivar";
-                    confirmBtn.style.color = "var(--color-warning)";
-                    modalReason.classList.add("hidden");
-                    modalReason.value = "";
-                    break;
-                case "rectify":
-                    icon.className = "fa-solid fa-pen-to-square";
-                    icon.style.color = "var(--color-warning)";
-                    title.textContent = "Crear rectificación";
-                    text.textContent = "Podrá crear una nueva versión de este documento. Los datos originales se conservarán.";
-                    confirmBtn.textContent = "Rectificar";
-                    confirmBtn.style.color = "var(--color-warning)";
-                    modalReason.classList.add("hidden");
-                    modalReason.value = "";
-                    break;
-                default:
-                    break;
-            }
-
-            modal.classList.add("open");
-        });
-    });
-
-    confirmBtn.addEventListener("click", function () {
-        if (!currentAction) return;
-
-        // Crear input hidden dinámicamente
-        const hiddenInput = document.createElement("input");
-        hiddenInput.type = "hidden";
-        hiddenInput.name = "action";
-        hiddenInput.value = currentAction;
-
-        form.appendChild(hiddenInput);
-        form.submit();
-    });
-
-    document.querySelectorAll("[data-close]").forEach(btn => {
-        btn.addEventListener("click", function () {
-        modal.classList.remove("open");
-        });
-    });
-
-    document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape") {
-        modal.classList.remove("open");
-        }
-    });
-
-    });
-    </script>
+    <script src="{% static 'js/document-viewer.js' %}"></script>
+
+    <script src="{% static 'js/tax-calculator.js' %}"></script>
+    <script src="{% static 'js/confirm-modal.js' %}"></script>
+    <script src="{% static 'js/auto-refresh.js' %}"></script>
 
 {% endblock %}
