@@ -32,3 +32,11 @@ def test_missing_r2_gives_clear_error_not_nameerror():
     r = run({"USE_R2_STORAGE": "False"})
     assert r.returncode != 0
     assert "AssertionError" in r.stderr and "Faltan variables R2_*" in r.stderr and "NameError" not in r.stderr
+
+
+def test_csrf_origins_follow_allowed_hosts():
+    code = "import django; django.setup(); from django.conf import settings; print(settings.CSRF_TRUSTED_ORIGINS)"
+    env = {**BASE_ENV, **R2, "ALLOWED_HOSTS": "a.com,.b.com,web.easypanel.host", "CSRF_TRUSTED_ORIGINS": "https://extra.io"}
+    r = subprocess.run([sys.executable, "-c", code], cwd=ROOT, env=env, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr[-400:]
+    assert r.stdout.strip() == str(["https://a.com", "https://*.b.com", "https://web.easypanel.host", "https://extra.io"])

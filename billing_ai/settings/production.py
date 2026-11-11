@@ -24,9 +24,14 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 INSTALLED_APPS = [a for a in INSTALLED_APPS if a != "debug_toolbar"]
 MIDDLEWARE = [m for m in MIDDLEWARE if "debug_toolbar" not in m]
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://facturia.xyz",
-    "https://www.facturia.xyz",
+def _origin(host):
+    host = host.strip()
+    return f"https://*{host}" if host.startswith(".") else f"https://{host}"
+
+
+# Orígenes de confianza para CSRF: los de ALLOWED_HOSTS (https) más los de CSRF_TRUSTED_ORIGINS (opcional).
+CSRF_TRUSTED_ORIGINS = [_origin(h) for h in ALLOWED_HOSTS if h != "*"] + [
+    o.strip() for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
 ]
 
 # Base de datos PostgreSQL

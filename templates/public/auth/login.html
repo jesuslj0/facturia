@@ -1,125 +1,100 @@
 {% extends "base.html" %}
-{% block styles %}
 {% load static %}
+{% block styles %}
     <link rel="stylesheet" href="{% static 'css/auth.css' %}">
 {% endblock %}
-{% block title %}FacturIA - Login{% endblock %}
+{% block title %}FacturIA - Iniciar sesión{% endblock %}
 {% block content %}
-    <div class="login-container">
-        <div class="hero-container">
-            <img src="{% static 'favicons/android-chrome-192x192.png' %}">
-            <div class="text-container">
-                <h2>Gestión inteligente de documentos</h2>
-                <p>Revisa, valida y exporta tus facturas de forma rápida y sencilla.</p>
-                <small>Automatización OCR · Uso interno empresarial</small>    
-            </div>
+<div class="login-page">
+
+    {# ---------- Columna de producto: marca + pasos de uso ---------- #}
+    <section class="login-intro" aria-labelledby="intro-title">
+        <div class="brand-row">
+            <img src="{% static 'favicons/android-chrome-192x192.png' %}" alt="" class="brand-mark">
+            <span class="brand-word">Factur<strong>IA</strong></span>
         </div>
-        <div class="form-container">
-            <form method="POST" class="login-form">
-                {% csrf_token %}
-                <fieldset>
-                    <legend>Iniciar sesión</legend>
-                    {% if form.errors %}
-                        <ul class="error-list">
-                            {% for field, errors in form.errors.items %}
-                                {% for error in errors %}
-                                    <li><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</li>
-                                {% endfor %}
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-                    <div class="form-row">
-                        <label for="id_username">
-                            <i class="fa-solid fa-user"></i>
-                            <span class="sr-only">Usuario</span>
-                        </label>
-                        {{ form.username }}
-                    </div>
-    
-                    <div class="form-row">
-                        <label for="id_password">
-                            <i class="fa-solid fa-lock"></i>
-                            <span class="sr-only">Contraseña</span>
-                        </label>
-                        {{ form.password }}
-                        <button type="button" id="toggle-password-btn" class="password-toggle">
-                            <i class="fa-solid fa-eye-slash"></i>
-                        </button>
-                    </div>
-    
-                    <button type="submit" class="btn btn-primary btn-block">Entrar</button>
-                </fieldset>
-            </form>
+
+        <div class="intro-copy">
+            <p class="eyebrow">Gestión inteligente de documentos</p>
+            <h1 id="intro-title">De la foto de la factura al dato validado, <span class="grad-text">sin teclear</span>.</h1>
+            <p class="lead">Sube un documento y la IA extrae y procesa sus datos. Tú solo revisas, validas y exportas.</p>
         </div>
-    </div>
-    <section class="product-carousel">
-        <div class="carousel-track" id="carouselTrack">
-            <div class="carousel-item">
-                <div class="icon">
-                    <img src="{% static "icons/clipboard.svg" %}" />
-                </div>
-                <h3>Gestión centralizada</h3>
-                <p>Controla todas tus facturas y documentos desde un único panel.</p>
-            </div>
 
-            <div class="carousel-item">
-                <div class="icon">
-                    <img src="{% static "icons/robot.svg" %}" />
-                </div>
-                <h3>Automatización</h3>
-                <p>Procesa documentos automáticamente con OCR y flujos.</p>
-            </div>
-
-            <div class="carousel-item">
-                <div class="icon">
-                    <img src="{% static "icons/computer-download.svg" %}" />
-                </div>
-                <h3>Exportación profesional</h3>
-                <p>Genera PDF y exporta datos para contabilidad o clientes.</p>
-            </div>
-
-            <div class="carousel-item">
-                <div class="icon">
-                    <img src="{% static "icons/graph.svg" %}" />
-                </div>
-                <h3>Métricas precisas</h3>
-                <p>Visualiza tus indicadores de calidad y rendimiento.</p>
-            </div>
-
-            <!-- duplicados -->
-             <div class="carousel-item duplicate">
-                <div class="icon">
-                    <img src="{% static "icons/clipboard.svg" %}" />
-                </div>
-                <h3>Gestión centralizada</h3>
-                <p>Controla todas tus facturas y documentos desde un único panel.</p>
-            </div>
-
-            <div class="carousel-item duplicate">
-                <div class="icon">
-                    <img src="{% static "icons/robot.svg" %}" />
-                </div>
-                <h3>Automatización</h3>
-                <p>Procesa documentos automáticamente con OCR y flujos.</p>
-            </div>
-
-            <div class="carousel-item duplicate">
-                <div class="icon">
-                    <img src="{% static "icons/computer-download.svg" %}" />
-                </div>
-                <h3>Exportación profesional</h3>
-                <p>Genera PDF y exporta datos para contabilidad o clientes.</p>
-            </div>
-
-            <div class="carousel-item duplicate">
-                <div class="icon">
-                    <img src="{% static "icons/graph.svg" %}" />
-                </div>
-                <h3>Métricas precisas</h3>
-                <p>Visualiza tus indicadores de calidad y rendimiento.</p>
-            </div>
-        </div>
+        <ol class="steps" aria-label="Cómo funciona FacturIA">
+            <li class="step" style="--tone: var(--color-info)">
+                <span class="step-num">01</span>
+                <span class="step-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+                <h3>Sube una foto</h3>
+                <p>Fotografía la factura con el móvil o sube el PDF desde el escritorio.</p>
+            </li>
+            <li class="step" style="--tone: var(--enfasis-color)">
+                <span class="step-num">02</span>
+                <span class="step-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                <h3>Se extrae y procesa</h3>
+                <p>Proveedor, fechas, importes e impuestos se leen y estructuran solos.</p>
+            </li>
+            <li class="step" style="--tone: var(--color-success)">
+                <span class="step-num">03</span>
+                <span class="step-icon"><i class="fa-solid fa-circle-check"></i></span>
+                <h3>Se guarda y validas</h3>
+                <p>Se archiva en tu cuenta; revisas lo dudoso y apruebas con un clic.</p>
+            </li>
+            <li class="step" style="--tone: var(--color-warning)">
+                <span class="step-num">04</span>
+                <span class="step-icon"><i class="fa-solid fa-file-export"></i></span>
+                <h3>Exporta y analiza</h3>
+                <p>PDF, Excel o CSV para contabilidad, con métricas siempre al día.</p>
+            </li>
+        </ol>
     </section>
+
+    {# ---------- Card de acceso ---------- #}
+    <section class="login-access" aria-labelledby="login-title">
+        <form method="POST" class="login-card" novalidate>
+            {% csrf_token %}
+            <header class="login-card-head">
+                <span class="login-card-icon"><i class="fa-solid fa-shield-halved"></i></span>
+                <h2 id="login-title">Iniciar sesión</h2>
+                <p>Accede a tu panel de documentos.</p>
+            </header>
+
+            {% if form.errors %}
+                <ul class="error-list" role="alert">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <div class="field">
+                <label for="id_username">Usuario</label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-user" aria-hidden="true"></i>
+                    {{ form.username }}
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="id_password">Contraseña</label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                    {{ form.password }}
+                    <button type="button" id="toggle-password-btn" class="password-toggle" aria-label="Mostrar contraseña">
+                        <i class="fa-solid fa-eye-slash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block login-submit">
+                Entrar <i class="fa-solid fa-arrow-right"></i>
+            </button>
+
+            <p class="login-note"><i class="fa-solid fa-lock"></i> Acceso privado · Uso interno empresarial</p>
+        </form>
+    </section>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -128,49 +103,19 @@
     document.addEventListener("DOMContentLoaded", function () {
         const usernameInput = document.getElementById('id_username');
         const passwordInput = document.getElementById('id_password');
-        const togglePasswordBtn = document.getElementById('toggle-password-btn');
+        const toggleBtn = document.getElementById('toggle-password-btn');
 
-        usernameInput.placeholder = "Tu usuario (ej. admin_taller)";
+        usernameInput.placeholder = "Tu usuario";
+        usernameInput.setAttribute("autocomplete", "username");
         passwordInput.placeholder = "Tu contraseña";
+        passwordInput.setAttribute("autocomplete", "current-password");
 
-        togglePasswordBtn.addEventListener("click", () => {
-            const type = passwordInput.type === "password" ? "text" : "password";
-            passwordInput.type = type;
-            togglePasswordBtn.innerHTML = type === "password"
-                ? `<i class="fa-solid fa-eye-slash"></i>`
-                : `<i class="fa-solid fa-eye"></i>`;
+        toggleBtn.addEventListener("click", () => {
+            const show = passwordInput.type === "password";
+            passwordInput.type = show ? "text" : "password";
+            toggleBtn.setAttribute("aria-label", show ? "Ocultar contraseña" : "Mostrar contraseña");
+            toggleBtn.innerHTML = `<i class="fa-solid ${show ? "fa-eye" : "fa-eye-slash"}"></i>`;
         });
     });
-</script>
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-
-        const track = document.getElementById("carouselTrack");
-        if (!track) return;
-        let speed = 0.5;
-        let pos = 0;
-
-        function animate() {
-            pos += speed;
-            track.style.transform = `translate3d(-${Math.round(pos)}px,0,0)`;
-
-            if (pos >= track.scrollWidth / 2) {
-            pos = 0;
-            }
-
-            requestAnimationFrame(animate);
-        }
-
-        if (window.innerWidth < 768) {
-            animate();
-        }
-
-        track.addEventListener("mouseenter", () => speed = 0.2);
-        track.addEventListener("mouseleave", () => speed = 0.5);
-
-        track.addEventListener("touchstart", () => speed = 0.2);
-        track.addEventListener("touchend", () => speed = 0.5);
-
-        });
 </script>
 {% endblock %}

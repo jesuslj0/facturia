@@ -1,283 +1,254 @@
-/* Contenedor centrado */
+/* ===== Login: layout de dos columnas (producto + acceso) ===== */
 
-/* Reescribir fondo de pantalla */
+/* El login ocupa todo el ancho; el fondo son gradientes del sistema, sin imagen */
 .app-main {
-  background-image: url('/static/img/ondas-a-cuadros-azules-editada.jpg');
-  background-size: cover;
-  margin: 0;
+  max-width: none;
   padding: 0;
-  max-width: 100vw;
-  min-height: 90vh;
-}
-
-/*Contenedor principal */
-.login-container {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  gap: 5rem;
-  padding: 2rem;
+  /* La imagen va debajo de una capa oscura (~55%) para que quede sutil */
+  background:
+    radial-gradient(900px 600px at 8% -10%, color-mix(in srgb, var(--enfasis-color) 20%, transparent), transparent 65%),
+    radial-gradient(800px 560px at 100% 105%, color-mix(in srgb, var(--color-info) 18%, transparent), transparent 65%),
+    linear-gradient(color-mix(in srgb, var(--body-bg-color) 55%, transparent), color-mix(in srgb, var(--body-bg-color) 55%, transparent)),
+    url('/static/img/ondas-a-cuadros-azules-editada.jpg') center / cover no-repeat,
+    var(--body-bg-color);
 }
 
-.form-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  padding: 2rem;
-  padding-top: 8vh;
-}
-
-/* Formulario */
-.login-form {
+.login-page {
   width: 100%;
-  max-width: 380px;
+  max-width: 1480px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 2rem 1.25rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-content: center;
 }
 
-/* Fieldset */
-.login-form fieldset {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 2rem;
-  background: var(--card-bg-color);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+/* ---------- Columna de producto ---------- */
+.login-intro { display: flex; flex-direction: column; gap: 1.75rem; min-width: 0; }
+
+.brand-row { display: flex; align-items: center; gap: 0.7rem; }
+.brand-mark {
+  width: 40px; height: 40px; border-radius: 11px;
+  box-shadow: 0 0 0 1px var(--border-color-strong), 0 6px 22px -6px color-mix(in srgb, var(--enfasis-color) 55%, transparent);
+}
+.brand-word { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+.brand-word strong { color: var(--enfasis-color); font-weight: 700; }
+
+.eyebrow {
+  margin: 0 0 0.6rem;
+  font-size: 0.75rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--enfasis-color);
+}
+.intro-copy h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 4.6vw, 3rem);
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.grad-text {
+  background: linear-gradient(90deg, var(--enfasis-color), var(--color-info) 60%, var(--color-success));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.lead { margin: 0.9rem 0 0; max-width: 56ch; font-size: 1.05rem; color: var(--muted-color); }
+
+/* ---------- Pasos de uso ---------- */
+.steps {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; gap: 0.85rem;
+  grid-template-columns: 1fr;
 }
 
-/* Título */
-.login-form legend {
-  padding: 0 0.5rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--body-fg-color);
-  letter-spacing: 0.05em;
-}
-
-/* Fila por input */
-.login-form .form-row {
+.step {
+  --tone: var(--enfasis-color);
   position: relative;
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.9rem;
+  align-items: start;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background:
+    radial-gradient(260px 120px at 0% 0%, color-mix(in srgb, var(--tone) 14%, transparent), transparent 70%),
+    var(--grad-surface);
+  overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.step::before {                       /* hilo de color superior, igual que las KPI del dashboard */
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
+  background: linear-gradient(90deg, var(--tone), transparent);
+  opacity: 0.85;
+}
+.step:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--tone) 45%, transparent);
+  box-shadow: 0 12px 28px -14px color-mix(in srgb, var(--tone) 60%, transparent);
+}
+.step-icon {
+  grid-row: span 2;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px; border-radius: 12px;
+  font-size: 1.05rem; color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone) 30%, transparent);
+}
+.step-num {
+  position: absolute; top: 0.55rem; right: 0.9rem;
+  font-size: 1.6rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1;
+  color: color-mix(in srgb, var(--tone) 38%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+.step h3 { margin: 0; font-size: 1rem; font-weight: 600; padding-right: 2.5rem; }
+.step p { margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--muted-color); }
+
+/* ---------- Card de login ---------- */
+.login-access { display: flex; justify-content: center; }
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  position: relative;
+  padding: 2rem 1.75rem 1.5rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-color-strong);
+  background:
+    radial-gradient(420px 200px at 100% -10%, color-mix(in srgb, var(--enfasis-color) 22%, transparent), transparent 70%),
+    var(--grad-surface);
+  box-shadow: 0 30px 60px -24px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  overflow: hidden;
+}
+.login-card::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: linear-gradient(90deg, var(--enfasis-color), var(--color-info), var(--color-success));
 }
 
-/* Labels */
-.login-form .form-row label {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #aaa;
-  font-size: 1rem;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
+.login-card-head { text-align: center; margin-bottom: 1.5rem; }
+.login-card-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; border-radius: 14px; margin-bottom: 0.8rem;
+  font-size: 1.15rem; color: var(--enfasis-color);
+  background: color-mix(in srgb, var(--enfasis-color) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--enfasis-color) 30%, transparent);
 }
+.login-card-head h2 { margin: 0; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
+.login-card-head p { margin: 0.25rem 0 0; font-size: 0.9rem; color: var(--muted-color); }
 
-/* Inputs */
-.login-form input[type="text"],
-.login-form input[type="password"] {
+.field { margin-bottom: 1rem; }
+.field label {
+  display: block; margin-bottom: 0.35rem;
+  font-size: 0.8rem; font-weight: 500; color: var(--muted-color);
+}
+.input-wrap { position: relative; display: flex; align-items: center; }
+.input-wrap > i {
+  position: absolute; left: 0.85rem; font-size: 0.9rem;
+  color: var(--muted-color); pointer-events: none;
+  transition: color 0.2s;
+}
+.input-wrap:focus-within > i { color: var(--enfasis-color); }
+
+.login-card input[type="text"],
+.login-card input[type="password"] {
   width: 100%;
   box-sizing: border-box;
-  padding: 0.5rem 2.5rem 0.5rem 2.5rem;
+  padding: 0.7rem 2.6rem;
+  font: inherit; font-size: 1rem;      /* 16px: iOS no hace zoom al enfocar */
   border-radius: 10px;
-  border: 1px solid var(--border-color);
-  background: var(--body-bg-color);
+  border: 1px solid var(--border-color-strong);
+  background: color-mix(in srgb, var(--body-bg-color) 80%, transparent);
   color: var(--body-fg-color);
-  transition: border-color 0.2s, box-shadow 0.2s ease;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-
-.login-form input:focus {
+.login-card input::placeholder { color: color-mix(in srgb, var(--muted-color) 75%, transparent); }
+.login-card input:focus {
   outline: none;
   border-color: var(--enfasis-color);
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--enfasis-color) 20%, transparent);
 }
 
-/* Botón */
-
-/* Password toggle */
-.login-form .password-toggle {
-  position: absolute;
-  right: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  color: #aaa;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
+.password-toggle {
+  position: absolute; right: 0.4rem;
+  width: 2.25rem; height: 2.25rem;
+  display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: 8px; background: transparent;
+  color: var(--muted-color); cursor: pointer; font-size: 0.95rem;
 }
+.password-toggle:hover { color: var(--body-fg-color); background: var(--surface-hover); }
+.password-toggle:focus-visible { outline: 2px solid var(--enfasis-color); }
 
-/* Errores Django */
-.login-form .error-list {
-  margin-bottom: 1rem;
-  padding: 0;
-  list-style: none;
-  color: #fca5a5;
-  font-size: 0.8rem;
-}
-
-/* Contenedor del texto */
-.hero-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 0.35rem;
-  margin-bottom: 1.25rem;
-}
-
-/* Icono */
-.hero-container > img {
-  width: 120px;
-  border-radius: 22px;
-  box-shadow: 0px 0px 25px rgba(56, 189, 248, 0.25);
-  margin: 24px 0;
-}
-
-.hero-container > img {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.hero-container > img:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 35px rgba(56, 189, 248, 0.35);
-}
-
-/* Texto del hero */
-.text-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 0.35rem;
-}
-
-/* Título */
-.text-container > h2 {
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin: 0;
-  color: var(--body-fg-color);
-  letter-spacing: -0.01em;
-}
-
-/* Texto descriptivo */
-.text-container > p {
-  margin: 0;
-  font-size: 1rem;
-  color: var(--enfasis-color);
-  font-weight: 500;
-  opacity: 0.9;
-  margin-bottom: 0.5rem;
-}
-
-.text-container > small {
+.login-submit {
   margin-top: 0.5rem;
-  font-size: 0.75rem;
-  color: var(--muted-color);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  padding: 0.8rem 1rem;
+  font-size: 1rem; font-weight: 600;
+  border: 1px solid color-mix(in srgb, var(--enfasis-color) 40%, transparent);
+  background: linear-gradient(135deg, var(--enfasis-color-dark), color-mix(in srgb, var(--color-info) 80%, var(--enfasis-color-dark)));
+  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--enfasis-color) 70%, transparent);
+  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+}
+.login-submit:hover {
+  background: linear-gradient(135deg, var(--enfasis-color-dark), color-mix(in srgb, var(--color-info) 80%, var(--enfasis-color-dark)));
+  filter: brightness(1.12);
+  box-shadow: 0 14px 28px -10px color-mix(in srgb, var(--enfasis-color) 80%, transparent);
+}
+.login-submit i { transition: transform 0.2s; }
+.login-submit:hover i { transform: translateX(3px); }
+
+.login-note {
+  margin: 1.1rem 0 0; text-align: center;
+  font-size: 0.75rem; color: var(--muted-color);
+}
+.login-note i { margin-right: 0.3rem; }
+
+.error-list {
+  margin: 0 0 1.1rem; padding: 0.6rem 0.8rem;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+  border-radius: 10px;
 }
 
-/* Media query movil */
+/* ---------- Móvil: card primero, pasos debajo ---------- */
+.login-access { order: -1; }
 
-@media (max-width: 768px) {
-  .login-container {
-    flex-direction: column;
-    gap: 2rem;
+/* ---------- Tablet ---------- */
+@media (min-width: 640px) {
+  .login-page { padding: 3rem 2rem; }
+  .steps { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ---------- Escritorio: dos columnas, mejor uso del ancho ---------- */
+@media (min-width: 1024px) {
+  .login-page {
+    grid-template-columns: minmax(0, 1.25fr) minmax(380px, 0.75fr);
+    gap: clamp(3rem, 6vw, 7rem);
+    padding: 3rem clamp(2rem, 5vw, 5rem);
+    align-items: center;
   }
+  .login-access { order: 0; }
+  .login-intro { gap: 2.25rem; }
+  .step { padding: 1.25rem 1.3rem; }
+  .step h3 { font-size: 1.05rem; }
+  .login-card { padding: 2.5rem 2.25rem 1.75rem; }
 }
 
-/* Carousel de producto */
-.product-carousel {
-  margin-top: 2rem;
-  overflow: hidden;
-  width: 100%;
+/* Pantallas muy anchas: pasos en una fila de 4 si caben */
+@media (min-width: 1600px) {
+  .login-page { max-width: 1680px; }
 }
 
-.carousel-track {
-  display: flex;
-  align-items: center;  
-  gap: 1.5rem;
-  padding: 1.5rem 0;
-  width: max-content;
-  will-change: transform;
-  transform: translate3d(0,0,0);
-}
-
-.carousel-item {
-  flex: 0 0 260px;
-  scroll-snap-align: start;
-
-  background: rgba(255,255,255,0.045);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 14px;
-
-  padding: 1.5rem;
-  text-align: center;
-  
-  transform: translate3d(0,0,0);
-  backface-visibility: hidden;
-}
-
-.carousel-item:hover {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  transform: translateY(-4px);
-  transition: background 0.2s ease, border 0.2s ease, transform 0.2s ease;
-}
-
-.carousel-item:not(:hover) {
-  transition: background 0.2s ease, border 0.2s ease, transform 0.2s ease;
-}
-
-.carousel-item h3 {
-  margin-top: .5rem;
-  font-size: 1.1rem;
-}
-
-.carousel-item p {
-  font-size: .9rem;
-  opacity: .8;
-}
-
-.icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.icon img {
-  width: 60px;
-  border-radius: 22px;
-  box-shadow: 0px 0px 25px rgba(56, 189, 248, 0.25);
-  margin: 24px 0;
-  display: inline-block;
-  backface-visibility: hidden;
-  will-change: transform;
-  transform: translate3d(0,0,0);
-}
-
-@media (min-width: 768px) {
-  .duplicate {
-    display: none;
-  }
-
-  .carousel-track {
-    justify-content: center;
-    width: 100%;
-  }
-}
-
-@media(max-width: 768px) {
-  .carousel-track {
-    width: max-content;
-  }
+@media (prefers-reduced-motion: reduce) {
+  .step, .login-submit, .login-submit i { transition: none; }
+  .step:hover { transform: none; }
 }
