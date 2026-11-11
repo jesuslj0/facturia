@@ -106,3 +106,10 @@ class TestNormalize:
         assert [t.kind for t in n.tax_lines] == ["vat", "withholding"]
         assert n.tax_lines[1].amount == D("150")
         assert n.lines[0].position == 1 and n.lines[0].amount == D("1000.00") and n.lines[0].unit_price == D("500.00")
+
+
+def test_line_page_is_kept_and_invalid_pages_are_dropped():
+    from documents.services.extraction.schemas import Line
+    base = dict(description="a", quantity="1", unit_price="1", tax_rate=None, amount="1")
+    n = normalize(make_result(lines=[Line(**base, page=2), Line(**base, page=0), Line(**base)]))
+    assert [ln.page for ln in n.lines] == [2, None, None]

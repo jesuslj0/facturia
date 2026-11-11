@@ -22,8 +22,16 @@ class TaxIdCheck:
     valid: bool | None   # None = no se puede verificar (extranjero o formato desconocido)
 
 
+_LABEL = re.compile(r"^\s*(?:N\.?\s?I\.?\s?F|C\.?\s?I\.?\s?F|N\.?\s?I\.?\s?E|V\.?\s?A\.?\s?T|I\.?\s?V\.?\s?A)\.?\s*[:\-]\s*", re.I)
+
+
 def clean_tax_id(value: str | None) -> str:
-    s = re.sub(r"[\s\-.]", "", value or "").upper()
+    """Forma canónica de un NIF/CIF/NIE/IVA: mayúsculas, solo letras y dígitos, sin prefijo "ES".
+
+    "b-96.148.028", "B/96148028", "ES B96148028" y "NIF: B96148028" dan "B96148028".
+    """
+    s = _LABEL.sub("", value or "")
+    s = re.sub(r"[^A-Z0-9]", "", s.upper())
     if re.fullmatch(r"ES[A-Z0-9]{9}", s):
         s = s[2:]
     return s

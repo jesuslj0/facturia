@@ -30,6 +30,7 @@ class Line(BaseModel):
     unit_price: str | None
     tax_rate: str | None
     amount: str | None
+    page: int | None = None   # nº de página del PDF (1 = primera) donde figura la línea
 
 
 class Confidence(BaseModel):

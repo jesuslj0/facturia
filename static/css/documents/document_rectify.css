@@ -1,0 +1,608 @@
+/* Layout general */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 0.85rem;
+  padding: 0;
+}
+
+/* Visor documento */
+.pdf {
+  background: #020617;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.pdf iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 70vh;
+  border: none;
+}
+
+.pdf img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.pdf > h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--body-fg-color);
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Panel datos */
+.data {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.25rem;
+  height: fit-content;
+}
+
+/* Formulario */
+.data form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+#review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+#review-form input {
+  flex: 1;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--body-bg-color);
+  color: var(--body-fg-color);
+  font-weight: 600;
+  transition: border 0.2s;
+}
+
+#review-form input::placeholder {
+  color: var(--muted-color);
+}
+
+#review-form input:focus {
+  border-color: var(--enfasis-color);
+  outline: none;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.field .label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.field .value {
+  font-size: 0.95rem;
+  color: #f8fafc;
+  background: #020617;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+select.editable-field {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--body-bg-color);
+  color: var(--body-fg-color);
+  font-weight: 600;
+  transition: border 0.2s;
+}
+
+.iva-fields {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  align-items: center;
+  color: var(--body-fg-color);
+}
+
+.iva-fields input {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.6rem 0.65rem;
+  border-radius: 8px;
+  max-width: 110px;
+}
+
+#review-form .form-errors > ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  color: var(--color-danger);
+}
+
+.form-errors > ul > li > .field-label {
+  font-weight: 600;
+  margin-right: 0.3rem;
+}
+
+.form-errors > ul > li > .error-message {
+  font-size: 0.8rem;
+}
+
+/* Acciones */
+.data-form .actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+
+
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pdf iframe {
+    min-height: 60vh;
+  }
+}
+
+/* Toolbar general */
+.pdf-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0f172a;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Botones de toolbar */
+.pdf-toolbar button {
+  background: #1e293b; /* gris oscuro suave */
+  color: #f8fafc;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.05s;
+}
+
+.pdf-toolbar button:hover {
+  background: #334155; /* más claro al hover */
+  transform: scale(1.05);
+}
+
+/* Zoom buttons un poco más destacados */
+.pdf-toolbar #zoom-in, .pdf-toolbar #zoom-out {
+  background: var(--color-info);
+  color: #020617;
+  color: #f8fafc;
+  border: none;
+}
+
+.pdf-toolbar #zoom-in:hover, .pdf-toolbar #zoom-out:hover {
+  background: #2563eb;
+}
+
+/* Texto de página */
+.pdf-toolbar span {
+  margin: 0 0.25rem;
+  font-weight: 500;
+  color: #cbd5f5;
+}
+
+/* Responsive: en móvil los botones más pequeños */
+@media (max-width: 768px) {
+  .pdf-toolbar {
+    font-size: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .pdf-toolbar button {
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+.pdf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  padding: 0.75rem;
+  z-index: 100;
+  position: relative;
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.pdf-header h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.pdf-badges {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.badge {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.badge.type {
+  background: #1e293b;
+  color: #cbd5f5;
+}
+
+/* Badges de nivel de revisión */
+
+/* Colores según tipo */
+
+/* Contenedor común */
+.review-level,
+.ocr-confidence {
+  margin-bottom: 1.5rem;
+  font-family: "Inter", sans-serif;
+}
+
+.review-level {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+  color: #94a3b8; /* gris medio */
+}
+
+/* Descripción */
+.description {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b; /* gris oscuro */
+  margin-top: 0.25rem;
+}
+
+/* --- Confianza OCR --- */
+.confidence-score {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Colores según confianza */
+.confidence-value.high {
+  color: var(--color-success);
+}
+.confidence-value.medium {
+  color: var(--color-warning);
+}
+.confidence-value.low {
+  color: var(--color-danger);
+}
+
+/* Barra de progreso */
+.confidence-bar {
+  width: 100%;
+  height: 0.5rem;
+  background-color: #e2e8f0; /* gris claro */
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.4s ease;
+}
+
+/* Colores de la barra */
+.confidence-fill.high {
+  background-color: var(--color-success);
+}
+.confidence-fill.medium {
+  background-color: var(--color-warning);
+}
+.confidence-fill.low {
+  background-color: var(--color-danger);
+}
+
+/* Modal acciones formulario */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal.open {
+  display: flex;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  position: relative;
+  background: var(--card-bg-color);
+  color: var(--body-fg-color);
+  padding: 2rem;
+  border-radius: 12px;
+  width: 420px;
+  max-width: 90%;
+  transform: scale(0.95);
+  opacity: 0;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.modal-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.modal-body {
+  margin-bottom: 1.5rem;
+}
+
+#modal-doc-info > ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#modal-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+#modal-text {
+  font-size: 0.85rem;
+  margin-top: 1rem;
+}
+
+.modal.open .modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.modal-doc-summary strong {
+  font-size: 1rem;
+  display: block;
+}
+
+.modal-doc-summary .meta {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+#modal-reason {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--body-bg-color);
+  color: var(--body-fg-color);
+  font-weight: 600;
+  transition: border 0.2s;
+  cursor: pointer;
+  width: 100%;
+  font-size: 0.75rem;
+  box-sizing: border-box;
+  margin-bottom: 0.5rem;
+}
+
+#modal-reason.hidden {
+  display: none;
+}
+
+.document-lineage {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.document-lineage a {
+  text-decoration: none;
+  color: var(--enfasis-color);
+}
+
+.document-lineage span {
+  color: var(--muted-color);
+}
+
+.document-lineage a:hover {
+  text-decoration: underline;
+}
+
+.document-versions {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.document-versions h3 {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--body-fg-color);
+}
+
+.document-versions h4  {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted-color);
+}
+
+.document-versions ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.document-versions li {
+  margin-bottom: 0.5rem;
+}
+
+.document-versions li a {
+  background: var(--card-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+  text-decoration: none;
+  color: var(--body-fg-color);
+}
+
+.document-versions li a:hover {
+  background: var(--enfasis-color);
+  border-color: var(--enfasis-color);
+}
+
+.document-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.badge.rectifying {
+  background: #1e293b;
+  color: #cbd5f5;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.badge.rectifying .spinner {
+  animation: rotate 1s linear infinite;
+}
+
+.reason {
+  color: var(--muted-color);
+  font-size: 0.85rem;
+}
+
+/* ---------- H6: procesado, incidencias, desglose, organización ---------- */
+.processing-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-info) 35%, transparent);
+  background: color-mix(in srgb, var(--color-info) 10%, transparent);
+  color: var(--body-fg-color);
+}
+
+.processing-banner > div { flex: 1; display: flex; flex-direction: column; }
+.processing-banner small { color: var(--muted-color); }
+.processing-banner.failed { border-color: color-mix(in srgb, var(--color-danger) 35%, transparent); background: color-mix(in srgb, var(--color-danger) 10%, transparent); }
+.processing-banner .inline-form { margin: 0; }
+
+.issues {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg-color);
+}
+
+.issues .label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.issues ul { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.issue { display: flex; gap: 0.5rem; font-size: 0.85rem; }
+.issue.error i { color: var(--color-danger); }
+.issue.warning i { color: var(--color-warning); }
+.issue.info i { color: var(--color-info); }
+
+.field.has-issue .editable-field,
+.field.has-issue .value { border-color: var(--color-warning); }
+
+.field .description { color: var(--muted-color); }
+#review-form .field input[name="new_folder"] { margin-top: 0.4rem; flex: none; }
+
+.breakdown { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.breakdown .label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.mini-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 0.5rem; }
+.mini-table th, .mini-table td { padding: 0.3rem 0.4rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+.mini-table th { color: var(--muted-color); font-weight: 600; }
+.mini-table td:not(:first-child), .mini-table th:not(:first-child) { text-align: right; }
+
+.next-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.75rem 0;
+  color: var(--enfasis-color);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.next-pending:hover { text-decoration: underline; }

@@ -192,7 +192,12 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         context["tag_names"] = ", ".join(t.name for t in document.tags.all())
         context["all_tag_names"] = list(Tag.objects.filter(client=client).values_list("name", flat=True))
         context["tax_lines"] = document.tax_lines.all()
-        context["invoice_lines"] = document.lines.all()
+        invoice_lines = list(document.lines.all())
+        context["invoice_lines"] = invoice_lines
+        # Filtrar líneas por página solo si es PDF y todas las líneas saben su página
+        context["lines_by_page"] = bool(
+            document.is_pdf and invoice_lines and all(l.page for l in invoice_lines)
+        )
         context["issues"] = sorted(
             document.validation_issues or [],
             key=lambda i: {"error": 0, "warning": 1}.get(i.get("severity"), 2),

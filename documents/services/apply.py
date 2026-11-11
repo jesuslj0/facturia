@@ -129,5 +129,6 @@ def _replace_lines(doc, n) -> None:
             unit_price=ln.unit_price if ln.unit_price is not None and abs(ln.unit_price) < Decimal(10) ** 10 else None,
             tax_rate=ln.tax_rate if _rate_ok(ln.tax_rate) else None,
             amount=_money(ln.amount),
+            page=ln.page,
         ))
     InvoiceLine.objects.bulk_create(rows)

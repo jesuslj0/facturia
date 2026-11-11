@@ -240,3 +240,28 @@ def test_credit_note_with_withholding_and_negative_amounts_is_consistent(client)
         TaxLine(kind="vat", rate="21", base="-1000", amount="-210"),
         TaxLine(kind="withholding", rate="15", base="-1000", amount="150")])   # retención en positivo
     assert issues_for(client, **r)[0] == []
+
+
+class TestLinesSum:
+    @staticmethod
+    def _lines(*amounts):
+        from documents.services.extraction.schemas import Line
+        return [Line(description=f"l{i}", quantity="1", unit_price=a, tax_rate=None, amount=a, page=1)
+                for i, a in enumerate(amounts, start=1)]
+
+    def test_lines_that_add_up_to_base_are_fine(self, client):
+        i, _ = issues_for(client, lines=self._lines("60.00", "40.00"))
+        assert "lines_sum_mismatch" not in codes(i)
+
+    def test_lines_with_vat_that_add_up_to_total_are_fine(self, client):
+        i, _ = issues_for(client, lines=self._lines("60.50", "60.50"))
+        assert "lines_sum_mismatch" not in codes(i)
+
+    def test_missing_lines_are_flagged_as_warning(self, client):
+        i, _ = issues_for(client, lines=self._lines("30.00", "20.00"))
+        assert "lines_sum_mismatch" in codes(i, v.WARNING)
+        assert not next(x for x in i if x.code == "lines_sum_mismatch").model_fixable
+
+    def test_single_line_is_not_checked(self, client):
+        i, _ = issues_for(client, lines=self._lines("10.00"))
+        assert "lines_sum_mismatch" not in codes(i)

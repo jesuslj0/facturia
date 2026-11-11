@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
+from documents.validators import clean_tax_id
+
 from .schemas import ExtractionResult
 
 # Tipo de la extracción -> Document.document_type (None = sin equivalente)
@@ -22,13 +24,8 @@ DOCUMENT_TYPE_MAP = {
 
 
 def normalize_tax_id(value: str | None) -> str | None:
-    if not value:
-        return None
-    cleaned = re.sub(r"[\s\-.]", "", value).upper()
-    # Prefijo de país del IVA intracomunitario español ("ESB12345678").
-    if re.fullmatch(r"ES[A-Z0-9]{9}", cleaned):
-        cleaned = cleaned[2:]
-    return cleaned or None
+    # Forma canónica única (documents.validators.clean_tax_id): sin separadores ni prefijo "ES".
+    return clean_tax_id(value) or None
 
 
 def parse_amount(value: str | None) -> Decimal | None:
@@ -103,6 +100,7 @@ class NormalizedLine:
     unit_price: Decimal | None
     tax_rate: Decimal | None
     amount: Decimal | None
+    page: int | None = None
 
 
 @dataclass
@@ -180,7 +178,8 @@ def normalize(result: ExtractionResult, *, client_tax_id: str | None = None) -> 
         ],
         lines=[
             NormalizedLine(i, (l.description or "").strip()[:500], parse_amount(l.quantity),
-                           parse_amount(l.unit_price), parse_amount(l.tax_rate), parse_amount(l.amount))
+                           parse_amount(l.unit_price), parse_amount(l.tax_rate), parse_amount(l.amount),
+                           l.page if isinstance(l.page, int) and 1 <= l.page <= 9999 else None)
             for i, l in enumerate(result.lines, start=1)
         ],
         iban=re.sub(r"\s", "", result.iban or "").upper()[:34],

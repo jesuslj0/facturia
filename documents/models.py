@@ -2,6 +2,8 @@ from django.db import models
 from django.db.models import Q
 from django.db import models, transaction
 from clients.models import Client
+from documents.company_names import display_name, name_key
+from documents.validators import clean_tax_id
 import os
 from django.utils import timezone
 from django.core.exceptions import ValidationError
@@ -16,6 +18,8 @@ class Company(models.Model):
         related_name="companies"
     )
     name = models.CharField(max_length=255)
+    # Clave de comparación del nombre (minúsculas, sin tildes/puntuación/forma jurídica); ver company_names.py
+    name_key = models.CharField(max_length=255, blank=True, default="", editable=False)
     tax_id = models.CharField(max_length=50, null=True, blank=True)
     address = models.CharField(max_length=255, blank=True, default="")
     postal_code = models.CharField(max_length=20, blank=True, default="")
@@ -38,20 +42,17 @@ class Company(models.Model):
         indexes = [
             models.Index(fields=["client", "tax_id"]),
             models.Index(fields=["client", "name"]),
+            models.Index(fields=["client", "name_key"], name="company_client_name_key_idx"),
         ]
-    
+
     def save(self, *args, **kwargs):
-        if self.tax_id:
-            self.tax_id = (
-                self.tax_id.replace(" ", "").replace("-", "").upper(
-                    
-                )
-            )
-        if not self.tax_id:
-            # "" violaría la unicidad (client, tax_id); sin NIF se guarda NULL.
-            self.tax_id = None
-        if self.name: 
-            self.name = self.name.strip()
+        # "" violaría la unicidad (client, tax_id); sin NIF se guarda NULL.
+        self.tax_id = clean_tax_id(self.tax_id) or None
+        self.name = display_name(self.name)
+        self.name_key = name_key(self.name)
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            kwargs["update_fields"] = set(update_fields) | {"tax_id", "name", "name_key"}
         super().save(*args, **kwargs)
 
     def get_type(self):
@@ -690,6 +691,7 @@ class InvoiceLine(models.Model):
     unit_price = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    page = models.PositiveSmallIntegerField(null=True, blank=True)   # página del PDF donde figura la línea
 
     class Meta:
         ordering = ["document_id", "position"]

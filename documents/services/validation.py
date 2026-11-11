@@ -129,10 +129,31 @@ def _check_amounts(n, out, invoice_like):
         s = sum((t.base for t in with_base), Decimal(0))
         if abs(s - base) > LINE_TOLERANCE:
             out.append(Issue("base_split_mismatch", WARNING, f"La suma de bases por tipo de IVA ({s}) no coincide con la base ({base}).", "base_amount"))
+    _check_lines_sum(n, out, base, total)
     if n.document_type != "corrected_invoice":
         negatives = [x for x in (base, total) if x is not None and x < 0]
         if negatives:
             out.append(Issue("negative_amount", WARNING, "Importe negativo en un documento que no es rectificativo.", "total_amount"))
+
+
+def _check_lines_sum(n, out, base, total):
+    """Aviso si las líneas extraídas no suman ni la base ni el total (posibles líneas sin leer).
+
+    Se admite que los importes de línea sean netos (suman la base) o con IVA (suman el total).
+    """
+    amounts = [l.amount for l in n.lines if l.amount is not None]
+    if len(amounts) < 2 or (base is None and total is None):
+        return
+    s = sum(amounts, Decimal(0))
+    tol = max(LINE_TOLERANCE, Decimal("0.01") * len(amounts))   # redondeos línea a línea
+    if any(ref is not None and abs(s - ref) <= tol for ref in (base, total)):
+        return
+    ref = base if base is not None else total
+    out.append(Issue(
+        "lines_sum_mismatch", WARNING,
+        f"Las líneas suman {s} y no coinciden con {'la base' if base is not None else 'el total'} ({ref}): puede que falten líneas por leer.",
+        "lines",
+    ))
 
 
 def _check_rates(n, out):

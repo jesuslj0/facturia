@@ -54,18 +54,19 @@ a.link:hover { text-decoration: underline; }
 
 .btn-secondary { /* alias explícito del neutro */ }
 
-.btn-success, .btn-danger, .btn-warning, .btn-info {
+.btn-success, .btn-danger, .btn-warning, .btn-info, .btn-neutral {
   color: var(--tone);
   --btn-bg: color-mix(in srgb, var(--tone) 10%, transparent);
   --btn-bd: color-mix(in srgb, var(--tone) 35%, transparent);
 }
-.btn-success:hover, .btn-danger:hover, .btn-warning:hover, .btn-info:hover {
+.btn-success:hover, .btn-danger:hover, .btn-warning:hover, .btn-info:hover, .btn-neutral:hover {
   background: color-mix(in srgb, var(--tone) 18%, transparent);
 }
 .btn-success { --tone: var(--color-success); }
 .btn-danger  { --tone: var(--color-danger); }
 .btn-warning { --tone: var(--color-warning); }
 .btn-info    { --tone: var(--color-info); }
+.btn-neutral { --tone: color-mix(in srgb, var(--muted-color) 65%, #fff); }   /* archivar / desarchivar */
 
 .btn-ghost, .btn-back, .btn-clear, .btn-action {
   --btn-bg: transparent;

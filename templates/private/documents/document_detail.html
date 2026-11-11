@@ -8,108 +8,198 @@
 {% endblock %}
 
 {% block content %}
-<div class="layout">
+<div class="detail">
 
-    <!-- Panel PDF -->
-    <div class="pdf" data-file-url="{% url 'documents:file' document.pk %}" data-file-type="{% if document.is_pdf %}pdf{% else %}image{% endif %}">
-        <div class="pdf-header">
-            <h3>{{ document.original_name }} 
-                {% if document.parent_document %}
-                    <span class="badge rectified">Rectificación v{{ document.version }}
-                        {% if document.is_current %}
-                            (actual)
-                        {% endif %}
-                    </span>
-                {% else %}
-                    <span class="badge original">Documento original
-                        {% if document.is_current %}
-                            (actual)
-                        {% else %}
-                            (v{{ document.version }})
-                        {% endif %}
-                    </span>
-                {% endif %}
-            </h3>
-            
-            <div class="pdf-badges">
-                <span class="badge type">{{ document.get_document_type_display }}</span>
-                {% badge "status" document.status %}
-                {% if document.is_archived %}{% badge "status" "archived" %}{% endif %}
+    <!-- Cabecera: identidad del documento y acciones siempre visibles -->
+    <header class="detail-head">
+        <div class="detail-title">
+            <a class="btn btn-ghost btn-sm" href="{% url 'documents:list' %}" title="Volver al listado"><i class="fa-solid fa-arrow-left"></i></a>
+            <div class="detail-title-text">
+                <h1 title="{{ document.original_name }}">{{ document.original_name }}</h1>
+                <div class="detail-badges">
+                    {% if document.parent_document %}
+                        <span class="badge rectified">Rectificación v{{ document.version }}{% if document.is_current %} (actual){% endif %}</span>
+                    {% else %}
+                        <span class="badge original">Original{% if document.is_current %} (actual){% else %} (v{{ document.version }}){% endif %}</span>
+                    {% endif %}
+                    <span class="badge type">{{ document.get_document_type_display }}</span>
+                    {% badge "status" document.status %}
+                    {% if document.is_archived %}{% badge "status" "archived" %}{% endif %}
+                </div>
             </div>
         </div>
-        
-        {% if document.is_pdf %}
-        <div class="pdf-toolbar">
-            <button id="prev-page"><i class="fa-solid fa-chevron-left"></i></button>
-            <span>Pagina <span id="page-num"></span> / <span id="page-count"></span></span>
-            <button id="next-page"><i class="fa-solid fa-chevron-right"></i></button>
-            <button id="zoom-in"><i class="fa-solid fa-plus"></i></button>
-            <button id="zoom-out"><i class="fa-solid fa-minus"></i></button>
-            <button id="rotate-left"><i class="fa-solid fa-rotate-left"></i></button>
-            <button id="rotate-right"><i class="fa-solid fa-rotate-right"></i></button>
-        </div>
-        {% endif %}
 
-        {% if document.is_pdf %}
-            <div id="pdf-viewer" style="width:100%; height:100%; max-height:800px; overflow:auto; transition: transform 0.2s ease;"></div>
+        <div class="detail-actions">
+            {% if next_pending %}
+            <a class="btn btn-ghost next-pending" href="{% url 'documents:detail' next_pending.pk %}">
+                Siguiente pendiente {% icon "next" %}
+            </a>
+            {% endif %}
+
+            <!-- Guardar, Aprobar o Rechazar (pendientes) -->
+            {% if document.status == "pending" and not document.is_processing %}
+                <button type="submit" form="review-form" name="action" value="save" class="btn btn-info" id="save-changes">
+                    {% icon "save" %} Guardar cambios
+                </button>
+                <button type="button" class="btn btn-success confirm-action" data-action="approve">
+                    {% icon "approve" %} Aprobar
+                </button>
+                <button type="button" class="btn btn-danger confirm-action" data-action="reject">
+                    {% icon "reject" %} Rechazar
+                </button>
+            {% endif %}
+
+            <!-- Archivar documentos aprobados o rechazados -->
+            {% if not document.is_archived %}
+                {% if document.status == "approved" or document.status == "rejected" %}
+                <button type="button" class="btn btn-neutral confirm-action" data-action="archive">
+                    {% icon "archive" %} Archivar
+                </button>
+                {% endif %}
+            {% endif %}
+
+            <!-- Rectificar documentos que no estén archivados y no hayan sido rectificados -->
+            {% if not document.is_archived and not document.status == "pending" %}
+                <button type="button" class="btn btn-warning confirm-action" data-action="rectify">
+                    {% icon "rectify" %} Rectificar
+                </button>
+            {% endif %}
+
+            <!-- Desarchivar -->
+            {% if document.is_archived %}
+                <button type="button" class="btn btn-neutral confirm-action" data-action="unarchive">
+                    {% icon "unarchive" %} Desarchivar
+                </button>
+            {% endif %}
+        </div>
+    </header>
+
+    {% if document.is_processing %}
+    <div class="processing-banner" data-autorefresh="4">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <div>
+            <strong>Extrayendo datos…</strong>
+            <small>{{ document.get_processing_status_display }}. Esta página se actualiza sola.</small>
+        </div>
+    </div>
+    {% elif document.processing_status == "failed" %}
+    <div class="processing-banner failed">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div>
+            <strong>No se pudo extraer el documento</strong>
+            <small>{{ processing_error.message }}</small>
+            {% if document.status == "pending" and not document.is_archived %}
+            <small>Puedes rellenar los datos a mano o reintentar.</small>
+            {% endif %}
+        </div>
+        {% if document.status == "pending" and not document.is_archived %}
+        <form method="post" class="inline-form">
+            {% csrf_token %}
+            <button type="submit" name="action" value="retry" class="btn">{% icon "retry" %} Reintentar</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Incidencias: una tarjeta por aviso, coloreada por severidad -->
+    {% if issues %}
+    <section class="issues" aria-labelledby="issues-title">
+        <div class="issues-head">
+            <h2 id="issues-title" class="section-title"><i class="fa-solid fa-flag"></i> Incidencias detectadas</h2>
+            {% regroup issues by severity as issue_groups %}
+            <div class="issues-count">
+                {% for g in issue_groups %}
+                <span class="count {{ g.grouper }}">{{ g.list|length }}
+                    {% if g.grouper == "error" %}error{{ g.list|length|pluralize:"es" }}{% elif g.grouper == "warning" %}aviso{{ g.list|length|pluralize }}{% else %}info{% endif %}</span>
+                {% endfor %}
+            </div>
+        </div>
+        <ul class="issue-grid">
+            {% for issue in issues %}
+            <li class="issue {{ issue.severity }}"{% if issue.field %} data-field="{{ issue.field }}" tabindex="0" role="button" title="Ir al campo"{% endif %}>
+                <span class="issue-icon"><i class="fa-solid {% if issue.severity == 'error' %}fa-circle-xmark{% elif issue.severity == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %}"></i></span>
+                <span class="issue-body">
+                    <strong>{% if issue.severity == 'error' %}Error{% elif issue.severity == 'warning' %}Aviso{% else %}Información{% endif %}</strong>
+                    <span>{{ issue.message }}</span>
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    <div class="detail-main">
+
+        <!-- Visor del documento (sticky en escritorio) -->
+        <div class="pdf" data-file-url="{% url 'documents:file' document.pk %}" data-file-type="{% if document.is_pdf %}pdf{% else %}image{% endif %}">
+            {% if document.is_pdf %}
+            <div class="pdf-toolbar">
+                <button type="button" id="prev-page" aria-label="Página anterior"><i class="fa-solid fa-chevron-left"></i></button>
+                <span class="pdf-pages">Página <span id="page-num"></span> / <span id="page-count"></span></span>
+                <button type="button" id="next-page" aria-label="Página siguiente"><i class="fa-solid fa-chevron-right"></i></button>
+                <span class="toolbar-sep"></span>
+                <button type="button" id="zoom-in" aria-label="Acercar"><i class="fa-solid fa-plus"></i></button>
+                <button type="button" id="zoom-out" aria-label="Alejar"><i class="fa-solid fa-minus"></i></button>
+                <button type="button" id="rotate-left" aria-label="Girar a la izquierda"><i class="fa-solid fa-rotate-left"></i></button>
+                <button type="button" id="rotate-right" aria-label="Girar a la derecha"><i class="fa-solid fa-rotate-right"></i></button>
+                <a class="toolbar-link" href="{% url 'documents:file' document.pk %}" target="_blank" rel="noopener" title="Abrir en una pestaña"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+            </div>
+            <div id="pdf-viewer" class="viewer-scroll"></div>
             <p id="pdf-fallback" style="display:none;">
                 No se puede visualizar el PDF.
                 <a href="{% url 'documents:file' document.pk %}" target="_blank">Descargar PDF</a>
             </p>
-        {% elif document.is_image %}
-            <div id="image-container">
-                <img  src="{% url 'documents:file' document.pk %}" style="max-width:100%; height: auto;transform:scale(1); transform-origin:center;" />
+            {% elif document.is_image %}
+            <div id="image-container" class="viewer-scroll">
+                <img src="{% url 'documents:file' document.pk %}" alt="{{ document.original_name }}" style="max-width:100%; height:auto; transform:scale(1); transform-origin:center;" />
             </div>
-        {% else %}
+            {% else %}
             <p>No se puede visualizar el archivo</p>
-        {% endif %}
-    </div>
-    <!-- Panel de datos con revisión editable -->
-    <div class="data-form">
-        {% if document.is_processing %}
-        <div class="processing-banner" data-autorefresh="4">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <div>
-                <strong>Extrayendo datos…</strong>
-                <small>{{ document.get_processing_status_display }}. Esta página se actualiza sola.</small>
-            </div>
-        </div>
-        {% elif document.processing_status == "failed" %}
-        <div class="processing-banner failed">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-            <div>
-                <strong>No se pudo extraer el documento</strong>
-                <small>{{ processing_error.message }}</small>
-                {% if document.status == "pending" and not document.is_archived %}
-                <small>Puedes rellenar los datos a mano o reintentar.</small>
-                {% endif %}
-            </div>
-            {% if document.status == "pending" and not document.is_archived %}
-            <form method="post" class="inline-form">
-                {% csrf_token %}
-                <button type="submit" name="action" value="retry" class="btn">{% icon "retry" %} Reintentar</button>
-            </form>
             {% endif %}
         </div>
-        {% endif %}
 
-        {% if issues %}
-        <div class="issues">
-            <span class="label">Incidencias detectadas</span>
-            <ul>
-                {% for issue in issues %}
-                <li class="issue {{ issue.severity }}">
-                    <i class="fa-solid {% if issue.severity == 'error' %}fa-circle-xmark{% elif issue.severity == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %}"></i>
-                    <span>{{ issue.message }}</span>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
+        <!-- Panel de datos con revisión editable -->
+        <div class="data-form">
+
+            <!-- Estado, nivel de revisión y confianza OCR: tres tarjetas independientes -->
+            <div class="summary-card">
+                <section class="sum-item {% if document.status == 'approved' %}tone-ok{% elif document.status == 'rejected' %}tone-bad{% elif document.status == 'pending' %}tone-warn{% else %}tone-neutral{% endif %}">
+                    <span class="sum-label"><i class="fa-solid fa-clipboard-check"></i> Estado del documento</span>
+                    <div class="sum-value">{% badge "status" document.status %}</div>
+                    <p class="sum-text">{{ document.status_message }}</p>
+                    {% if document.rejection_reason %}<p class="sum-text reason">Motivo: {{ document.rejection_reason }}</p>{% endif %}
+                    {% if document.rectification_reason %}<p class="sum-text reason">Motivo: {{ document.rectification_reason }}</p>{% endif %}
+                </section>
+
+                <section class="sum-item {% if document.review_key == 'required' %}tone-bad{% elif document.review_key == 'recommended' %}tone-warn{% elif document.review_key == 'auto' %}tone-ok{% elif document.review_key == 'manual' %}tone-info{% else %}tone-neutral{% endif %}">
+                    <span class="sum-label"><i class="fa-solid fa-user-check"></i> Nivel de revisión</span>
+                    <div class="sum-value">{% badge "review" document.review_key %}</div>
+                    <p class="sum-text">
+                        {% if document.review_key == "required" %}El sistema detectó inconsistencias que requieren validación humana.
+                        {% elif document.review_key == "recommended" %}Se recomienda validar los datos antes de continuar.
+                        {% elif document.review_key == "auto" %}El documento cumple los criterios de validación automática.
+                        {% elif document.review_key == "manual" %}Los datos fueron corregidos o verificados manualmente.{% endif %}
+                    </p>
+                </section>
+
+                <section class="sum-item {% if document.ocr_confidence == 'high' %}tone-ok{% elif document.ocr_confidence == 'medium' %}tone-warn{% elif document.ocr_confidence == 'low' %}tone-bad{% else %}tone-neutral{% endif %}">
+                    <span class="sum-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Confianza OCR</span>
+                    <div class="sum-value big">{{ document.confidence_global|to_percent|floatformat:0 }}<small>%</small></div>
+                    <div class="confidence-bar"><div class="confidence-fill" style="width: {{ document.confidence_global|to_percent }}%;"></div></div>
+                    <p class="sum-text">
+                        {% if document.ocr_confidence == "high" %}Datos extraídos con alta consistencia.
+                        {% elif document.ocr_confidence == "medium" %}Posibles pequeñas inconsistencias detectadas.
+                        {% elif document.ocr_confidence == "low" %}Se recomienda revisión manual.{% endif %}
+                    </p>
+                </section>
+            </div>
 
         <form method="post" id="review-form">
             {% csrf_token %}
             <div class="data">
+              <section class="form-section">
+                <h2 class="section-title"><i class="fa-solid fa-id-card"></i> Identificación</h2>
+                <div class="form-grid">
                 <!-- Datos para el modal -->
                 <div id="doc-data" hidden
                     data-name="{{ document.original_name }}"
@@ -132,7 +222,20 @@
                     {% endif %}
                 </div>
 
-                <div class="field{% if 'counterparty_tax_id' in issue_fields or 'tax_id' in issue_fields or 'company' in issue_fields %} has-issue{% endif %}">
+                <!-- Compra o Venta-->
+                <div class="field">
+                    <span class="label">Flujo</span>
+                    {% if document.is_editable %}
+                        <select name="flow" class="editable-field">
+                            <option value="in" {% if document.flow == "in" %}selected{% endif %}>Venta</option>
+                            <option value="out" {% if document.flow == "out" %}selected{% endif %}>Compra</option>
+                        </select>
+                    {% else %}
+                        <span class="value">{{ document.get_flow_display }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="field span-2{% if 'counterparty_tax_id' in issue_fields or 'tax_id' in issue_fields or 'company' in issue_fields %} has-issue{% endif %}">
                     <span class="label">Tercero</span>
                     {% if document.is_editable %}
                         <select name="company" class="editable-field">
@@ -157,19 +260,6 @@
                     {% endif %}
                 </div> {% endcomment %}
 
-                <!-- Compra o Venta-->
-                <div class="field">
-                    <span class="label">Flujo</span>
-                    {% if document.is_editable %}
-                        <select name="flow" class="editable-field">
-                            <option value="in" {% if document.flow == "in" %}selected{% endif %}>Venta</option>
-                            <option value="out" {% if document.flow == "out" %}selected{% endif %}>Compra</option>
-                        </select>
-                    {% else %}
-                        <span class="value">{{ document.get_flow_display }}</span>
-                    {% endif %}
-                </div>
-
                 <!-- Numero factura-->
                 <div class="field{% if 'document_number' in issue_fields %} has-issue{% endif %}">
                     <span class="label">N° Documento</span>
@@ -190,6 +280,11 @@
                     {% endif %}
                 </div>
     
+                </div>
+              </section>
+              <section class="form-section">
+                <h2 class="section-title"><i class="fa-solid fa-euro-sign"></i> Importes</h2>
+                <div class="form-grid">
                 <!-- Base -->
                 <div class="field">
                     <span class="label">Base</span>
@@ -201,7 +296,7 @@
                 </div>
     
                 <!-- Cálculo IVA -->
-                <div class="field">
+                <div class="field span-2">
                     {% if document.is_editable %}
                     <span class="label">% / Total IVA</span>
                     <div class="iva-fields">
@@ -221,7 +316,7 @@
                 </div>
     
                 <!-- Total -->
-                <div class="field{% if 'total_amount' in issue_fields %} has-issue{% endif %}">
+                <div class="field span-2 field-total{% if 'total_amount' in issue_fields %} has-issue{% endif %}">
                     <span class="label">Total</span>
                     {% if document.is_editable %}
                         <input type="text" inputmode="decimal" step="0.01" name="total_amount" value="{{ document.total_amount }}" class="editable-field decimal-field">
@@ -230,6 +325,11 @@
                     {% endif %}
                 </div>
 
+                </div>
+              </section>
+              <section class="form-section">
+                <h2 class="section-title"><i class="fa-solid fa-folder-tree"></i> Organización</h2>
+                <div class="form-grid">
                 <!-- Organización -->
                 <div class="field">
                     <span class="label">Categoría</span>
@@ -260,7 +360,7 @@
                     {% endif %}
                 </div>
 
-                <div class="field">
+                <div class="field span-2">
                     <span class="label">Etiquetas</span>
                     {% if document.is_editable %}
                         <input type="text" name="tags" value="{{ tag_names }}" class="editable-field" list="tag-options" placeholder="separadas por comas" autocomplete="off">
@@ -271,151 +371,8 @@
                         <span class="value">{% for t in document.tags.all %}<span class="chip">{{ t.name }}</span>{% empty %}-{% endfor %}</span>
                     {% endif %}
                 </div>
-            </div>
-
-            {% if tax_lines or invoice_lines %}
-            <div class="breakdown">
-                {% if tax_lines %}
-                <span class="label">Impuestos y retenciones</span>
-                <table class="mini-table">
-                    <thead><tr><th>Tipo</th><th>%</th><th>Base</th><th>Importe</th></tr></thead>
-                    <tbody>
-                    {% for t in tax_lines %}
-                        <tr><td>{{ t.get_kind_display }}</td><td>{{ t.rate|floatformat:2 }}</td><td>{{ t.base|floatformat:2 }}</td><td>{{ t.amount|floatformat:2 }}</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                {% endif %}
-                {% if invoice_lines %}
-                <span class="label">Líneas</span>
-                <table class="mini-table">
-                    <thead><tr><th>Descripción</th><th>Cant.</th><th>P. unit.</th><th>Importe</th></tr></thead>
-                    <tbody>
-                    {% for l in invoice_lines %}
-                        <tr><td>{{ l.description }}</td><td>{{ l.quantity|floatformat:"-2" }}</td><td>{{ l.unit_price|floatformat:2|default:"-" }}</td><td>{{ l.amount|floatformat:2|default:"-" }}</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                {% endif %}
-            </div>
-            {% endif %}
-            <!-- Acciones -->
-            <div class="actions">
-                <!-- Guardar, Aprobar o Rechazar (pendientes) -->
-                {% if document.status == "pending" and not document.is_processing %}
-                    <button type="submit" name="action" value="save" class="btn btn-primary">
-                        {% icon "save" %} Guardar
-                    </button>
-                    <button type="button" class="btn btn-success confirm-action" data-action="approve">
-                        {% icon "approve" %} Aprobar
-                    </button>
-                    <button type="button" class="btn btn-danger confirm-action" data-action="reject">
-                        {% icon "reject" %} Rechazar
-                    </button>
-                {% endif %}
-
-                <!-- Archivar documentos aprobados o rechazados -->
-                {% if not document.is_archived and document.status == "approved" or document.status == "rejected" %}
-                    <button type="button" class="btn confirm-action" data-action="archive">
-                        {% icon "archive" %} Archivar
-                    </button>
-                {% endif %}
-
-                <!-- Rectificar documentos que no estén archivados y no hayan sido rectificados -->
-                {% if not document.is_archived and not document.status == "pending" %}
-                    <button type="button" class="btn btn-warning confirm-action" data-action="rectify">
-                        {% icon "rectify" %} Rectificar
-                    </button>
-                {% endif %}
-
-                <!-- Desarchivar -->
-                {% if document.is_archived %}
-                    <button type="button" class="btn confirm-action" data-action="unarchive">
-                        {% icon "unarchive" %} Desarchivar
-                    </button>
-                {% endif %}
-            </div>
-            
-            {% if next_pending %}
-            <a class="next-pending" href="{% url 'documents:detail' next_pending.pk %}">
-                Siguiente pendiente {% icon "next" %}
-            </a>
-            {% endif %}
-
-            <div class="document-info">
-                <span class="label">Estado del documento</span>
-                <span class="content">{{ document.status_message }}</span>
-                {% if document.rejection_reason %}
-                    <span class="content reason">
-                        Motivo: {{ document.rejection_reason }}
-                    </span>
-                {% endif %}
-                {% if document.rectification_reason %}
-                    <span class="content reason">
-                        Motivo: {{ document.rectification_reason }}
-                    </span>
-                {% endif %}
-                <div class="separator"></div>
-            </div>
-            <div class="separator"></div>
-
-            <!-- Nivel de revisión -->
-            <div class="review-level">
-                <span class="label">Nivel de revisión</span>
-
-                {% badge "review" document.review_key %}
-
-                <small class="description">
-                    {% if document.review_key == "required" %}
-                        El sistema detectó inconsistencias que requieren validación humana.
-                    {% elif document.review_key == "recommended" %}
-                        Se recomienda validar los datos antes de continuar.
-                    {% elif document.review_key == "auto" %}
-                        El documento cumple los criterios de validación automática.
-                    {% elif document.review_key == "manual" %}
-                        Los datos fueron corregidos o verificados manualmente.
-                    {% endif %}
-                </small>
-            </div>
-
-
-            <!-- Confianza OCR -->
-            <div class="ocr-confidence">
-                <span class="label">Confianza OCR</span>
-
-                <div class="confidence-score">
-                    <span class="confidence-value 
-                        {% if document.ocr_confidence == 'high' %}high
-                        {% elif document.ocr_confidence == 'medium' %}medium
-                        {% elif document.ocr_confidence == 'low' %}low
-                        {% endif %}">
-                        
-                        {{ document.confidence_global|to_percent|floatformat:0 }}%
-                    </span>
                 </div>
-
-                <div class="confidence-bar">
-                    <div class="confidence-fill 
-                        {% if document.ocr_confidence == 'high' %}high
-                        {% elif document.ocr_confidence == 'medium' %}medium
-                        {% elif document.ocr_confidence == 'low' %}low
-                        {% endif %}"
-                        style="width: {{ document.confidence_global|to_percent }}%;">
-                    </div>
-                </div>
-
-                <small class="description">
-                    {% if document.ocr_confidence == "high" %}
-                        Datos extraídos con alta consistencia.
-                    {% elif document.ocr_confidence == "medium" %}
-                        Posibles pequeñas inconsistencias detectadas.
-                    {% elif document.ocr_confidence == "low" %}
-                        Se recomienda revisión manual.
-                    {% endif %}
-                </small>
-            </div>
-
-        </div>
+              </section>
             </div>
         </form>
 
@@ -455,38 +412,105 @@
                 </div>
             </div>
         </form>
-        
-    </div>
 
-    <div class="document-versions">
-        <h3><i class="fa-solid fa-history"></i> Historial</h3>
-        {% if not has_versions %}
-            <p>No hay rectificaciones de este documento</p>
+    </div><!-- /data-form -->
+    </div><!-- /detail-main -->
+
+    <!-- Líneas e impuestos: ancho completo, bajo visor y datos -->
+    {% if tax_lines or invoice_lines %}
+    <section class="breakdown">
+        {% if invoice_lines %}
+        <div class="panel lines-panel" id="lines-panel"{% if lines_by_page %} data-by-page="1"{% endif %}>
+            <div class="panel-head">
+                <h2 class="section-title"><i class="fa-solid fa-list"></i> Líneas de la factura</h2>
+                <div class="panel-head-right">
+                    {% if lines_by_page %}
+                    <div class="seg" role="group" aria-label="Qué líneas mostrar">
+                        <button type="button" class="seg-btn active" data-lines-mode="page" aria-pressed="true">Esta página</button>
+                        <button type="button" class="seg-btn" data-lines-mode="all" aria-pressed="false">Todas</button>
+                    </div>
+                    <div class="pager" role="group" aria-label="Cambiar de página del documento">
+                        <button type="button" class="pager-btn" id="lines-prev" aria-label="Página anterior" title="Página anterior" disabled><i class="fa-solid fa-chevron-left"></i></button>
+                        <span class="pager-label" id="lines-pager-label" aria-live="polite">1 / 1</span>
+                        <button type="button" class="pager-btn" id="lines-next" aria-label="Página siguiente" title="Página siguiente" disabled><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                    {% endif %}
+                    <span class="panel-meta" id="lines-meta" data-all="{{ invoice_lines|length }} línea{{ invoice_lines|length|pluralize }}">{{ invoice_lines|length }} línea{{ invoice_lines|length|pluralize }}</span>
+                </div>
+            </div>
+            <div class="lines-scroll">
+                <table class="lines-table">
+                    <thead>
+                        <tr><th class="col-n">#</th><th>Descripción</th><th class="num">Cant.</th><th class="num">P. unit.</th><th class="num">IVA</th><th class="num">Importe</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for l in invoice_lines %}
+                        <tr{% if lines_by_page %} data-page="{{ l.page }}"{% endif %} data-amount="{% if l.amount is not None %}{{ l.amount|stringformat:'s' }}{% endif %}">
+                            <td class="col-n" data-label="#">{{ forloop.counter }}</td>
+                            <td class="col-desc" data-label="Descripción">{{ l.description|default:"—" }}</td>
+                            <td class="num" data-label="Cant.">{{ l.quantity|floatformat:"-2" }}</td>
+                            <td class="num" data-label="P. unit.">{% if l.unit_price is not None %}{{ l.unit_price|floatformat:2 }}{% else %}—{% endif %}</td>
+                            <td class="num" data-label="IVA">{% if l.tax_rate is not None %}{{ l.tax_rate|floatformat:"-2" }}%{% else %}—{% endif %}</td>
+                            <td class="num amount" data-label="Importe">{% if l.amount is not None %}{{ l.amount|floatformat:2 }} €{% else %}—{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr><td colspan="5" class="foot-label" id="lines-foot-label" data-all="Suma de líneas">Suma de líneas</td><td class="num amount" id="lines-foot-sum" data-all="{{ invoice_lines|sum_attr:"amount"|floatformat:2 }} €">{{ invoice_lines|sum_attr:"amount"|floatformat:2 }} €</td></tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
         {% endif %}
-        {% if has_previous_versions %}
-            <h4>Versiones anteriores</h4>
-            <ul>
-                {% for v in previous_versions %}
-                <li>
-                    <a href="{% url 'documents:detail' v.pk %}">v{{ v.version }} - {{ v.created_at|date:"d/m/Y" }}</a>
-                </li>
+
+        {% if tax_lines %}
+        <div class="panel taxes-panel">
+            <div class="panel-head">
+                <h2 class="section-title"><i class="fa-solid fa-percent"></i> Impuestos y retenciones</h2>
+            </div>
+            <table class="lines-table taxes-table">
+                <thead><tr><th>Tipo</th><th class="num">%</th><th class="num">Base</th><th class="num">Importe</th></tr></thead>
+                <tbody>
+                {% for t in tax_lines %}
+                    <tr>
+                        <td data-label="Tipo">{{ t.get_kind_display }}</td>
+                        <td class="num" data-label="%">{{ t.rate|floatformat:2 }}</td>
+                        <td class="num" data-label="Base">{{ t.base|floatformat:2 }}</td>
+                        <td class="num amount" data-label="Importe">{{ t.amount|floatformat:2 }} €</td>
+                    </tr>
                 {% endfor %}
-            </ul>
+                </tbody>
+            </table>
+        </div>
         {% endif %}
+    </section>
+    {% endif %}
 
-        {% if has_next_versions %}
-        <h4>Versiones posteriores</h4>
-        <ul>
-            {% for v in next_versions %}
-            <li>
-                <a href="{% url 'documents:detail' v.pk %}">v{{ v.version }} - {{ v.created_at|date:"d/m/Y" }}</a>
+    <!-- Historial de rectificaciones: línea de tiempo -->
+    <section class="document-versions panel">
+        <div class="panel-head">
+            <h2 class="section-title"><i class="fa-solid fa-clock-rotate-left"></i> Historial de rectificaciones</h2>
+        </div>
+        {% if not has_versions %}
+            <p class="muted-note">Este documento no tiene rectificaciones.</p>
+        {% else %}
+        <ol class="timeline">
+            {% for v in previous_versions|dictsort:"version" %}
+            <li class="tl-item">
+                <a href="{% url 'documents:detail' v.pk %}"><strong>v{{ v.version }}</strong><small>{{ v.created_at|date:"d/m/Y" }}</small><em>Anterior</em></a>
             </li>
             {% endfor %}
-        </ul>
+            <li class="tl-item current" aria-current="true">
+                <span><strong>v{{ document.version }}</strong><small>{{ document.created_at|date:"d/m/Y" }}</small><em>Estás aquí</em></span>
+            </li>
+            {% for v in next_versions %}
+            <li class="tl-item">
+                <a href="{% url 'documents:detail' v.pk %}"><strong>v{{ v.version }}</strong><small>{{ v.created_at|date:"d/m/Y" }}</small><em>Posterior</em></a>
+            </li>
+            {% endfor %}
+        </ol>
         {% endif %}
-
-    </div>
-
+    </section>
 
 </div>
 {% endblock %}
@@ -499,5 +523,6 @@
     <script src="{% static 'js/tax-calculator.js' %}"></script>
     <script src="{% static 'js/confirm-modal.js' %}"></script>
     <script src="{% static 'js/auto-refresh.js' %}"></script>
+    <script src="{% static 'js/document-detail.js' %}"></script>
 
 {% endblock %}

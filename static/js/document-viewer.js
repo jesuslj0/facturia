@@ -27,6 +27,38 @@
         let startX = 0;
         let startY = 0;
         let rotation = 0;
+        let currentCanvas = null;
+
+        // Arrastrar para mover el documento con cualquier zoom (ratón y táctil).
+        // Mueve con translate, así funciona también cuando el documento es más pequeño que el visor.
+        function enablePan(surface, apply) {
+            surface.style.touchAction = "none";
+            surface.style.cursor = "grab";
+            let dragging = false, sx = 0, sy = 0;
+
+            surface.addEventListener("pointerdown", (e) => {
+                if (e.button !== undefined && e.button !== 0) return;
+                dragging = true;
+                sx = e.clientX - translateX;
+                sy = e.clientY - translateY;
+                surface.setPointerCapture(e.pointerId);
+                surface.style.cursor = "grabbing";
+                e.preventDefault();
+            });
+            surface.addEventListener("pointermove", (e) => {
+                if (!dragging) return;
+                translateX = e.clientX - sx;
+                translateY = e.clientY - sy;
+                apply();
+            });
+            const end = () => { dragging = false; surface.style.cursor = "grab"; };
+            surface.addEventListener("pointerup", end);
+            surface.addEventListener("pointercancel", end);
+        }
+
+        function applyPdfPan() {
+            if (currentCanvas) currentCanvas.style.transform = `translate(${translateX}px, ${translateY}px)`;
+        }
 
         pdfjsLib.GlobalWorkerOptions.workerSrc =
         "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.worker.min.js";
@@ -46,8 +78,12 @@
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
 
+                canvas.style.display = "block";
+                canvas.style.margin = "0 auto";
                 pdfContainer.innerHTML = '';
                 pdfContainer.appendChild(canvas);
+                currentCanvas = canvas;
+                applyPdfPan();
 
                 page.render({ 
                     canvasContext: ctx, viewport: viewport 
@@ -58,6 +94,11 @@
 
                 if (pageNumEl) pageNumEl.textContent = pageNum;
                 if (pageCountEl) pageCountEl.textContent = pdfDoc.numPages;
+
+                // Avisa a otras partes de la página (p. ej. las líneas de la factura)
+                document.dispatchEvent(new CustomEvent("viewer:page", {
+                    detail: { page: num, total: pdfDoc.numPages },
+                }));
 
             }).catch(err => {
                 console.error("Error renderizando página:", err);
@@ -88,10 +129,9 @@
                     style="
                         max-width:100%;
                         height:auto;
-                        cursor: grab;
                         user-select: none;
+                        -webkit-user-drag: none;
                         transform-origin: center center;
-                        transition: transform 0.05s ease;
                     "
                 />
             `;
@@ -113,11 +153,6 @@
                     imageScale = Math.max(MIN_SCALE, imageScale - zoomIntensity);
                 }
 
-                if (imageScale === 1) {
-                    translateX = 0;
-                    translateY = 0;
-                }
-
                 updateTransform();
             };
 
@@ -125,29 +160,7 @@
                 e.preventDefault();
             });
 
-            img.addEventListener("mousedown", (e) => {
-                if (imageScale <= 1) return; // solo mover si está ampliada
-
-                isDragging = true;
-                startX = e.clientX - translateX;
-                startY = e.clientY - translateY;
-
-                img.style.cursor = "grabbing";
-            });
-
-            window.addEventListener("mousemove", (e) => {
-                if (!isDragging) return;
-
-                translateX = e.clientX - startX;
-                translateY = e.clientY - startY;
-
-                updateTransform();
-            });
-
-            window.addEventListener("mouseup", () => {
-                isDragging = false;
-                img.style.cursor = "grab";
-            });
+            enablePan(imageContainer, updateTransform);
 
             imageContainer.addEventListener("dblclick", () => {
                 imageScale = 1;
@@ -158,50 +171,27 @@
 
         }
 
-        // wheel zoom para pdf
+        // wheel zoom + arrastre para pdf
         if (pdfContainer) {
             pdfContainer.addEventListener("wheel", function (e) {
-            e.preventDefault();
-
-            const zoomIntensity = 0.05;
-
-            if (e.deltaY < 0) {
-                scale = Math.min(MAX_SCALE, scale + zoomIntensity); // Zoom in
-            } else {
-                scale = Math.max(MIN_SCALE, scale - zoomIntensity); // Zoom out
-            }
-
-            renderPage(pageNum);
-
-            let isDragging = false;
-            let startX, startY, scrollLeft, scrollTop;
-
-            pdfContainer.addEventListener("mousedown", (e) => {
-                if (scale <= 1) return;
-                isDragging = true;
-                startX = e.pageX - pdfContainer.offsetLeft;
-                startY = e.pageY - pdfContainer.offsetTop;
-                scrollLeft = pdfContainer.scrollLeft;
-                scrollTop = pdfContainer.scrollTop;
-            });
-
-            pdfContainer.addEventListener("mousemove", (e) => {
-                if (!isDragging) return;
                 e.preventDefault();
-                const x = e.pageX - pdfContainer.offsetLeft;
-                const y = e.pageY - pdfContainer.offsetTop;
-                pdfContainer.scrollLeft = scrollLeft - (x - startX);
-                pdfContainer.scrollTop = scrollTop - (y - startY);
-            });
-
-            pdfContainer.addEventListener("mouseup", () => isDragging = false);
-            pdfContainer.addEventListener("mouseleave", () => isDragging = false);
-
-            pdfContainer.addEventListener("dblclick" , (e) => {
-                scale = 1.2;
+                const zoomIntensity = 0.05;
+                if (e.deltaY < 0) {
+                    scale = Math.min(MAX_SCALE, scale + zoomIntensity); // Zoom in
+                } else {
+                    scale = Math.max(MIN_SCALE, scale - zoomIntensity); // Zoom out
+                }
                 renderPage(pageNum);
-            })
-        });
+            }, { passive: false });
+
+            enablePan(pdfContainer, applyPdfPan);
+
+            pdfContainer.addEventListener("dblclick", () => {
+                scale = 1.2;
+                translateX = 0;
+                translateY = 0;
+                renderPage(pageNum);
+            });
         }
 
         // Detectar extensión
@@ -223,6 +213,7 @@
             prevBtn.addEventListener('click', () => {
                 if (pageNum > 1) {
                     pageNum--;
+                    translateX = 0; translateY = 0;
                     renderPage(pageNum);
                 }
             });
@@ -232,6 +223,7 @@
             nextBtn.addEventListener('click', () => {
                 if (pdfDoc && pageNum < pdfDoc.numPages) {
                     pageNum++;
+                    translateX = 0; translateY = 0;
                     renderPage(pageNum);
                 }
             });
