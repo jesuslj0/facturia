@@ -9,91 +9,44 @@ from django.template.loader import render_to_string
 from openpyxl import Workbook
 
 
-EXPORT_HEADERS = [
-    "Fecha",
-    "Tipo",
-    "Número documento",
-    "Tercero",
-    "NIF",
-    "Base imponible",
-    "IVA %",
-    "Importe IVA",
-    "Retención",
-    "Total",
-]
-
-_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
-
-
-def sanitize_cell(value):
-    """Neutraliza la inyección de fórmulas en CSV/Excel.
-
-    Un texto que empiece por = + - @ (o tab/CR) se interpreta como fórmula al abrirlo
-    en Excel/LibreOffice; se antepone una comilla simple. Solo afecta a `str`:
-    los números y fechas no se tocan (un importe negativo es un `Decimal`, no texto).
-    """
-    if isinstance(value, str) and value.startswith(_FORMULA_PREFIXES):
-        return "'" + value
-    return value
-
-
-def _withholding_by_document(docs):
-    from documents.models import TaxBreakdown
-
-    ids = [d.pk for d in docs]
-    totals = {}
-    for kind_row in TaxBreakdown.objects.filter(document_id__in=ids, kind="withholding"):
-        totals[kind_row.document_id] = totals.get(kind_row.document_id, Decimal("0")) + kind_row.amount
-    return totals
-
-
-def export_rows(qs):
-    """Filas exportables (con signo contable: las rectificativas restan) y totales.
-
-    Devuelve `(rows, totals)`; `totals` = (base, iva, retención, total) como `Decimal`.
-    Funciona con un queryset vacío y con documentos sin tercero ni importes.
-    """
-    from documents.services.signs import signed_value
-
-    docs = list(qs.select_related("company").order_by("issue_date", "pk"))
-    withholding = _withholding_by_document(docs)
-    zero = Decimal("0")
-    sums = [zero, zero, zero, zero]
-    rows = []
-    for doc in docs:
-        kind = doc.document_type
-        base = signed_value(kind, doc.base_amount)
-        tax = signed_value(kind, doc.tax_amount)
-        total = signed_value(kind, doc.total_amount)
-        held = signed_value(kind, withholding.get(doc.pk))
-        for i, v in enumerate((base, tax, held, total)):
-            sums[i] += v or zero
-        rows.append([
-            doc.issue_date,
-            doc.get_document_type_display(),
-            doc.document_number or "",
-            doc.company.name if doc.company else "",
-            (doc.company.tax_id or "") if doc.company else "",
-            base,
-            doc.tax_percentage,
-            tax,
-            held,
-            total,
-        ])
-    return rows, tuple(sums)
-
-
 def export_to_csv(qs):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="documentos.csv"'
     writer = csv.writer(response)
-    writer.writerow(EXPORT_HEADERS)
+    writer.writerow([
+        "Fecha",
+        "Número documento",
+        "Proveedor",
+        "Base imponible",
+        "IVA %",
+        "Importe IVA",
+        "Total",
+    ])
 
-    rows, (base, tax, held, total) = export_rows(qs)
-    for row in rows:
-        writer.writerow([sanitize_cell(v) for v in row])
+    for doc in qs:
+        writer.writerow([
+            doc.issue_date,
+            doc.document_number,
+            doc.company.name,
+            doc.base_amount,
+            doc.tax_percentage,
+            doc.tax_amount,
+            doc.total_amount,
+        ])
 
-    writer.writerow(["Totales", "", "", "", "", base, "", tax, held, total])
+    total_base_amount = round(float(qs.aggregate(Sum('base_amount'))['base_amount__sum']), 2)
+    total_tax_amount = round(float(qs.aggregate(Sum('tax_amount'))['tax_amount__sum']), 2)
+    total_total_amount = round(float(qs.aggregate(Sum('total_amount'))['total_amount__sum']), 2)
+
+    writer.writerow([
+        "Totales",
+        "",
+        "",
+        total_base_amount,
+        "",
+        total_tax_amount,
+        total_total_amount
+    ])
     return response
 
 
@@ -101,13 +54,43 @@ def export_to_excel(qs):
     wb = Workbook()
     ws = wb.active
     ws.title = "Documentos"
-    ws.append(EXPORT_HEADERS)
 
-    rows, (base, tax, held, total) = export_rows(qs)
-    for row in rows:
-        ws.append([sanitize_cell(v) for v in row])
+    headers = [
+        "Fecha",
+        "Número documento",
+        "Proveedor",
+        "Base imponible",
+        "IVA %",
+        "Importe IVA",
+        "Total",
+    ]
 
-    ws.append(["Totales", "", "", "", "", base, "", tax, held, total])
+    ws.append(headers)
+
+    for doc in qs:
+        ws.append([
+            doc.issue_date.strftime("%d/%m/%Y"),
+            doc.document_number,
+            doc.company.name,
+            doc.base_amount,
+            doc.tax_percentage,
+            doc.tax_amount,
+            doc.total_amount,
+        ])
+
+    total_base_amount = round(float(qs.aggregate(Sum('base_amount'))['base_amount__sum']), 2)
+    total_tax_amount = round(float(qs.aggregate(Sum('tax_amount'))['tax_amount__sum']), 2)
+    total_total_amount = round(float(qs.aggregate(Sum('total_amount'))['total_amount__sum']), 2)
+
+    ws.append([
+        "Totales",
+        "",
+        "",
+        total_base_amount,
+        "",
+        total_tax_amount,
+        total_total_amount
+    ])
 
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -183,13 +166,8 @@ def _logo_as_data_uri(client):
 
 
 def build_pdf_context(qs, request):
-    from documents.services.signs import signed_amount, signed_value
-
     client = request.user.client
-    invoices = list(qs.select_related("company"))
-    for inv in invoices:  # solo en memoria (no se guarda): rectificativas con signo negativo
-        for field in ("base_amount", "tax_amount", "total_amount"):
-            setattr(inv, field, signed_value(inv.document_type, getattr(inv, field)))
+    invoices = list(qs)
     return {
         "invoices": invoices,
         "pages": _paginate_invoices(invoices),
@@ -197,9 +175,9 @@ def build_pdf_context(qs, request):
         "logo_data_uri": _logo_as_data_uri(client),
         "date": timezone.now(),
         "totals": qs.aggregate(
-            base_total=Sum(signed_amount("base_amount")),
-            tax_total=Sum(signed_amount("tax_amount")),
-            total=Sum(signed_amount("total_amount")),
+            base_total=Sum("base_amount"),
+            tax_total=Sum("tax_amount"),
+            total=Sum("total_amount"),
             count=Count("id"),
         ),
     }

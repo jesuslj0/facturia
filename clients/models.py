@@ -1,7 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, UserManager
+from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
-from billing_ai.storage import HashedImageField, logo_upload_to
 
 # Create your models here.
 class Client(models.Model):
@@ -9,15 +8,8 @@ class Client(models.Model):
     tax_id = models.CharField(max_length=50, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    logo = HashedImageField(upload_to=logo_upload_to, blank=True, null=True)
+    logo = models.ImageField(upload_to='clients/logos/', blank=True, null=True)
     primary_color = models.CharField(max_length=7, default="#2563eb")
-    # Ficha de la empresa (todo opcional)
-    founded_date = models.DateField("Fecha de fundación", null=True, blank=True)
-    employee_count = models.PositiveIntegerField("Número de empleados", null=True, blank=True)
-    industry = models.CharField("Sector", max_length=100, blank=True, default="")
-    city = models.CharField("Localidad", max_length=100, blank=True, default="")
-    website = models.URLField("Sitio web", blank=True, default="")
-    phone = models.CharField("Teléfono", max_length=30, blank=True, default="")
     def __str__(self):
         return self.name
 
@@ -34,30 +26,13 @@ class Role(models.Model):
     def __str__(self):
         return f"{self.client.name} - {self.name}"
     
-class CustomUserManager(UserManager):
-    def _create_user_object(self, username, email, password, **extra_fields):
-        # createsuperuser pasa el id del Client (no la instancia) para las FK
-        # de REQUIRED_FIELDS; lo convertimos a client_id.
-        client = extra_fields.get("client")
-        if client is not None and not isinstance(client, Client):
-            extra_fields["client_id"] = extra_fields.pop("client")
-        return super()._create_user_object(username, email, password, **extra_fields)
-
-
 class CustomUser(AbstractUser):
-    objects = CustomUserManager()
-
     client = models.ForeignKey(
         Client, 
         on_delete=models.CASCADE, 
         related_name="users"
     )
     roles = models.ManyToManyField(Role, blank=True)
-    city = models.CharField("Localidad", max_length=100, blank=True, default="")
-    birth_date = models.DateField("Fecha de nacimiento", null=True, blank=True)
-
-    # createsuperuser pedirá el id del Client (FK obligatoria)
-    REQUIRED_FIELDS = ["email", "client"]
 
     def has_role(self, code):
         return self.roles.filter(code=code).exists()

@@ -15,12 +15,8 @@ class HasApiKey(BasePermission):
             return False
 
         try:
-            api_key = ApiKey.objects.select_related("client").get(prefix=prefix, is_active=True)
+            api_key = ApiKey.objects.get(prefix=prefix, is_active=True)
         except ApiKey.DoesNotExist:
-            return False
-
-        # Un cliente desactivado no puede ingerir documentos
-        if not api_key.client.is_active:
             return False
 
         # Validación completa (hash + expiración)

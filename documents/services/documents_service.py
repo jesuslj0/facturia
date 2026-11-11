@@ -1,7 +1,6 @@
 from django.db import transaction
 from documents.models import Document
 from documents.utils import parse_decimal
-from documents.services import organization
 from decimal import InvalidOperation
 
 class DocumentService:
@@ -70,10 +69,6 @@ class DocumentService:
         if data.get("flow"):
             document.flow = data["flow"]
 
-        organization.apply_organization(document, data)
-
         document.mark_as_manually_reviewed(user)
 
         document.save()
-        if "tags" in data:
-            organization.set_tags(document, data.get("tags"))

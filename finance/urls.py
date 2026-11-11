@@ -7,8 +7,7 @@ from .views import (
     MovementCategoryCreateView,
     MovementCategoryListView,
     MovementCategoryUpdateView,
-    MovementCategoryDeleteView,
-    FinancialMovementReceiptView,
+    MovementCategoryDeleteView
 )
 
 app_name = "finance"
@@ -18,7 +17,6 @@ urlpatterns = [
     path("movements/new", FinancialMovementCreateView.as_view(), name="new_movement"),
     path("movements/<int:pk>/edit", FinancialMovementUpdateView.as_view(), name="edit_movement"),
     path("movements/<int:pk>/delete", FinancialMovementDeleteView.as_view(), name="delete_movement"),
-    path("movements/<int:pk>/receipt", FinancialMovementReceiptView.as_view(), name="receipt"),
     path("categories", MovementCategoryListView.as_view(), name="categories"),
     path("categories/new", MovementCategoryCreateView.as_view(), name="new_category"),
     path("categories/<int:pk>/edit", MovementCategoryUpdateView.as_view(), name="edit_category"),

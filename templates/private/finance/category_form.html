@@ -1,74 +1,43 @@
 {% extends "base.html" %}
-{% load ui static %}
-{% block title %}{% if object %}Editar categoría{% else %}Nueva categoría{% endif %} - FacturIA{% endblock %}
+{% block title %}Nueva categoría - FacturIA{% endblock %}
 {% block styles %}
-    <link rel="stylesheet" href="{% static 'css/form-page.css' %}">
+{% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/finance/category_form.css' %}">
 {% endblock %}
 {% block content %}
-<div class="form-head">
-  <a href="{% url 'finance:categories' %}" class="btn btn-back btn-sm">{% icon "back" %} Volver</a>
-  <h1 class="form-page-title"><i class="fa-solid fa-tags"></i> {% if object %}Editar categoría{% else %}Nueva categoría{% endif %}</h1>
-  <p class="form-subtitle">Las categorías clasifican tus movimientos y aparecen en los resúmenes de gastos e ingresos.</p>
-</div>
-
-<form method="post" id="category-form" class="form-layout" novalidate>
-  {% csrf_token %}
-  <div class="form-card">
-    {% if form.non_field_errors %}<ul class="fld-errors">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-
-    <fieldset class="form-section">
-      <legend><i class="fa-solid fa-pen"></i> Datos</legend>
-      {% include "components/field.html" with field=form.name %}
-      <div class="fld{% if form.type.errors %} has-error{% endif %}">
-        <span class="fld-label">{{ form.type.label }}</span>
-        <div class="seg-radio" role="radiogroup">
-          {% for radio in form.type %}<label for="{{ radio.id_for_label }}">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>{% endfor %}
-        </div>
-        {% if form.type.errors %}<ul class="fld-errors">{% for e in form.type.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-      </div>
-    </fieldset>
-
-    <fieldset class="form-section">
-      <legend><i class="fa-solid fa-palette"></i> Aspecto</legend>
-      <div class="fld{% if form.color.errors %} has-error{% endif %}">
-        <label for="{{ form.color.id_for_label }}">{{ form.color.label }}</label>
-        <div class="color-row">
-          {{ form.color }}
-          <span class="color-hex" id="color-hex">{{ form.color.value }}</span>
-          <div class="swatches" id="swatches" aria-label="Colores sugeridos"></div>
-        </div>
-        {% if form.color.errors %}<ul class="fld-errors">{% for e in form.color.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-      </div>
-      <div class="fld{% if form.icon.errors %} has-error{% endif %}">
-        <label for="{{ form.icon.id_for_label }}">{{ form.icon.label }}</label>
-        <div class="icon-grid" id="icon-grid" role="listbox" aria-label="Iconos sugeridos"></div>
-        {{ form.icon }}
-        <span class="help">{{ form.icon.help_text }}</span>
-        {% if form.icon.errors %}<ul class="fld-errors">{% for e in form.icon.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-      </div>
-    </fieldset>
-
-    <div class="form-actions-bar">
-      <button type="submit" class="btn btn-primary">{% icon "save" %} Guardar</button>
-      <a href="{% url 'finance:categories' %}" class="btn btn-ghost">Cancelar</a>
-      {% if object %}<a href="{% url 'finance:delete_category' object.pk %}" class="btn btn-danger spacer">{% icon "delete" %} Borrar</a>{% endif %}
+    <a href="{% url 'finance:categories' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+    <div class="category-header">
+        {% if object %}
+            <i class="{{ object.icon }} category-icon" style="color: {{ object.color }}"></i>
+            <h3 class="category-name">{{ object.name }}</h3>
+        {% endif %}
     </div>
-  </div>
-
-  <aside class="side-card">
-    <h2>Vista previa</h2>
-    <div class="cat-preview" id="cat-preview">
-      <span class="cat-icon"><i id="prev-icon" class="fa-solid fa-tag"></i></span>
-      <div><strong id="prev-name">Nombre de la categoría</strong><small id="prev-type">Gasto</small></div>
+    <h1 class="form-title"><i class="fa-solid fa-list"></i> 
+        {% if object %}Editar categoría{% else %}Nueva categoría{% endif %}
+    </h1>
+    <div class="form-container">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <p>
+                {{ field.label_tag }}
+                {{ field }}
+                {{ field.errors }}
+            </p>
+            {% endfor %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                {% if object %}
+                <a href="{% url 'finance:delete_category' object.pk %}" class="btn btn-secondary">Borrar</a>
+                {% endif %}
+                <a href="{% url 'finance:categories' %}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
     </div>
-    {% if object %}
-    <a href="{% url 'finance:new_movement' %}?category={{ object.pk }}" class="btn btn-block">{% icon "new" %} Crear movimiento de {{ object.name }}</a>
-    {% endif %}
-  </aside>
-</form>
-{% endblock %}
-
-{% block scripts %}
-{{ block.super }}
-<script src="{% static 'js/category-form.js' %}"></script>
+    <div>
+        <a href="{% url 'finance:new_movement' %}?category={{ object.pk }}" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Crear movimiento 
+            {% if object %}de {{ object.name }}{% endif %}
+        </a>
+    </div>
 {% endblock %}

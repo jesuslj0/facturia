@@ -1,0 +1,181 @@
+/* Contenedor base para todos los gráficos */
+.chart-container {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;  
+    justify-content: center;
+    padding: 1.2rem 1rem;
+    border-radius: 12px;
+    background: var(--card-bg-color);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    box-sizing: border-box;
+    margin-bottom: 1.5rem; 
+}
+
+.canvas {
+    max-width: 100%;
+}
+
+/* Título del gráfico */
+.chart-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--body-fg-color);
+    margin: 0 0 1rem;
+    text-align: center;
+}
+
+/* Tamaño específico por tipo */
+.chart-container.donut-chart {
+    max-width: 310px;
+}
+
+.chart-container.line-chart {
+    max-width: 900px;
+    margin: auto auto;
+}
+
+/* Canvas responsive */
+.chart-container canvas {
+    width: 100% !important;
+    height: auto !important;
+}
+
+.period-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+
+
+/* Estilos de filtros por fecha */
+.date-filter {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.date-filter form {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.date-filter form label {
+    font-weight: 600;
+    color: var(--body-fg-color);
+}
+
+.date-filter form input[type="date"] {
+    padding: 0.45rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg-color);
+    color: var(--body-fg-color);
+}
+
+.date-filter form button[type="submit"] {
+    text-decoration: none;
+    border: 1px solid var(--border-color);
+    padding: 0.45rem 0.6rem;
+    border-radius: 6px;
+    background-color: var(--card-bg-color);
+    color: var(--body-fg-color);
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+
+.date-filter form button[type="submit"]:hover {
+    filter: brightness(1.2);
+    text-decoration: none;
+}
+
+.date-filter form button[type="submit"]:active {
+    background-color: var(--enfasis-color-dark);
+    transition: background-color 0.2s ease;
+}
+
+.date-filter form .btn-clear {
+    font-size: 0.9rem;
+    color: var(--color-warning);
+    text-decoration: none;
+    transition: color 0.2s;
+    background-color: var(--card-bg-color);
+    padding: 0.45rem 0.6rem;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.date-range {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Sección automatización */
+.automation-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}   
+
+/* Ajuste móvil */
+@media (max-width: 768px) {
+    .chart-container.donut-chart,
+    .chart-container.line-chart {
+        max-width: 100%;
+    }
+
+    .chart-container.donut-chart {
+        max-width: 400px;
+    }
+
+    .automation-section {
+        flex-direction: column;
+    }
+
+    .automation-section .dashboard-cards {
+        width: 100%;
+    }
+
+    .period-header {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+    }
+
+    .period-header > .date-filter {
+        align-self: center;
+    }
+
+    .period-header > .date-filter form {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        align-self: center;
+    }
+
+    .date-range {
+        display: flex;
+        width: 100%;
+        justify-content: space-around;
+    }
+
+    .date-input-container {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .date-filter form .buttons {
+        display: flex;
+        width: 100%;
+        justify-content: end;
+        gap: 0.5rem;
+    }
+}

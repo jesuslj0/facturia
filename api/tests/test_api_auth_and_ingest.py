@@ -207,7 +207,7 @@ class TestDocumentIngestEndpointRealDB:
         response = api_client.post(
             "/api/v1/documents/ingest/",
             data={
-                "file": SimpleUploadedFile("real.pdf", b"%PDF-1.4", content_type="application/pdf"),
+                "file": SimpleUploadedFile("real.pdf", b"pdf", content_type="application/pdf"),
                 "external_id": "real-ingest-001",
                 "original_name": "real.pdf",
                 "document_type": "invoice",
@@ -242,7 +242,7 @@ class TestDocumentIngestEndpointRealDB:
         response = api_client.post(
             "/api/v1/documents/ingest/",
             data={
-                "file": SimpleUploadedFile("low.pdf", b"%PDF-1.4", content_type="application/pdf"),
+                "file": SimpleUploadedFile("low.pdf", b"x", content_type="application/pdf"),
                 "external_id": "low-confidence-001",
                 "original_name": "low.pdf",
                 "document_type": "invoice",
@@ -270,7 +270,7 @@ class TestDocumentIngestEndpointRealDB:
         response = api_client.post(
             "/api/v1/documents/ingest/",
             data={
-                "file": SimpleUploadedFile("cust.pdf", b"%PDF-1.4", content_type="application/pdf"),
+                "file": SimpleUploadedFile("cust.pdf", b"y", content_type="application/pdf"),
                 "external_id": "cust-ingest-001",
                 "original_name": "cust.pdf",
                 "document_type": "invoice",

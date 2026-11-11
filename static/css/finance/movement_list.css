@@ -1,18 +1,222 @@
-/* Movimientos: solo lo específico (filtros, tabla y paginación en list-page.css / ui.css) */
-.category-icon { margin-right: 0.5rem; opacity: 0.9; }
+/* CONTENEDORES */
 
-.table td.amount.income { color: var(--color-success); font-weight: 600; }
-.table td.amount.expense { color: var(--color-danger); font-weight: 600; }
-
-.badge-method {
-  display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.15rem 0.55rem; border-radius: 999px;
-  font-size: 0.78rem; color: var(--muted-color); border: 1px solid var(--border-color);
+.movements-container {
+  margin-top: 20px;
 }
-.badge-method i { font-size: 0.72rem; opacity: 0.85; }
 
-.receipt-link { color: var(--enfasis-color); text-decoration: none; }
-.receipt-link:hover { text-decoration: underline; }
+.table-wrapper {
+  background: var(--card-bg-color);
+  border-radius: 14px;
+  padding: 22px;
+  border: 1px solid var(--border-color);
+  overflow-x: auto;
+}
 
-.table td.empty i { display: block; font-size: 1.6rem; margin-bottom: 0.4rem; opacity: 0.6; }
-.only-cards { display: none; }
-@container tablewrap (max-width: 760px) { .only-cards { display: inline; } }
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.table-header .results {
+  font-size: 0.9rem;
+  color: var(--muted-color);
+}
+
+/* TITULO */
+
+.page-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-title i {
+  color: var(--enfasis-color);
+}
+
+/* TABLA */
+
+.movements-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.movements-table thead th {
+  text-align: left;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-color);
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.movements-table tbody td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.92rem;
+}
+
+.movements-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.movement-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.category-icon {
+  margin-right: 10px;
+  opacity: 0.85;
+}
+
+/* IMPORTE */
+
+.amount {
+  font-weight: 600;
+}
+
+.amount.income {
+  color: var(--color-success);
+}
+
+.amount.expense {
+  color: var(--color-danger);
+}
+
+.badge-method{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+  padding:4px 8px;
+  border-radius:6px;
+  color:#d1d5db;
+  border:1px solid #3a3a3a;
+}
+
+.badge-method i{
+  font-size:11px;
+  opacity: .85;
+}
+
+.badge {
+  font-size: 12px;
+  padding: 4px 7px;
+  border-radius: 6px;
+}
+
+.badge-success {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.badge-warning {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.receipt-link {
+  color: #6b7280;
+}
+
+.receipt-link:hover {
+  color: #111;
+}
+
+.empty-row {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+}
+
+/* ALINEACION */
+
+.text-end {
+  text-align: right;
+}
+
+/* CATEGORIAS */
+
+.categories-container {
+  margin-top: 22px;
+  display: flex;
+  gap: 10px;
+}
+
+.filters-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+  justify-content:first baseline;
+}
+
+.search-bar {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg-color);
+  color: var(--body-fg-color);
+}
+
+.filters-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top-right {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 10px;
+}
+
+.date-filter {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg-color);
+  color: var(--body-fg-color);
+}
+
+.bottom-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.category-filter, .method-filter {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg-color);
+  color: var(--body-fg-color);
+  max-width: 120px;
+  margin-left: 10px;
+}
+
+.bottom-right { 
+  justify-content: end;
+}
+
+.amount-filter {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg-color);
+  color: var(--body-fg-color);
+  max-width: 90px;
+}
+
+label {
+  font-size: 0.85rem;
+  color: var(--muted-color);
+  cursor: pointer;
+}

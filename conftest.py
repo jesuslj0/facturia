@@ -5,8 +5,6 @@ from uuid import uuid4
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "billing_ai.settings.base")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
-# Los tests NUNCA usan el bucket real de R2.
-os.environ["USE_R2_STORAGE"] = "False"
 
 import django
 import pytest
@@ -23,19 +21,6 @@ from django.db.models.signals import post_save
 
 django.setup()
 settings.ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
-
-
-@pytest.fixture(autouse=True)
-def _test_storage(tmp_path, settings):
-    """Archivos de test en disco temporal; jamás en R2 ni en media/ real."""
-    settings.STORAGES = {
-        "default": {
-            "BACKEND": "django.core.files.storage.FileSystemStorage",
-            "OPTIONS": {"location": str(tmp_path / "media")},
-        },
-        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
-    }
-    yield
 
 
 @pytest.fixture(autouse=True)

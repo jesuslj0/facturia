@@ -3,7 +3,11 @@ from django.urls import path, include
 from django.contrib.auth.views import LoginView, LogoutView
 from django.views.generic import RedirectView
 from django.conf import settings
+from django.conf.urls.static import static
 from documents.views import DashboardView, MetricsDashboardView
+from debug_toolbar.toolbar import debug_toolbar_urls
+from django.urls import re_path
+from django.views.static import serve
 
 urlpatterns = [
     path("", RedirectView.as_view(pattern_name="dashboard"), name="home"),
@@ -18,9 +22,12 @@ urlpatterns = [
     path('clients/', include("clients.urls")),
 ]
 
-if settings.DEBUG and "debug_toolbar" in settings.INSTALLED_APPS:
-    from debug_toolbar.toolbar import debug_toolbar_urls
+if settings.DEBUG:
     urlpatterns += debug_toolbar_urls()
+
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+]
 
 
 

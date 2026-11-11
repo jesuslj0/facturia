@@ -1,0 +1,404 @@
+/* =========================
+   Dashboard
+========================= */
+
+.dashboard {
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    margin-top: 0;
+  }
+}
+
+/* =========================
+   Dashboard header
+========================= */
+
+.dashboard-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* menos centrado, más app */
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--body-fg-color);
+  line-height: 1.2;
+  text-align: center;
+}
+
+.dashboard-header h1 i {
+  color: var(--enfasis-color);
+  font-size: 1.25rem;
+}
+
+.dashboard-header h1 .client-name{
+  text-transform: capitalize;
+  font-weight: 700;
+}
+
+.client-name > a {
+  color: var(--enfasis-color);
+  text-decoration: none;
+}
+
+.dashboard-header p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted-color);
+}
+
+/* Desktop: deja aire y permite CTA a la derecha */
+@media (min-width: 768px) {
+  .dashboard-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .dashboard-header p {
+    font-size: 0.85rem;
+  }
+}
+
+/* =========================
+   KPI cards
+========================= */
+
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-cards .card {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  transition: box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dashboard-cards .card:hover {
+  box-shadow: 0 4px 18px rgba(56, 189, 248, 0.25);
+  cursor: pointer;
+}
+
+.dashboard-cards .card:hover {
+  box-shadow: 0 6px 22px rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.35);
+  transform: translateY(-2px);
+}
+
+
+.dashboard-cards .card h3 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #cbd5f5;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-cards .card a {
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* KPI número */
+.dashboard-cards .kpi {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--body-fg-color);
+}
+
+/* Colores de estado (reutilizan tus utilidades) */
+.kpi.text-danger {
+  color: var(--color-danger);
+}
+
+.kpi.text-warning {
+  color: var(--color-warning);
+}
+
+.kpi.text-success,
+.text-success {
+  color: var(--color-success);
+}
+
+/* =========================
+   Card genérica (tabla)
+========================= */
+
+.dashboard .card.mt-4 {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.25rem 0.75rem;
+}
+
+.dashboard .finance-summary {
+  margin-bottom: 1.5rem;
+}
+
+.dashboard .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1.5rem 0.75rem;
+}
+
+.dashboard .section-header > h2 {
+  padding: 0px;
+  margin: 0px;
+  font-size: 1.2rem;
+}
+
+.dashboard .link-inline {
+  font-size: 0.85rem;
+  color: var(--enfasis-color);
+  text-decoration: none;
+}
+
+.dashboard .link-inline:hover {
+  text-decoration: underline;
+}
+
+.dashboard .period-label {
+  padding-top: 0;
+}
+
+.dashboard .finance-cards {
+  margin: 0 0 1rem;
+  padding: 0 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard .top-categories {
+  padding: 1rem 1.5rem 0;
+  margin-top: 1.5rem;
+}
+
+.dashboard .top-categories h3 {
+  font-size: 0.85rem;
+  margin: 0 0 0.75rem;
+  color: var(--body-fg-color);
+}
+
+.dashboard .top-categories ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard .top-categories li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .top-categories .category-icon {
+  margin-right: 0.5rem;
+  font-size: 0.85rem;
+  filter: brightness(0.8);
+}
+
+.dashboard .card.mt-4 h2 {
+  padding: 0 1.5rem 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--body-fg-color);
+}
+
+/* Ajuste botón Ver */
+.dashboard .btn.btn-primary {
+  background: transparent;
+  border: none;
+  color: var(--enfasis-color);
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+}
+
+.dashboard .btn.btn-primary:hover {
+  text-decoration: underline;
+}
+
+/* Texto vacío */
+.dashboard .text-muted {
+  padding: 0 1.5rem 1rem;
+  font-size: 0.9rem;
+  color: var(--muted-color);
+}
+
+/* Wrapper específico dashboard */
+
+.dashboard .table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0;
+}
+
+.dashboard .table-wrapper {
+  margin-top: 0.5rem;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.table-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.table-footer > a {
+  text-decoration: none;
+  color: var(--body-fg-color);
+  border: 1px solid var(--border-color);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: color 0.2s;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.dashboard .table td {
+    color: var(--muted-color);
+    text-align: center;
+}
+
+/* Cabecera ligeramente más marcada */
+.dashboard .table thead th {
+  background: #020617;
+  color: #e0e7ff;
+}
+
+/* Filas más compactas */
+.dashboard .table td {
+  font-size: 0.88rem;
+}
+
+/* Hover más sutil (menos ruido visual) */
+.dashboard .table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Última columna (acción) */
+.dashboard .table td.text-end {
+  white-space: nowrap;
+}
+
+/* Botón "Ver" coherente con lista */
+.dashboard .table a.btn.btn-primary {
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.25rem 0.4rem;
+  color: var(--body-fg-color);
+  text-decoration: none;
+}
+
+.dashboard .table a.btn.btn-primary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  text-decoration: none;
+}
+
+/* Review level más compacto en dashboard */
+.dashboard .table td .review_level {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Espaciado horizontal algo mayor en desktop */
+@media (min-width: 768px) {
+  .dashboard .table td {
+    padding: 0.65rem 1.5rem;
+  }
+}
+
+/* Estado vacío más discreto */
+.dashboard .card.mt-4 p.text-muted {
+  margin: 0;
+  padding: 0.75rem 1.5rem 1rem;
+}
+
+
+/* Estilos Dashboard Métricas */
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--body-fg-color);
+  margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted-color);
+  display: inline-block;
+  margin-bottom: 0.85rem;
+}
+
+.section-icon {
+  color: var(--muted-color);
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+}
+
+.kpi.text-success {
+  color: var(--color-success);
+}
+
+.kpi.text-info {
+  color: var(--color-info);
+}
+
+.kpi.text-danger {
+  color: var(--color-danger);
+}
+
+.kpi.text-warning {
+  color: var(--color-warning);
+}
+
+.kpi-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted-color);
+}
+
+.kpi-info .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-success);
+  margin-left: 0.25rem;
+}
+
+.kpi-info .dot.dot-info {
+  background-color: var(--color-info);
+}
+
+.kpi-info strong {
+  font-weight: 600;
+  color: var(--text-color);
+}

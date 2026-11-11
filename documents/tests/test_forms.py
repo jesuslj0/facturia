@@ -9,7 +9,6 @@ from documents.forms import DocumentRectificationForm
 class TestDocumentRectificationForm:
     def test_form_accepts_decimal_strings_with_comma(self, company):
         form = DocumentRectificationForm(
-            client=company.client,
             data={
                 "base_amount": "100,50",
                 "tax_amount": "21,11",
@@ -30,7 +29,6 @@ class TestDocumentRectificationForm:
 
     def test_form_accepts_standard_decimal_strings(self, company):
         form = DocumentRectificationForm(
-            client=company.client,
             data={
                 "base_amount": "100.50",
                 "tax_amount": "21.11",

@@ -1,89 +1,64 @@
 {% extends "base.html" %}
-{% load ui static %}
-{% block title %}{% if object %}Editar movimiento{% else %}Nuevo movimiento{% endif %} - FacturIA{% endblock %}
+{% block title %}Crear movimiento - FacturIA{% endblock %}
 {% block styles %}
-    <link rel="stylesheet" href="{% static 'css/form-page.css' %}">
+{% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/finance/movement_form.css' %}">
 {% endblock %}
 {% block content %}
-<div class="form-head">
-  <a href="{% url 'finance:movements' %}" class="btn btn-back btn-sm">{% icon "back" %} Volver</a>
-  <h1 class="form-page-title">{% icon "finance" %} {% if object %}Editar movimiento{% else %}Nuevo movimiento{% endif %}</h1>
-  <p class="form-subtitle">{% if object %}Modifica los datos del movimiento.{% else %}Registra un ingreso o un gasto que no proviene de una factura.{% endif %}</p>
-</div>
-
-<form method="post" enctype="multipart/form-data" id="movement-form" class="form-layout single" novalidate>
-  {% csrf_token %}
-  <div class="form-card">
-    {% if form.non_field_errors %}<ul class="fld-errors">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-
-    <fieldset class="form-section">
-      <legend><i class="fa-solid fa-circle-info"></i> Datos principales</legend>
-      <div class="fld{% if form.category.errors %} has-error{% endif %}">
-        <label for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
-        {{ form.category }}
-        <span class="type-pill badge-status" id="type-pill"></span>
-        {% if form.category.errors %}<ul class="fld-errors">{% for e in form.category.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-      </div>
-      <div class="form-grid-2">
-        <div class="fld{% if form.amount.errors %} has-error{% endif %}">
-          <label for="{{ form.amount.id_for_label }}">{{ form.amount.label }}</label>
-          <div class="input-suffix">{{ form.amount }}<span>€</span></div>
-          {% if form.amount.errors %}<ul class="fld-errors">{% for e in form.amount.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-        </div>
-        {% include "components/field.html" with field=form.date %}
-      </div>
-    </fieldset>
-
-    <fieldset class="form-section">
-      <legend><i class="fa-solid fa-align-left"></i> Detalle</legend>
-      {% include "components/field.html" with field=form.description %}
-      {% include "components/field.html" with field=form.payment_method %}
-    </fieldset>
-
-    <fieldset class="form-section">
-      <legend><i class="fa-solid fa-paperclip"></i> Justificante</legend>
-      {% if form.instance.receipt %}
-      <details class="receipt-box" id="receipt-preview">
-        <summary><i class="fa-regular fa-file-image"></i> Recibo actual: {{ form.instance.receipt_name }}</summary>
-        <div class="receipt-body">
-          <img src="{% url 'finance:receipt' form.instance.pk %}" alt="Recibo del movimiento">
-          <a class="link" href="{% url 'finance:receipt' form.instance.pk %}" target="_blank" rel="noopener">Abrir en una pestaña nueva</a>
-        </div>
-      </details>
-      {% endif %}
-      <div class="fld{% if form.receipt.errors %} has-error{% endif %}">
-        <label class="file-drop" for="{{ form.receipt.id_for_label }}" id="receipt-drop">
-          <i class="fa-solid fa-cloud-arrow-up"></i>
-          <span class="file-name" id="receipt-name">{% if form.instance.receipt %}Sustituir el recibo…{% else %}Adjuntar recibo (imagen o PDF)…{% endif %}</span>
-          {{ form.receipt }}
-        </label>
-        {% if form.receipt.errors %}<ul class="fld-errors">{% for e in form.receipt.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-      </div>
-    </fieldset>
-
-    <fieldset class="form-section">
-      <legend><i class="fa-solid fa-sliders"></i> Estado</legend>
-      {% for f in form.visible_fields %}{% if f.name == "is_reconciled" or f.name == "is_recurrent" or f.name == "is_active" %}
-      <label class="switch" for="{{ f.id_for_label }}">
-        <span class="switch-text">
-          <strong>{{ f.label }}</strong>
-          <small>{% if f.name == "is_reconciled" %}Ya aparece en el extracto del banco.{% elif f.name == "is_recurrent" %}Se repite periódicamente.{% else %}Si lo desactivas, no cuenta en resúmenes ni métricas.{% endif %}</small>
-        </span>
-        {{ f }}<span class="track" aria-hidden="true"></span>
-      </label>
-      {% endif %}{% endfor %}
-    </fieldset>
-
-    <div class="form-actions-bar">
-      <button type="submit" class="btn btn-primary">{% icon "save" %} Guardar</button>
-      <a href="{% url 'finance:movements' %}" class="btn btn-ghost">Cancelar</a>
-      {% if object %}<a href="{% url 'finance:delete_movement' object.pk %}" class="btn btn-danger spacer">{% icon "delete" %} Borrar</a>{% endif %}
+    <a href="{% url 'finance:movements' %}" class="btn btn-secondary btn-back"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+    <h1 class="page-title">
+        <i class="fa-solid fa-coins"></i> 
+        {% if object %}Editar movimiento{% else %}Nuevo movimiento
+        {% endif %}
+    </h1>
+    <div class="form-container">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+            {% if field.name == "receipt" %}
+                {% if form.instance.receipt %}
+                <details id="receipt-preview">
+                    <summary>
+                        <span class="receipt-preview-text"><i class="fa-solid fa-chevron-down"></i> Ver recibo</span>
+                    </summary>
+                    <div class="receipt-preview-container {% if form.instance.receipt %}show{% endif %}">
+                        <span class="receipt-name">{{ form.instance.receipt_name }}</span>
+                        <img src="{{ form.instance.receipt.url }}" alt="Receipt" class="receipt-preview-img">
+                    </div>
+                </details>
+                {% endif %}
+            {% endif %}
+            <p>
+                {{ field.label_tag }}
+                {{ field }}
+                {{ field.errors }}
+            </p>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            {% if object %}
+            <a href="{% url 'finance:delete_movement' object.pk %}" class="btn btn-secondary btn-danger">Borrar</a>
+            {% endif %}
+            <a href="{% url 'finance:movements' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
     </div>
-  </div>
-</form>
 {% endblock %}
-
 {% block scripts %}
 {{ block.super }}
-<script src="{% static 'js/movement-form.js' %}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const receiptDetails = document.getElementById("receipt-preview");
+
+        receiptDetails.addEventListener("toggle", function () {
+            const receiptPreviewText = document.querySelector(".receipt-preview-text");
+
+            if (receiptDetails.open) {
+                receiptPreviewText.innerHTML = "<i class='fa-solid fa-chevron-up'></i> Ocultar recibo";
+                receiptDetails.classList.toggle("open");
+            } else {
+                receiptPreviewText.innerHTML = "<i class='fa-solid fa-chevron-down'></i> Ver recibo";
+                receiptDetails.classList.toggle("open");
+            }
+        });
+    });
+</script>
 {% endblock %}
