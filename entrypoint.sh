@@ -10,6 +10,6 @@ python manage.py migrate --noinput
 echo "=== Arrancando Gunicorn ==="
 exec gunicorn billing_ai.wsgi:application \
     --bind 0.0.0.0:8000 \
-    --workers 2 \
-    --timeout 60 \
+    --workers "${GUNICORN_WORKERS:-2}" \
+    --timeout "${GUNICORN_TIMEOUT:-180}" \
     --log-level info

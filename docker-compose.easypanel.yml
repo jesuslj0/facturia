@@ -28,7 +28,7 @@ x-django-env: &django-env
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD}
 
   # Cola
-  CELERY_BROKER_URL: redis://redis:6379/0
+  CELERY_BROKER_URL: redis://facturia-redis:6379/0   # nombre propio: «redis» podría chocar con otro servicio de la red de Easypanel
 
   # Documentos en Cloudflare R2 (obligatorio en producción)
   R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:?define R2_ACCESS_KEY_ID}
@@ -41,9 +41,22 @@ x-django-env: &django-env
   EXTRACTION_MODEL: ${EXTRACTION_MODEL:-claude-haiku-5-5}
   EXTRACTION_FALLBACK_MODEL: ${EXTRACTION_FALLBACK_MODEL:-claude-sonnet-5-5}
   EXTRACTION_AUTO_APPROVE: ${EXTRACTION_AUTO_APPROVE:-False}
+  EXTRACTION_EFFORT: ${EXTRACTION_EFFORT:-low}
+  EXTRACTION_MAX_TOKENS: ${EXTRACTION_MAX_TOKENS:-8192}   # subir (p. ej. 16000) si hay facturas muy largas
+  UPLOAD_MAX_FILE_MB: ${UPLOAD_MAX_FILE_MB:-20}
+
+  # Seguridad / red
+  CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
+  SECURE_SSL_REDIRECT: ${SECURE_SSL_REDIRECT:-True}
+  SECURE_HSTS_SECONDS: ${SECURE_HSTS_SECONDS:-3600}
+  STORAGE_SSE: ${STORAGE_SSE:-}   # vacío en R2
+
+  # Gunicorn (solo lo usa la web)
+  GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
+  GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-180}
 
 services:
-  redis:
+  facturia-redis:
     image: redis:7-alpine
     restart: unless-stopped
     command: redis-server --appendonly yes
@@ -62,12 +75,13 @@ services:
     environment: *django-env
     networks: [default, easypanel]
     depends_on:
-      redis:
+      facturia-redis:
         condition: service_healthy
     expose:
       - "8000"
 
   worker:
+    build: .
     image: billing_ai:latest
     restart: unless-stopped
     # El CMD de la imagen arranca gunicorn; aquí se sustituye por el worker.
@@ -75,7 +89,7 @@ services:
     environment: *django-env
     networks: [default, easypanel]
     depends_on:
-      redis:
+      facturia-redis:
         condition: service_healthy
       web:
         condition: service_started   # la web ejecuta las migraciones al arrancar
