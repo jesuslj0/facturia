@@ -104,8 +104,11 @@
         hiddenInput.name = "action";
         hiddenInput.value = currentAction;
 
-        form.appendChild(hiddenInput);
-        form.submit();
+        // Aprobar envía el formulario de revisión: así no se pierden los cambios sin guardar.
+        const reviewForm = document.getElementById("review-form");
+        const target = currentAction === "approve" && reviewForm ? reviewForm : form;
+        target.appendChild(hiddenInput);
+        target.submit();
     });
 
     document.querySelectorAll("[data-close]").forEach(btn => {

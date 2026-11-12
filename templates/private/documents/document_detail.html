@@ -227,6 +227,7 @@
                     <span class="label">Flujo</span>
                     {% if document.is_editable %}
                         <select name="flow" class="editable-field">
+                            {% if document.flow == "unknown" %}<option value="unknown" selected>— Por revisar —</option>{% endif %}
                             <option value="in" {% if document.flow == "in" %}selected{% endif %}>Venta</option>
                             <option value="out" {% if document.flow == "out" %}selected{% endif %}>Compra</option>
                         </select>
@@ -329,32 +330,20 @@
               </section>
               <section class="form-section">
                 <h2 class="section-title"><i class="fa-solid fa-folder-tree"></i> Organización</h2>
+                {# Pendiente: va con «Guardar cambios». Aprobado/rechazado/archivado: formulario propio (no es una rectificación). #}
+                {% with org_form=document.is_editable|yesno:"review-form,organization-form" %}
                 <div class="form-grid">
                 <!-- Organización -->
                 <div class="field">
-                    <span class="label">Categoría</span>
-                    {% if document.is_editable %}
-                        <select name="category" class="editable-field">
-                            <option value="">— Sin categoría —</option>
-                            {% for c in categories %}
-                            <option value="{{ c.pk }}" {% if document.category_id == c.pk %}selected{% endif %}>{{ c.name }}</option>
-                            {% endfor %}
-                        </select>
-                    {% else %}
-                        <span class="value">{{ document.category.name|default:"-" }}</span>
-                    {% endif %}
-                </div>
-
-                <div class="field">
                     <span class="label">Carpeta</span>
-                    {% if document.is_editable %}
-                        <select name="folder" class="editable-field">
+                    {% if document.can_organize %}
+                        <select name="folder" form="{{ org_form }}" class="editable-field">
                             <option value="">— Sin carpeta —</option>
                             {% for f in folders %}
-                            <option value="{{ f.pk }}" {% if document.folder_id == f.pk %}selected{% endif %}>{{ f.name }}</option>
+                            <option value="{{ f.pk }}" {% if document.folder_id == f.pk %}selected{% endif %}>{{ f.label }}</option>
                             {% endfor %}
                         </select>
-                        <input type="text" name="new_folder" class="editable-field" placeholder="…o crear carpeta nueva" maxlength="100">
+                        <input type="text" name="new_folder" form="{{ org_form }}" class="editable-field" placeholder="…o crear carpeta nueva (en la raíz)" maxlength="100">
                     {% else %}
                         <span class="value">{{ document.folder.name|default:"-" }}</span>
                     {% endif %}
@@ -362,8 +351,8 @@
 
                 <div class="field span-2">
                     <span class="label">Etiquetas</span>
-                    {% if document.is_editable %}
-                        <input type="text" name="tags" value="{{ tag_names }}" class="editable-field" list="tag-options" placeholder="separadas por comas" autocomplete="off">
+                    {% if document.can_organize %}
+                        <input type="text" name="tags" form="{{ org_form }}" value="{{ tag_names }}" class="editable-field" list="tag-options" placeholder="separadas por comas" autocomplete="off">
                         <datalist id="tag-options">
                             {% for t in all_tag_names %}<option value="{{ t }}">{% endfor %}
                         </datalist>
@@ -371,10 +360,20 @@
                         <span class="value">{% for t in document.tags.all %}<span class="chip">{{ t.name }}</span>{% empty %}-{% endfor %}</span>
                     {% endif %}
                 </div>
+                {% if document.can_organize and not document.is_editable %}
+                <div class="field span-2">
+                    <button type="submit" form="organization-form" name="action" value="organize" class="btn btn-info">
+                        {% icon "save" %} Guardar organización
+                    </button>
                 </div>
+                {% endif %}
+                </div>
+                {% endwith %}
               </section>
             </div>
         </form>
+
+        <form method="post" id="organization-form">{% csrf_token %}</form>
 
         <form id="modal-form" method="post">
             {% csrf_token %}

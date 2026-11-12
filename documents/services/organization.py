@@ -35,11 +35,17 @@ def apply_organization(document, data) -> None:
             client=client, pk=_int(data.get("category"))
         ).first()
 
+    apply_folder(document, data)
+
+
+def apply_folder(document, data) -> None:
+    """Aplica (sin guardar) la carpeta manual de `data`: `folder` (id; vacío = ninguna) o `new_folder` (raíz)."""
+    client = document.client
     if "folder" in data or data.get("new_folder"):
         folder = None
         new_name = " ".join((data.get("new_folder") or "").split())[:100]
         if new_name:
-            folder = Folder.objects.filter(client=client, name__iexact=new_name).first() \
+            folder = Folder.objects.filter(client=client, parent=None, name__iexact=new_name).first() \
                 or Folder.objects.create(client=client, name=new_name)
         elif data.get("folder"):
             folder = Folder.objects.filter(client=client, pk=_int(data["folder"])).first()

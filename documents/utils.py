@@ -252,6 +252,6 @@ def parse_decimal(value):
         value = value.strip()
         value = value.replace(".", "") if value.count(",") == 1 else value
         value = value.replace(",", ".")
-        value = re.sub(r"[^\d.]", "", value)
+        value = re.sub(r"[^\d.\-]", "", value)
 
     return Decimal(value)

@@ -159,3 +159,15 @@ class TestSearchRow:
     def test_movements_use_the_same_joined_control(self, auth_client):
         top = auth_client.get("/finance/movements").content.decode().split('class="filter-top"')[1].split('id="filter-panel"')[0]
         assert 'class="search-group"' in top and top.count('type="submit"') == 1
+
+
+class TestConfidenceInRows:
+    @pytest.mark.parametrize("value, tone, pct", [("0.9500", "high", "95"), ("0.7000", "medium", "70"), ("0.3000", "low", "30")])
+    def test_confidence_shows_tone_bar_and_percent(self, auth_client, user, value, tone, pct):
+        f.DocumentFactory(client=user.client, confidence_global=D(value))
+        body = auth_client.get(reverse("documents:list")).content.decode()
+        assert f"conf conf-{tone}" in body and f"{pct}%" in body and "conf-fill" in body
+
+    def test_no_confidence_no_meter(self, auth_client, user):
+        f.DocumentFactory(client=user.client, confidence_global=None)
+        assert "conf-fill" not in auth_client.get(reverse("documents:list")).content.decode()

@@ -1,0 +1,32 @@
+{# Filas de documentos (listado y Archivo). Uso: {% include "components/_document_rows.html" %} con `documents`. #}
+{% load ui custom_filters %}
+{% for doc in documents %}
+      <tr class="clickable-row" data-href="{% url 'documents:detail' doc.id %}">
+        <td data-label="N.º factura">{{ doc.document_number|default:"—" }}</td>
+        <td class="name-cell cell-primary" data-label="Nombre">
+          <a href="{% url 'documents:file' doc.pk %}">{{ doc.original_name }}</a>
+          {% if doc.drive_reason %}<small class="cell-sub">{{ doc.drive_reason }}</small>{% endif %}
+          {% if doc.folder %}<span class="chip">{% icon "folder" %} {{ doc.folder.name }}</span>{% endif %}
+          {% for t in doc.tags.all %}<span class="chip">{{ t.name }}</span>{% endfor %}
+        </td>
+        <td class="cell-sub" data-label="Empresa">{{ doc.company.name|default:"—" }}</td>
+        <td class="amount" data-label="Total">{% if doc.total_amount %}{{ doc.total_amount|floatformat:2 }} €{% else %}—{% endif %}</td>
+        <td data-label="Fecha">{% if doc.issue_date %}{{ doc.issue_date|pretty_date }}{% else %}—{% endif %}</td>
+        <td data-label="Tipo">{{ doc.get_document_type_display }}</td>
+        <td data-label="Estado">
+          {% if doc.is_processing or doc.processing_status == "failed" %}{% badge "processing" doc.processing_status %}{% else %}{% badge "status" doc.status %}{% endif %}
+          {% if doc.is_archived %}{% badge "status" "archived" %}{% endif %}
+        </td>
+        <td data-label="Revisión">
+          <div class="review-cell">
+            {% badge "review" doc.review_key %}
+            {% if doc.confidence_global %}{% with pct=doc.confidence_global|to_percent|floatformat:0 %}
+            <span class="conf conf-{{ doc.ocr_confidence }}" title="Confianza de la extracción: {{ pct }}%" aria-label="Confianza de la extracción {{ pct }}%">
+              <span class="conf-bar" aria-hidden="true"><span class="conf-fill" style="width: {{ pct }}%"></span></span>{{ pct }}%
+            </span>
+            {% endwith %}{% endif %}
+          </div>
+        </td>
+        <td class="col-actions cell-actions"><a class="btn btn-ghost btn-sm" href="{% url 'documents:detail' doc.id %}">{% icon "view" %} Ver</a></td>
+      </tr>
+{% endfor %}

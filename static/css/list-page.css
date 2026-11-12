@@ -137,7 +137,6 @@
 .table thead th.sortable a:hover, .table thead th.active-sort a { color: var(--enfasis-color); text-decoration: none; }
 .table thead th.sortable a .sort-icon { font-size: 0.6rem; opacity: 0.35; }
 .table thead th.active-sort a .sort-icon { opacity: 1; }
-.table td .confidence { margin-left: 0.35rem; color: var(--muted-color); font-size: 0.75rem; }
 .table td.name-cell { max-width: 280px; }
 .table td.name-cell a { overflow-wrap: anywhere; }
 

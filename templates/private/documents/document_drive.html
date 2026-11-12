@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% load ui static custom_filters %}
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'css/list-page.css' %}">
+  <link rel="stylesheet" href="{% static 'css/documents/document_drive.css' %}">
+{% endblock %}
+{% block title %}Archivo - FacturIA{% endblock %}
+
+{% block content %}
+<nav class="drive-crumbs" aria-label="Ruta de carpetas">
+  <ol>
+    {% for label, ruta in breadcrumbs %}
+    <li>
+      {% if forloop.last %}<span aria-current="page">{{ label }}</span>
+      {% else %}<a href="{% if ruta %}{% url 'documents:drive' ruta=ruta %}{% else %}{% url 'documents:drive' %}{% endif %}{% if querystring %}?{{ querystring }}{% endif %}">{{ label }}</a>{% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+</nav>
+
+{% with current=breadcrumbs|last %}
+<h1 class="page-title">{% icon "drive" %} {{ current.0 }}
+  <a href="{% url 'documents:upload' %}" class="btn btn-primary upload-link">{% icon "upload" %} Subir</a>
+</h1>
+{% endwith %}
+
+<form method="get" class="filter-card" id="filter-form">
+  {% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}
+
+  <div class="filter-top">
+    <nav class="status-tabs" aria-label="Estado del documento">
+      {% for t in status_tabs %}<a class="status-tab{% if t.active %} active{% endif %}" href="{{ t.url }}">{{ t.label }}</a>{% endfor %}
+    </nav>
+
+    <button type="button" class="btn" id="filters-toggle" aria-expanded="false" aria-controls="filter-panel">
+      {% icon "filter" %} Filtros <i class="fa-solid fa-chevron-down caret"></i>
+    </button>
+  </div>
+
+  <div class="filter-panel" id="filter-panel" hidden>
+    <div class="drive-fields">
+      <div class="field"><label for="f-folder">Carpeta manual</label>
+        <select name="folder" id="f-folder"><option value="">Todas</option>
+          {% for f in folders %}<option value="{{ f.pk }}" {% if request.GET.folder == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.label }}</option>{% endfor %}
+        </select></div>
+      <div class="field"><label for="f-tag">Etiqueta</label>
+        <select name="tag" id="f-tag"><option value="">Todas</option>
+          {% for t in tags %}<option value="{{ t.pk }}" {% if request.GET.tag == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.name }}</option>{% endfor %}
+        </select></div>
+    </div>
+    <div class="filter-actions">
+      {% if active_filters %}<a href="?" class="btn btn-ghost">Limpiar todo</a>{% endif %}
+      <button type="submit" class="btn btn-primary">{% icon "filter" %} Aplicar filtros</button>
+    </div>
+  </div>
+
+  {% if active_filters %}
+  <div class="active-filters" aria-label="Filtros aplicados">
+    <span class="active-filters-label">Filtros:</span>
+    {% for f in active_filters %}
+    <a class="filter-chip" href="{{ f.remove_url }}" title="Quitar este filtro"><small>{{ f.label }}:</small> <span>{{ f.text }}</span> <i class="x fa-solid fa-xmark"></i></a>
+    {% endfor %}
+    <a class="btn btn-ghost btn-sm" href="?">Limpiar todo</a>
+  </div>
+  {% endif %}
+</form>
+
+{% if path.unclassified %}
+<p class="drive-note is-warning">{% icon "warning" %} <span>Los documentos aparecen en su carpeta en cuanto tengan fecha, tercero y flujo (compra o venta) y estén procesados.</span></p>
+{% elif path.level == "company" %}
+<div class="drive-note" data-dismiss-key="duplicate-company">{% icon "folder" %} <span>¿Ves el mismo proveedor duplicado? Pide a un administrador que lo fusione.</span>
+  <button type="button" class="note-close" data-dismiss hidden aria-label="Cerrar aviso" title="Cerrar aviso">{% icon "reject" %}</button>
+</div>
+{% elif path.manual %}
+<div class="drive-note" data-dismiss-key="manual-folders">{% icon "folder" %} <span>Las carpetas manuales son tuyas: un documento puede estar a la vez en su carpeta calculada (año, trimestre, empresa) y en una de estas. Asígnalo desde el detalle del documento.</span>
+  <button type="button" class="note-close" data-dismiss hidden aria-label="Cerrar aviso" title="Cerrar aviso">{% icon "reject" %}</button>
+</div>
+{% endif %}
+{% if path.level == "company" or path.manual %}<script src="{% static 'js/dismissible.js' %}"></script>{% endif %}
+
+{% if path.manual or folders_here %}
+<div class="drive-toolbar">
+  {% if path.manual %}
+  <div class="folder-create" data-folder-create>
+    <button type="button" class="btn btn-sm" data-create-open aria-expanded="false" aria-controls="folder-create-form" hidden>{% icon "new" %} Nueva carpeta</button>
+    <form method="post" action="{% url 'documents:drive_folder' %}" class="folder-create-form" id="folder-create-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create">
+      <input type="hidden" name="parent" value="{% if current_folder %}{{ current_folder.pk }}{% endif %}">
+      <label class="visually-hidden" for="new-folder-name">Nombre de la carpeta nueva</label>
+      <input type="text" id="new-folder-name" name="name" maxlength="100" required autocomplete="off" placeholder="Nombre de la carpeta">
+      <button type="submit" class="btn btn-primary btn-sm">Crear</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-create-cancel hidden>Cancelar</button>
+    </form>
+  </div>
+  {% endif %}
+  {% if folders_here %}
+  <div class="view-toggle" role="group" aria-label="Disposición de las carpetas" hidden>
+    <button type="button" class="btn btn-sm" data-view-option="list" aria-pressed="true" title="Lista" aria-label="Ver carpetas en lista">{% icon "list" %}</button>
+    <button type="button" class="btn btn-sm" data-view-option="grid" aria-pressed="false" title="Cuadrícula" aria-label="Ver carpetas en cuadrícula">{% icon "grid" %}</button>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if folders_here %}
+{% if path.level == "folder" %}<h2 class="drive-section">Subcarpetas</h2>{% endif %}
+<div class="folder-view{% if path.manual %} is-manual{% endif %}" id="folder-view" data-view="list">
+  <div class="folder-head" aria-hidden="true">
+    <span class="h-name">Carpeta</span>
+    <span class="h-meta">{% if path.manual %}Contenido{% else %}Documentos{% endif %}</span>
+    <span class="h-total">Total</span>
+    <span class="h-pending">Pendientes</span>
+  </div>
+  <ul class="folder-list" aria-label="Carpetas">
+    {% for f in folders_here %}
+    <li{% if f.folder_id %} class="has-actions"{% endif %}>
+      <a class="folder-row{% if f.icon == 'warning' %} tone-warning{% endif %}" href="{% url 'documents:drive' ruta=f.ruta %}{% if querystring %}?{{ querystring }}{% endif %}">
+        <span class="folder-icon" aria-hidden="true"><img class="icon-closed" src="{% static 'icons/carpeta-cerrada.svg' %}" alt=""><img class="icon-open" src="{% static 'icons/carpeta-abierta.svg' %}" alt="">{% if f.icon == 'warning' %}{% icon "warning" "folder-flag" %}{% endif %}</span>
+        <span class="folder-name" title="{{ f.name }}">{{ f.name }}</span>
+        <span class="folder-meta">{{ f.count }} documento{{ f.count|pluralize }}{% if f.subfolders %} · {{ f.subfolders }} subcarpeta{{ f.subfolders|pluralize }}{% endif %}</span>
+        <span class="folder-total">{% if f.total is not None %}{{ f.total|floatformat:2 }} €{% endif %}</span>
+        <span class="folder-pending">{% if f.pending_count %}<span class="badge-status tone-info">{{ f.pending_count }} pendiente{{ f.pending_count|pluralize }}</span>{% endif %}</span>
+      </a>
+      {% if f.folder_id %}
+      <form method="post" action="{% url 'documents:drive_folder' %}" class="folder-rename" hidden>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="rename">
+        <input type="hidden" name="folder" value="{{ f.folder_id }}">
+        <img src="{% static 'icons/carpeta-cerrada.svg' %}" alt="">
+        <label class="visually-hidden" for="rename-{{ f.folder_id }}">Nuevo nombre de la carpeta {{ f.name }}</label>
+        <input type="text" id="rename-{{ f.folder_id }}" name="name" value="{{ f.name }}" maxlength="100" required autocomplete="off">
+        <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-rename-cancel>Cancelar</button>
+      </form>
+      <div class="folder-actions" hidden>
+        <button type="button" class="btn btn-ghost btn-sm" data-folder-rename title="Renombrar" aria-label="Renombrar la carpeta {{ f.name }}">{% icon "edit" %}</button>
+        <button type="button" class="btn btn-danger btn-sm" data-folder-delete data-folder-id="{{ f.folder_id }}" data-folder-name="{{ f.name }}" title="Eliminar" aria-label="Eliminar la carpeta {{ f.name }}">{% icon "delete" %}</button>
+      </div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{# Síncrono y justo tras el contenedor: aplica la vista guardada antes del primer pintado #}
+<script src="{% static 'js/drive.js' %}"></script>
+{% endif %}
+
+{% if path.manual %}
+<dialog class="dialog" id="folder-delete-dialog" aria-labelledby="folder-delete-title">
+  <span class="dialog-icon tone-danger" aria-hidden="true">{% icon "delete" %}</span>
+  <h3 id="folder-delete-title">Eliminar carpeta</h3>
+  <p>Se eliminará la carpeta. Si contiene documentos quedarán sin carpeta.</p>
+  <form method="post" action="{% url 'documents:drive_folder' %}" class="dialog-actions">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="delete">
+    <input type="hidden" name="folder" value="" id="folder-delete-id">
+    <button type="button" class="btn" data-dialog-cancel>Cancelar</button>
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+  </form>
+</dialog>
+<script src="{% static 'js/drive-folders.js' %}"></script>
+{% endif %}
+
+{% if path.shows_documents %}
+  {% if documents %}
+  {% if folders_here %}<h2 class="drive-section">Documentos</h2>{% endif %}
+  <div class="results-bar">
+    <div class="results-count">
+      <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong> de <strong>{{ page_obj.paginator.count }}</strong> documentos
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="table table-cards">
+      <thead>
+        <tr>
+          <th>N.º Factura</th>
+          <th>Nombre</th>
+          <th>Empresa</th>
+          <th class="num">Total (€)</th>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Estado</th>
+          <th>Revisión</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% include "components/_document_rows.html" %}
+      </tbody>
+    </table>
+
+    {% if is_paginated %}
+    <div class="table-footer-bar">
+      <span class="results-count">Página <strong>{{ page_obj.number }}</strong> de {{ page_obj.paginator.num_pages }}</span>
+      <nav class="pager" aria-label="Paginación">
+        {% if page_obj.has_previous %}
+        <a href="?{{ querystring }}&page=1" aria-label="Primera">&laquo;</a>
+        <a href="?{{ querystring }}&page={{ page_obj.previous_page_number }}" aria-label="Anterior">&lsaquo;</a>
+        {% else %}
+        <span class="page disabled">&laquo;</span><span class="page disabled">&lsaquo;</span>
+        {% endif %}
+        {% for n in page_numbers %}{% if n == "…" %}<span class="page gap num">…</span>{% elif n == page_obj.number %}<span class="page current num" aria-current="page">{{ n }}</span>{% else %}<a class="num" href="?{{ querystring }}&page={{ n }}">{{ n }}</a>{% endif %}{% endfor %}
+        {% if page_obj.has_next %}
+        <a href="?{{ querystring }}&page={{ page_obj.next_page_number }}" aria-label="Siguiente">&rsaquo;</a>
+        <a href="?{{ querystring }}&page={{ page_obj.paginator.num_pages }}" aria-label="Última">&raquo;</a>
+        {% else %}
+        <span class="page disabled">&rsaquo;</span><span class="page disabled">&raquo;</span>
+        {% endif %}
+      </nav>
+    </div>
+    {% endif %}
+  </div>
+  {% elif not folders_here %}
+  <div class="drive-empty">
+    {% icon "folder" %}
+    <p>Aún no hay documentos en esta carpeta</p>
+    {% if active_filters %}<a class="btn btn-ghost btn-sm" href="?">Limpiar filtros</a>{% endif %}
+  </div>
+  {% endif %}
+{% elif not folders_here %}
+<div class="drive-empty">
+  {% icon "folder" %}
+  {% if path.manual %}<p>Aún no tienes carpetas. Crea la primera con “Nueva carpeta”.</p>
+  {% else %}<p>Aún no hay documentos en esta carpeta</p>{% endif %}
+  {% if active_filters %}<a class="btn btn-ghost btn-sm" href="?">Limpiar filtros</a>{% endif %}
+</div>
+{% elif path.level == "root" %}
+  {% with top=folders_here|dictsort:"count"|last %}
+  {% if not top.count %}
+  <div class="drive-empty">
+    {% icon "upload" %}
+    <p>Aún no hay documentos en tu archivo</p>
+    <a class="btn btn-primary btn-sm" href="{% url 'documents:upload' %}">{% icon "upload" %} Sube el primero</a>
+  </div>
+  {% endif %}
+  {% endwith %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'js/list-page.js' %}"></script>
+{% endblock %}

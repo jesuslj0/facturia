@@ -46,8 +46,10 @@
     <nav class="sidebar-nav">
       <a href="{% url 'dashboard' %}" title="Inicio" {% if page == 'dashboard' %}class="active" aria-current="page"{% endif %}>
         {% icon "home" %}<span class="nav-label">Inicio</span></a>
-      <a href="{% url 'documents:list' %}" title="Documentos" {% if ns == 'documents' and page != 'upload' %}class="active" aria-current="page"{% endif %}>
+      <a href="{% url 'documents:list' %}" title="Documentos" {% if ns == 'documents' and page != 'upload' and page != 'drive' %}class="active" aria-current="page"{% endif %}>
         {% icon "document" %}<span class="nav-label">Documentos</span></a>
+      <a href="{% url 'documents:drive' %}" title="Archivo" {% if page == 'drive' %}class="active" aria-current="page"{% endif %}>
+        {% icon "drive" %}<span class="nav-label">Archivo</span></a>
       <a href="{% url 'documents:upload' %}" title="Subir" {% if page == 'upload' %}class="active" aria-current="page"{% endif %}>
         {% icon "upload" %}<span class="nav-label">Subir</span></a>
       <a href="{% url 'finance:movements' %}" title="Movimientos" {% if ns == 'finance' and page != 'categories' and 'category' not in page %}class="active" aria-current="page"{% endif %}>

@@ -1,5 +1,5 @@
 from django.db import transaction
-from documents.models import Document
+from documents.models import Document, DocumentAuditLog
 from documents.utils import parse_decimal
 from documents.services import organization
 from decimal import InvalidOperation
@@ -67,8 +67,10 @@ class DocumentService:
         if new_total is not None:
             document.total_amount = new_total
 
-        if data.get("flow"):
+        # Si el usuario cambia compra/venta, deja de ser el flujo calculado por la IA.
+        if data.get("flow") and data["flow"] != document.flow:
             document.flow = data["flow"]
+            document.flow_source = "manual"
 
         organization.apply_organization(document, data)
 
@@ -77,3 +79,26 @@ class DocumentService:
         document.save()
         if "tags" in data:
             organization.set_tags(document, data.get("tags"))
+
+    @staticmethod
+    @transaction.atomic
+    def organize(document: Document, user, data: dict):
+        """Cambia solo la organización (carpeta manual y etiquetas): no es una rectificación ni una
+        edición de datos, así que vale en cualquier estado y no toca revisión ni importes."""
+        before = {
+            "folder": document.folder_id,
+            "tags": sorted(document.tags.values_list("name", flat=True)),
+        }
+        organization.apply_folder(document, data)
+        document.save(update_fields=["folder"])
+        if "tags" in data:
+            organization.set_tags(document, data.get("tags"))
+        after = {
+            "folder": document.folder_id,
+            "tags": sorted(document.tags.values_list("name", flat=True)),
+        }
+        if before != after:
+            DocumentAuditLog(
+                document=document, user=user, action="edited",
+                changes={"organization": {"from": before, "to": after}},
+            ).save()

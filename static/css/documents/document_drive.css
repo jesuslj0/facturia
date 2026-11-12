@@ -1,0 +1,237 @@
+/* ==========================================================================
+   Archivo (Drive por carpetas virtuales). Cabecera, filtros, tabla y paginación
+   vienen de list-page.css; botones, badges y chips de ui.css. Aquí solo lo propio:
+   migas de pan, barra de herramientas, carpetas (lista/cuadrícula), notas y estado vacío.
+   ========================================================================== */
+
+/* ---------- Migas de pan ---------- */
+.drive-crumbs { margin-bottom: 0.6rem; }
+.drive-crumbs ol {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.15rem 0.1rem;
+  margin: 0; padding: 0; list-style: none; font-size: 0.85rem;
+}
+.drive-crumbs li { display: inline-flex; align-items: center; min-width: 0; }
+.drive-crumbs li + li::before { content: "\203A"; margin: 0 0.35rem; color: var(--muted-color); }
+.drive-crumbs a {
+  max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 0.1rem 0.35rem; border-radius: 6px; color: var(--muted-color); text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.drive-crumbs a:hover { color: var(--body-fg-color); background: var(--surface-hover); }
+.drive-crumbs a:focus-visible { outline: 2px solid var(--enfasis-color); outline-offset: 1px; }
+.drive-crumbs [aria-current="page"] {
+  max-width: 28ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 0.1rem 0.35rem; font-weight: 600; color: var(--body-fg-color);
+}
+
+/* ---------- Filtros (los selects del panel) ---------- */
+.drive-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.9rem; }
+
+/* ---------- Barra de herramientas (nueva carpeta + disposición de carpetas) ---------- */
+.drive-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin: 0 0 0.75rem; }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+.folder-create { flex: 1 1 auto; min-width: 0; }
+.folder-create .btn[hidden], .folder-create-form[hidden] { display: none; }   /* .btn fija display: hay que repetir [hidden] */
+.folder-create-form { display: flex; align-items: center; gap: 0.5rem; max-width: 30rem; }
+.folder-create-form input { flex: 1 1 auto; min-width: 0; }
+.view-toggle { display: inline-flex; margin-left: auto; }
+.view-toggle[hidden] { display: none; }   /* sin JS los botones no hacen nada: se ocultan */
+.view-toggle .btn { border-radius: 0; margin-left: -1px; min-width: 2.25rem; }
+.view-toggle .btn:first-child { border-radius: 6px 0 0 6px; margin-left: 0; }
+.view-toggle .btn:last-child { border-radius: 0 6px 6px 0; }
+.view-toggle .btn[aria-pressed="true"] {
+  --btn-bg: color-mix(in srgb, var(--enfasis-color) 18%, var(--card-bg-color));
+  --btn-bd: color-mix(in srgb, var(--enfasis-color) 55%, var(--border-color));
+  position: relative; z-index: 1;
+}
+
+.drive-section {
+  margin: 0 0 0.4rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--muted-color);
+}
+
+/* ---------- Carpetas: una sola estructura, dos disposiciones (data-view) ---------- */
+.folder-view { margin: 0 0 1.25rem; }
+.folder-list { margin: 0; padding: 0; list-style: none; }
+
+/* Lista (por defecto): una línea por carpeta */
+.folder-head,
+.folder-row {
+  display: grid; align-items: center; column-gap: 0.75rem; padding: 0.6rem 0.75rem;
+  grid-template-columns: 1.9rem minmax(0, 1fr) 8rem 8rem 7rem;
+  grid-template-areas: "icon name meta total pending";
+}
+.folder-head {
+  padding-block: 0.4rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--muted-color); border-bottom: 1px solid var(--border-color-strong);
+}
+.folder-head .h-name { grid-area: name; }
+.folder-head .h-meta { grid-area: meta; }
+.folder-head .h-total { grid-area: total; text-align: right; }
+.folder-head .h-pending { grid-area: pending; text-align: right; }
+
+.folder-list > li + li { border-top: 1px solid var(--border-color); }
+.folder-row {
+  --tone: var(--enfasis-color);
+  color: var(--body-fg-color); text-decoration: none; border-radius: 8px;
+  transition: background 0.15s;
+}
+.folder-row:hover { background: var(--surface-hover); }
+.folder-row:focus-visible { outline: 2px solid var(--enfasis-color); outline-offset: -2px; }
+.folder-row.tone-warning { --tone: var(--color-warning); }
+
+.folder-icon {
+  grid-area: icon; position: relative; display: inline-flex; justify-content: center; line-height: 0;
+}
+.folder-icon img { width: 1.9rem; height: 1.9rem; display: block; }
+/* Carpeta cerrada en reposo; abierta al pasar el ratón o enfocar */
+.folder-icon .icon-open { display: none; }
+.folder-row:hover .icon-closed,
+.folder-row:focus-visible .icon-closed { display: none; }
+.folder-row:hover .icon-open,
+.folder-row:focus-visible .icon-open { display: block; }
+.folder-flag {   /* distintivo de aviso en la carpeta «Sin clasificar» */
+  position: absolute; right: -0.3rem; bottom: -0.2rem; padding: 0.12rem; font-size: 0.7rem; line-height: 1;
+  color: var(--color-warning); background: var(--body-bg-color); border-radius: 50%;
+}
+.folder-name {
+  grid-area: name; min-width: 0; font-weight: 600; font-size: 0.95rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.folder-meta { grid-area: meta; font-size: 0.8rem; color: var(--muted-color); white-space: nowrap; }
+.folder-total {
+  grid-area: total; text-align: right; font-size: 0.9rem; font-weight: 600;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.folder-pending { grid-area: pending; justify-self: end; }
+.folder-pending .badge-status { font-size: 0.72rem; white-space: nowrap; }
+
+/* Cuadrícula: iconos grandes de solo contorno, sin tarjeta */
+.folder-view[data-view="grid"] .folder-head { display: none; }
+.folder-view[data-view="grid"] .folder-list {
+  display: grid; gap: 0.5rem 0.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+}
+.folder-view[data-view="grid"] .folder-list > li + li { border-top: 0; }
+.folder-view[data-view="grid"] .folder-row {
+  display: flex; flex-direction: column; align-items: center; gap: 0.2rem; height: 100%; box-sizing: border-box;
+  padding: 0.9rem 0.5rem 0.7rem; border-radius: 12px; text-align: center;
+}
+.folder-view[data-view="grid"] .folder-icon { margin-bottom: 0.3rem; }
+.folder-view[data-view="grid"] .folder-icon img { width: 4.5rem; height: 4.5rem; }
+.folder-view[data-view="grid"] .folder-flag { right: -0.2rem; bottom: -0.1rem; padding: 0.2rem; font-size: 1.1rem; }
+.folder-view[data-view="grid"] .folder-row:focus-visible { outline-offset: 0; }
+.folder-view[data-view="grid"] .folder-name {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+  white-space: normal; overflow-wrap: anywhere; max-width: 100%; font-size: 0.9rem; line-height: 1.25;
+}
+.folder-view[data-view="grid"] .folder-meta { font-size: 0.75rem; }
+.folder-view[data-view="grid"] .folder-total { font-size: 0.75rem; font-weight: 500; color: var(--muted-color); text-align: center; }
+.folder-view[data-view="grid"] .folder-total:empty,
+.folder-view[data-view="grid"] .folder-pending:empty { display: none; }
+.folder-view[data-view="grid"] .folder-pending { margin-top: 0.2rem; justify-self: auto; }
+
+/* ---------- Carpetas manuales: acciones por carpeta (hermanas del enlace) ---------- */
+.folder-view.is-manual { --actions-w: 4.9rem; }
+.folder-view.is-manual .folder-head,
+.folder-view.is-manual .folder-row {
+  grid-template-columns: 1.9rem minmax(0, 1fr) 14rem 7rem;
+  grid-template-areas: "icon name meta pending";
+}
+.folder-view.is-manual .folder-head { padding-right: calc(0.75rem + var(--actions-w)); }
+.folder-view.is-manual .h-total,
+.folder-view.is-manual .folder-total { display: none; }
+
+.folder-list > li.has-actions { position: relative; display: flex; align-items: center; }
+.folder-list > li.has-actions > .folder-row { flex: 1 1 auto; min-width: 0; }
+.folder-actions { display: flex; flex-shrink: 0; gap: 0.15rem; width: var(--actions-w); padding-right: 0.5rem; box-sizing: border-box; justify-content: flex-end; }
+.folder-actions[hidden], .folder-actions .btn[hidden], .folder-rename[hidden] { display: none; }
+.folder-actions .btn { padding: 0.35rem 0.5rem; }
+.folder-actions .btn-danger { --btn-bg: transparent; --btn-bd: transparent; }
+
+/* Con ratón las acciones aparecen al pasar o enfocar; en táctil se ven siempre */
+@media (hover: hover) and (pointer: fine) {
+  .folder-actions { opacity: 0; transition: opacity 0.15s; }
+  .folder-list > li:hover .folder-actions,
+  .folder-list > li:focus-within .folder-actions { opacity: 1; }
+}
+
+/* Renombrar en línea: el formulario sustituye a la fila */
+.folder-rename { display: flex; align-items: center; gap: 0.5rem; flex: 1 1 auto; min-width: 0; padding: 0.45rem 0.75rem; }
+.folder-rename img { width: 1.9rem; height: 1.9rem; flex-shrink: 0; }
+.folder-rename input { flex: 1 1 auto; min-width: 0; }
+.folder-list > li.is-editing > .folder-row,
+.folder-list > li.is-editing > .folder-actions { display: none; }
+
+/* Cuadrícula: las acciones van en la esquina de la tarjeta */
+.folder-view.is-manual[data-view="grid"] .folder-list > li.has-actions { display: block; }
+.folder-view.is-manual[data-view="grid"] .folder-row { padding-top: 2.4rem; }
+.folder-view.is-manual[data-view="grid"] .folder-actions {
+  position: absolute; top: 0.3rem; right: 0.3rem; width: auto; padding-right: 0;
+}
+.folder-view.is-manual[data-view="grid"] .folder-rename { flex-wrap: wrap; justify-content: center; padding: 0.9rem 0.5rem; }
+.folder-view.is-manual[data-view="grid"] .folder-rename img { display: none; }
+.folder-view.is-manual[data-view="grid"] .folder-rename input { flex-basis: 100%; }
+
+/* ---------- Notas y estado vacío ---------- */
+.drive-note {
+  display: flex; align-items: flex-start; gap: 0.6rem; margin: 0 0 1rem; padding: 0.6rem 0.9rem;
+  border-radius: 12px; font-size: 0.85rem; color: var(--muted-color);
+  border: 1px solid var(--border-color); background: color-mix(in srgb, var(--card-bg-color) 60%, transparent);
+}
+.drive-note > i { margin-top: 0.15rem; color: var(--muted-color); }
+.drive-note code { font-size: 0.8rem; color: var(--body-fg-color); }
+.drive-note.is-warning { border-color: color-mix(in srgb, var(--color-warning) 30%, transparent); }
+.drive-note.is-warning > i { color: var(--color-warning); }
+.drive-note[hidden] { display: none; }
+.note-close {
+  margin-left: auto; flex-shrink: 0; padding: 0.15rem 0.4rem; border: 0; border-radius: 6px; cursor: pointer;
+  font-size: 0.8rem; color: var(--muted-color); background: transparent; transition: background 0.15s, color 0.15s;
+}
+.note-close:hover { color: var(--body-fg-color); background: var(--surface-hover); }
+.note-close:focus-visible { outline: 2px solid var(--enfasis-color); outline-offset: 1px; }
+
+.drive-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 0.6rem; text-align: center;
+  padding: 2.5rem 1rem; border-radius: 14px; color: var(--muted-color);
+  border: 1px dashed var(--border-color-strong);
+}
+.drive-empty > i { font-size: 1.6rem; opacity: 0.7; }
+.drive-empty p { margin: 0; font-size: 0.95rem; color: var(--muted-color); }
+
+/* ---------- Filas de la hoja ---------- */
+.table td.name-cell .cell-sub { display: block; margin: 0.1rem 0 0.2rem; font-size: 0.78rem; color: var(--muted-color); }
+@container tablewrap (max-width: 760px) {
+  /* ui.css reordena .cell-sub como si fuera una celda; aquí es una nota dentro de «Nombre» */
+  .table-cards td.name-cell .cell-sub { order: 0; font-weight: 400; font-size: 0.78rem; }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .drive-crumbs a, .drive-crumbs [aria-current="page"] { max-width: 16ch; }
+  .drive-fields { grid-template-columns: 1fr; }
+  /* lista compacta: nombre + pendientes arriba, documentos + total debajo */
+  .folder-head { display: none; }
+  .folder-row {
+    grid-template-columns: 1.9rem minmax(0, 1fr) auto; row-gap: 0.1rem;
+    grid-template-areas: "icon name pending" "icon meta total";
+  }
+  .folder-view[data-view="grid"] .folder-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 7.5rem), 1fr)); }
+  .folder-view.is-manual { --actions-w: 4.4rem; }
+  .folder-view.is-manual .folder-row {
+    grid-template-columns: 1.9rem minmax(0, 1fr) auto;
+    grid-template-areas: "icon name pending" "icon meta meta";
+  }
+  .folder-meta { white-space: normal; }
+  .folder-actions .btn { padding: 0.45rem 0.55rem; }   /* objetivo táctil algo mayor */
+  .folder-create { flex-basis: 100%; }
+  .folder-create-form { max-width: none; }
+  .folder-rename { flex-wrap: wrap; }
+  .folder-rename input { flex-basis: calc(100% - 2.4rem); }
+}
+@media (max-width: 480px) {
+  .folder-view[data-view="grid"] .folder-icon img { width: 3.75rem; height: 3.75rem; }
+}

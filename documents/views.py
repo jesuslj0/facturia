@@ -1,4 +1,7 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
+from django.http import Http404
 from django.shortcuts import redirect, get_object_or_404
 from .models import Document
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -10,6 +13,7 @@ from django.db.models.functions import Coalesce
 from django.db.models import DecimalField, Sum, Count
 from finance.models import FinancialMovement
 from datetime import datetime
+from .selectors import drive_selector as drive
 from .selectors.document_selector import DocumentSelector
 from .services import DocumentService
 from .services.dashboard_service import DashboardService
@@ -19,7 +23,8 @@ from django.contrib.auth import get_user_model
 from .filters.document_filters import get_filtered_documents, get_exportable_documents
 from documents.models import Company
 from .forms import DocumentRectificationForm, DocumentUploadForm
-from .models import DocumentCategory, Folder, Tag
+from .models import Tag
+from .services import folders as folder_service
 from .services import upload as upload_service
 from billing_ai import listing
 from django.urls import reverse
@@ -50,9 +55,8 @@ class DocumentListView(LoginRequiredMixin, ListView):
         context["document_types"] = Document.TYPE_CHOICES
         client = self.request.user.client
         context["companies"] = Company.objects.filter(client=client).order_by("name")
-        context["folders"] = Folder.objects.filter(client=client)
+        context["folders"] = folder_service.with_labels(client)
         context["tags"] = Tag.objects.filter(client=client)
-        context["categories"] = DocumentCategory.objects.filter(client=client)
         context["quarters"] = DocumentSelector.available_quarters(client)
         context["processing_count"] = DocumentSelector.processing_count(client)
         context["processing_choices"] = Document.PROCESSING_CHOICES
@@ -87,9 +91,8 @@ class DocumentListView(LoginRequiredMixin, ListView):
             ("status", "Estado", {"pending": "Pendientes", "approved": "Aprobados", "rejected": "Rechazados"}, False),
             ("document_type", "Tipo", types, True),
             ("flow", "Flujo", {"in": "Venta", "out": "Compra", "unknown": "Por revisar"}, True),
-            ("category", "Categoría", names(context["categories"]), True),
             ("company", "Empresa", None, True),
-            ("folder", "Carpeta", names(context["folders"]), True),
+            ("folder", "Carpeta", {str(f.pk): f.label for f in context["folders"]}, True),
             ("tag", "Etiqueta", names(context["tags"]), True),
             ("quarter", "Trimestre", quarter_labels, True),
             ("review_level", "Revisión", {"auto": "Auto", "manual": "Manual", "recommended": "Recomendada", "required": "Obligatoria"}, True),
@@ -129,6 +132,10 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
             else:
                 messages.warning(request, "Este documento no se puede reprocesar.")
             return redirect("documents:detail", pk=self.object.pk)
+
+        # --- Organización (carpeta y etiquetas): vale en cualquier estado ---
+        if action == "organize":
+            return organize_document(request, self.object)
 
         # Mientras se extrae, los datos no son definitivos
         if self.object.is_processing and action in ("approve", "reject", "save"):
@@ -186,8 +193,7 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
 
         client = self.request.user.client
         context["companies"] = Company.objects.filter(client=client).order_by("name")
-        context["folders"] = Folder.objects.filter(client=client)
-        context["categories"] = DocumentCategory.objects.filter(client=client)
+        context["folders"] = folder_service.with_labels(client)
         context["document_types"] = Document.TYPE_CHOICES
         context["tag_names"] = ", ".join(t.name for t in document.tags.all())
         context["all_tag_names"] = list(Tag.objects.filter(client=client).values_list("name", flat=True))
@@ -225,10 +231,33 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
         }
 
 
+
+def _save_error(exc):
+    """Mensaje legible para un fallo al guardar los datos del formulario de revisión."""
+    if isinstance(exc, ValidationError):
+        return "Datos no válidos: " + "; ".join(exc.messages)
+    return "Importe inválido en uno de los campos."
+
+
 def approve_document(request, document):
+    # El formulario de revisión se envía junto con la aprobación: primero se guardan los cambios
+    # sin guardar (flujo, importes…) y luego se aprueba. Un POST solo con `action` aprueba tal cual.
+    if "flow" in request.POST:
+        try:
+            DocumentService.update_from_form(document=document, user=request.user, data=request.POST)
+        except (ValueError, ValidationError) as exc:
+            messages.error(request, _save_error(exc))
+            return redirect("documents:detail", pk=document.pk)
+
+    blockers = document.approval_blockers()
+    if blockers:
+        messages.warning(request, "No se puede aprobar: falta " + ", ".join(blockers) + ".")
+        return redirect("documents:detail", pk=document.pk)
+
     DocumentService.approve(document, user=request.user)
     messages.success(request, "El documento ha sido aprobado.")
     return redirect("documents:detail", pk=document.pk)
+
 
 def reject_document(request, document, reason=None):
     DocumentService.reject(document, user=request.user, reason=reason)
@@ -242,11 +271,23 @@ def save_document(request, document):
             user=request.user,
             data=request.POST
         )
-    except ValueError:
-        messages.error(request, "Importe inválido en uno de los campos.")
+    except (ValueError, ValidationError) as exc:
+        messages.error(request, _save_error(exc))
         return redirect("documents:detail", pk=document.pk)
 
     messages.success(request, "Cambios guardados correctamente.")
+    return redirect("documents:detail", pk=document.pk)
+
+def organize_document(request, document):
+    if not document.can_organize:
+        messages.warning(request, "El documento se está procesando; espera a que termine.")
+        return redirect("documents:detail", pk=document.pk)
+    try:
+        DocumentService.organize(document, user=request.user, data=request.POST)
+    except (ValueError, ValidationError) as exc:
+        messages.error(request, _save_error(exc))
+        return redirect("documents:detail", pk=document.pk)
+    messages.success(request, "Organización guardada.")
     return redirect("documents:detail", pk=document.pk)
 
 def archive_document(request, document): 
@@ -579,3 +620,96 @@ class DocumentUploadView(LoginRequiredMixin, FormView):
         if created:
             return redirect(f"{reverse('documents:list')}?processing=active")
         return redirect("documents:upload")
+
+
+class DocumentDriveView(LoginRequiredMixin, TemplateView):
+    """Vista «Archivo»: documentos en carpetas virtuales derivadas de sus datos (ver drive_selector)."""
+
+    template_name = "private/documents/document_drive.html"
+    paginate_by = 20
+
+    def get_context_data(self, ruta="", **kwargs):
+        context = super().get_context_data(**kwargs)
+        request, client = self.request, self.request.user.client
+        try:
+            path = drive.DrivePath.parse(ruta)
+            company = drive.DriveSelector.company(client, path)
+            current_folder = drive.DriveSelector.folder(client, path)
+        except drive.InvalidDrivePath:
+            raise Http404("Carpeta inexistente")
+        filters = drive.parse_filters(request.GET)
+
+        page_obj = None
+        if path.shows_documents:
+            page_obj = Paginator(drive.DriveSelector.documents(client, path, filters), self.paginate_by).get_page(
+                request.GET.get("page")
+            )
+            if path.unclassified:
+                for doc in page_obj:
+                    doc.drive_reason = drive.unclassified_reason(doc)
+
+        folders = folder_service.with_labels(client)
+        tags = Tag.objects.filter(client=client)
+        active_filters = listing.active_filters(request, [
+            ("status", "Estado", {"pending": "Pendientes", "approved": "Aprobados", "rejected": "Rechazados"}, False),
+            ("folder", "Carpeta", {str(f.pk): f.label for f in folders}, True),
+            ("tag", "Etiqueta", {str(t.pk): t.name for t in tags}, True),
+        ])
+        context.update(
+            path=path,
+            company=company,
+            current_folder=current_folder,
+            breadcrumbs=drive.breadcrumbs(path, company, current_folder),
+            folders_here=drive.DriveSelector.children(client, path, filters),
+            documents=page_obj,
+            page_obj=page_obj,
+            page_numbers=listing.page_window(page_obj) if page_obj and page_obj.paginator.num_pages > 1 else [],
+            is_paginated=bool(page_obj and page_obj.paginator.num_pages > 1),
+            folders=folders,
+            tags=tags,
+            status_tabs=listing.status_tabs(request, [
+                ("", "Todos"), ("pending", "Pendientes"), ("approved", "Aprobados"), ("rejected", "Rechazados"),
+            ]),
+            active_filters=active_filters,
+            querystring=listing.qs_without(request),
+        )
+        return context
+
+
+class DriveFolderActionView(LoginRequiredMixin, View):
+    """Crear, renombrar y eliminar carpetas manuales («Mis carpetas»). Siempre redirige al Archivo."""
+
+    def post(self, request):
+        client = request.user.client
+        action = request.POST.get("action")
+        target = None  # carpeta manual a la que volver (None = raíz de «Mis carpetas»)
+        try:
+            if action == "create":
+                parent = self._folder(request, "parent") if request.POST.get("parent") else None
+                target = parent
+                created = folder_service.create_folder(client, request.POST.get("name"), parent)
+                messages.success(request, f"Carpeta «{created.name}» creada.")
+            elif action == "rename":
+                folder = self._folder(request, "folder")
+                target = folder.parent
+                folder_service.rename_folder(folder, request.POST.get("name"))
+                messages.success(request, "Carpeta renombrada.")
+            elif action == "delete":
+                folder = self._folder(request, "folder")
+                target = folder.parent
+                count = folder_service.delete_folder(folder)
+                messages.success(
+                    request,
+                    "Carpeta eliminada." + (f" {count} documento(s) han quedado sin carpeta." if count else ""),
+                )
+            else:
+                messages.warning(request, "Acción no reconocida.")
+        except folder_service.FolderError as exc:
+            messages.error(request, str(exc))
+        return redirect("documents:drive", ruta=drive.manual_ruta(target.pk if target else None))
+
+    def _folder(self, request, field):
+        folder = folder_service.get_folder(request.user.client, request.POST.get(field))
+        if folder is None:
+            raise Http404("Carpeta inexistente")
+        return folder

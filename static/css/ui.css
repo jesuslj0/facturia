@@ -126,6 +126,20 @@ a.link:hover { text-decoration: underline; }
 
 .badge-status .confidence { opacity: 0.8; font-weight: 400; }
 
+/* Confianza de la extracción: barra mini + porcentaje, junto al badge de revisión (tablas de documentos).
+   El tono sale de Document.ocr_confidence (high ≥ 90 %, medium ≥ 60 %, low). */
+.review-cell { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.35rem 0.6rem; }
+.conf {
+  --tone: var(--muted-color);
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-size: 0.75rem; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--tone);
+}
+.conf-high   { --tone: var(--color-success); }
+.conf-medium { --tone: var(--color-warning); }
+.conf-low    { --tone: var(--color-danger); }
+.conf-bar { width: 2.25rem; height: 0.3rem; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, var(--tone) 18%, transparent); }
+.conf-fill { display: block; height: 100%; border-radius: inherit; background: var(--tone); }
+
 /* Chips neutros (etiquetas, carpetas) */
 .chip {
   display: inline-flex;

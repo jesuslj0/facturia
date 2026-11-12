@@ -320,7 +320,7 @@ class TestFinanceSeparateEntries:
         body = auth_client.get(reverse("dashboard")).content.decode()
         assert "nav-group" not in body and "nav-sub" not in body
         nav = body.split('class="sidebar-nav"')[1].split("</nav>")[0]
-        assert nav.count("<a ") == 7
+        assert nav.count("<a ") == 8
         assert nav.index("Documentos") < nav.index("Movimientos") < nav.index("Categorías") < nav.index("Métricas")
 
     def test_edit_category_keeps_categories_active(self, auth_client, user):

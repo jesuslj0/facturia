@@ -162,6 +162,11 @@ class Document(models.Model):
         """Extracción en curso: los datos aún no son definitivos (no editar ni aprobar)."""
         return self.processing_status in ("uploaded", "queued", "processing", "batched")
 
+    @property
+    def can_organize(self):
+        """Carpeta y etiquetas se pueden cambiar en cualquier estado (menos mientras se extrae)."""
+        return not self.is_processing
+
     @property 
     def is_editable(self):
         return self.status == "pending" and not self.is_archived and not self.is_processing
@@ -379,12 +384,22 @@ class Document(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
-    def can_be_approved(self): 
+    def approval_blockers(self):
+        """Lo que falta para poder aprobar (vacío = se puede)."""
+        missing = []
+        if self.total_amount is None:
+            missing.append("el total")
+        if self.issue_date is None:
+            missing.append("la fecha de emisión")
+        if self.flow not in ("in", "out"):
+            missing.append("indicar si es compra o venta")
+        return missing
+
+    def can_be_approved(self):
         return (
-            self.status == "pending" 
+            self.status == "pending"
             and not self.is_processing
-            and self.total_amount is not None
-            and self.issue_date is not None
+            and not self.approval_blockers()
         )
     def mark_as_manually_reviewed(self, user):
         self.review_level = "manual"
@@ -478,7 +493,7 @@ class Document(models.Model):
 
             new_doc = Document.objects.create(
                 client=self.client,
-                company=kwargs.get("company", self.company),
+                company=kwargs.get("company") or self.company,  # vacío = conservar
                 external_id=new_external_id,
                 original_name=self.original_name,
                 file=self.file,
@@ -496,6 +511,11 @@ class Document(models.Model):
                 total_source=self.total_source,
                 flow=kwargs.get("flow", self.flow),
                 flow_source=self.flow_source,
+                source=self.source,
+                currency=self.currency,
+                iban=self.iban,
+                category=self.category,
+                folder=self.folder,
                 is_auto_approved=False,
                 parent_document=parent,
                 version=latest_version + 1,
@@ -505,6 +525,7 @@ class Document(models.Model):
                 rectification_reason=reason,
                 amount_snapshot=amount_snapshot,
             )
+            new_doc.tags.set(self.tags.all())
 
         return new_doc
 
@@ -533,15 +554,26 @@ class DocumentCategory(models.Model):
 
 
 class Folder(models.Model):
-    """Carpeta virtual (solo en base de datos; el bucket no cambia al mover documentos)."""
+    """Carpeta manual (solo en base de datos; el bucket no cambia al mover documentos).
+
+    Puede anidarse (`parent`). No confundir con las carpetas *derivadas* de la vista «Archivo»."""
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="folders")
+    parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.PROTECT, related_name="children")
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["name"]
         constraints = [
-            models.UniqueConstraint(fields=["client", "name"], name="unique_folder_per_client"),
+            # Nombre único entre hermanas. En SQL NULL no cuenta como igual: una restricción por caso.
+            models.UniqueConstraint(
+                fields=["client", "name"], condition=models.Q(parent__isnull=True),
+                name="unique_root_folder_per_client",
+            ),
+            models.UniqueConstraint(
+                fields=["client", "parent", "name"], condition=models.Q(parent__isnull=False),
+                name="unique_subfolder_per_parent",
+            ),
         ]
 
     def __str__(self):

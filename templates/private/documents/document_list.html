@@ -53,10 +53,6 @@
             <option value="in" {% if request.GET.flow == "in" %}selected{% endif %}>Venta (ingreso)</option>
             <option value="out" {% if request.GET.flow == "out" %}selected{% endif %}>Compra (gasto)</option>
           </select></div>
-        <div class="field"><label for="f-category">Categoría</label>
-          <select name="category" id="f-category"><option value="">Todas</option>
-            {% for c in categories %}<option value="{{ c.pk }}" {% if request.GET.category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
-          </select></div>
       </fieldset>
 
       <fieldset class="fgroup">
@@ -68,7 +64,7 @@
         <div class="field-row">
           <div class="field"><label for="f-folder">Carpeta</label>
             <select name="folder" id="f-folder"><option value="">Todas</option>
-              {% for f in folders %}<option value="{{ f.pk }}" {% if request.GET.folder == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.name }}</option>{% endfor %}
+              {% for f in folders %}<option value="{{ f.pk }}" {% if request.GET.folder == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.label }}</option>{% endfor %}
             </select></div>
           <div class="field"><label for="f-tag">Etiqueta</label>
             <select name="tag" id="f-tag"><option value="">Todas</option>
@@ -172,33 +168,12 @@
     </thead>
 
     <tbody>
-      {% for doc in documents %}
-      <tr class="clickable-row" data-href="{% url 'documents:detail' doc.id %}">
-        <td data-label="N.º factura">{{ doc.document_number|default:"—" }}</td>
-        <td class="name-cell cell-primary" data-label="Nombre">
-          <a href="{% url 'documents:file' doc.pk %}">{{ doc.original_name }}</a>
-          {% if doc.folder %}<span class="chip">{% icon "folder" %} {{ doc.folder.name }}</span>{% endif %}
-          {% for t in doc.tags.all %}<span class="chip">{{ t.name }}</span>{% endfor %}
-        </td>
-        <td class="cell-sub" data-label="Empresa">{{ doc.company.name|default:"—" }}</td>
-        <td class="amount" data-label="Total">{% if doc.total_amount %}{{ doc.total_amount|floatformat:2 }} €{% else %}—{% endif %}</td>
-        <td data-label="Fecha">{% if doc.issue_date %}{{ doc.issue_date|pretty_date }}{% else %}—{% endif %}</td>
-        <td data-label="Tipo">{{ doc.get_document_type_display }}</td>
-        <td data-label="Estado">
-          {% if doc.is_processing or doc.processing_status == "failed" %}{% badge "processing" doc.processing_status %}{% else %}{% badge "status" doc.status %}{% endif %}
-          {% if doc.is_archived %}{% badge "status" "archived" %}{% endif %}
-        </td>
-        <td data-label="Revisión">
-          {% badge "review" doc.review_key %}
-          {% if doc.confidence_global %}<small class="confidence" title="Confianza de la extracción">{{ doc.confidence_global|to_percent|floatformat:0 }}%</small>{% endif %}
-        </td>
-        <td class="col-actions cell-actions"><a class="btn btn-ghost btn-sm" href="{% url 'documents:detail' doc.id %}">{% icon "view" %} Ver</a></td>
-      </tr>
-      {% empty %}
+      {% include "components/_document_rows.html" %}
+      {% if not documents %}
       <tr><td colspan="9" class="empty">
         {% if active_filters %}Ningún documento coincide con los filtros. <a class="link" href="?">Limpiar filtros</a>{% else %}Aún no hay documentos. <a class="link" href="{% url 'documents:upload' %}">Sube el primero</a>.{% endif %}
       </td></tr>
-      {% endfor %}
+      {% endif %}
     </tbody>
   </table>
 
