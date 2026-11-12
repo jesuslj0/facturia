@@ -170,7 +170,7 @@ python manage.py collectstatic --noinput
 ## Notas y deuda conocida
 
 - `docs/plan-ocr.md` es el plan original y el registro de decisiones por hito (H0–H10). Su tabla de hallazgos (§2) describe el estado **previo** a H0 y está en su mayor parte resuelta; usar solo las secciones de «Estado de implementación» y «decisiones».
-- Pendiente: renovar al sistema visual nuevo la exportación y su previsualización (`/documents/export/`, `/documents/export/preview/`, `export_preview.css`) y barrer los botones/modales fuera de `ui.css` (`document_rectify.css` es una copia del CSS antiguo del detalle).
+- Pendiente: barrer los botones/modales fuera de `ui.css` (`document_rectify.css` es una copia del CSS antiguo del detalle). La previsualización de exportación (`/documents/export/preview/`) ya usa el sistema nuevo.
 - Pendiente de datos reales: calibrar umbrales de auto-aprobación con un dataset de evaluación; probar Batch API con clave real; firmar los DPA (Anthropic, Cloudflare) antes de procesar facturas reales; confirmar la retención con el asesor.
 - Sin gestión de etiquetas (renombrar, borrar, colores), sin mover carpetas manuales de padre, ni asignación masiva («Mover a carpeta») desde las tablas; `Role` existe pero ninguna vista lo usa para autorizar.
 - `Dockerfile` instala primero `weasyprint==59.0` y luego `requirements.txt` fija 60.2 (prevalece este).

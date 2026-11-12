@@ -1,327 +1,53 @@
-/* =============================================
-   Export Preview — estilos específicos de vista
-   Complementa document_list.css (ya importado)
-   ============================================= */
-
-/* ---------- Cabecera de página ---------- */
+/* ==========================================================================
+   Previsualización de exportación. Reutiliza list-page.css (.page-title, .summary-strip,
+   .summary-chip, columnas ordenables) y ui.css (.btn, .table, .badge-status).
+   Aquí solo lo propio de esta pantalla.
+   ========================================================================== */
 
 .page-subtitle {
-    font-size: 0.85rem;
-    font-weight: 400;
-    color: var(--muted-color);
-    margin-top: 0.15rem;
-    margin-bottom: 1.5rem;
-    line-height: 1.5;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;
+  margin: -0.5rem 0 1.1rem; font-size: 0.88rem; color: var(--muted-color);
 }
 
-.page-subtitle .non-exportable-warning {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    margin-left: 0.5rem;
-    padding: 0.15rem 0.55rem;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
-    color: var(--color-danger);
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    vertical-align: middle;
-}
+/* Fechas largas («1 enero 2026 – 31 marzo 2026»): cifra más pequeña que en los importes */
+.summary-chip-text strong { font-size: 0.95rem; line-height: 1.35; }
 
-/* ---------- Bloque de resumen ---------- */
-
-.export-summary {
-    background: var(--card-bg-color);
-    border: 1px solid var(--border-color);
-    border-radius: 14px;
-    padding: 1.4rem 1.6rem;
-    margin-bottom: 1.25rem;
-}
-
-.export-summary__header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1.1rem;
-}
-
-.export-summary__header h3 {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--body-fg-color);
-    margin: 0;
-    letter-spacing: -0.01em;
-}
-
-.export-summary__header i {
-    color: var(--enfasis-color);
-    font-size: 0.9rem;
-}
-
-/* Grid de métricas */
-.summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 0.75rem;
-}
-
-/* Tarjeta de métrica individual */
-.summary-item {
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    padding: 0.85rem 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.summary-item:hover {
-    background: rgba(255, 255, 255, 0.045);
-    border-color: rgba(255, 255, 255, 0.13);
-}
-
-.summary-item .label {
-    font-size: 0.7rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--muted-color);
-}
-
-.summary-item .value {
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: var(--body-fg-color);
-    line-height: 1.2;
-}
-
-/* Énfasis en columnas monetarias */
-.summary-item.money .value {
-    color: var(--enfasis-color);
-    font-weight: 700;
-}
-
-/* KPI destacado (clase opcional) */
-.summary-item.kpi {
-    border-color: var(--enfasis-color-dark);
-    background: rgba(56, 189, 248, 0.05);
-}
-
-/* ---------- Barra de exportación ---------- */
-
-/*
-  Sobreescribimos el .export-bar de document_list.css para esta
-  vista específica donde el formulario tiene una estructura diferente
-  (select de formato + botón, sin el bloque de summary de conteos).
-*/
+/* ---------- Barra de formato y confirmación ---------- */
 .export-bar {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    padding: 0.9rem 1.2rem;
-    background: var(--card-bg-color);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    margin-bottom: 1.25rem;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem 1rem;
+  margin-bottom: 1rem; padding: 0.85rem 1.1rem;
+  border: 1px solid var(--border-color); border-radius: 14px; background: var(--grad-surface);
 }
+.export-bar-format { display: flex; align-items: center; gap: 0.6rem; }
+.export-bar-format label { font-size: 0.82rem; color: var(--muted-color); }
+.export-bar-format select { min-width: 160px; cursor: pointer; }
+.export-bar-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 
-.export-bar__label {
-    font-size: 0.82rem;
-    font-weight: 500;
-    color: var(--muted-color);
-    white-space: nowrap;
-}
-
-.export-bar select[name="format"],
-.export-bar select {
-    padding: 0.45rem 0.7rem;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background-color: var(--body-bg-color);
-    color: var(--body-fg-color);
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: border-color 0.2s ease;
-    min-width: 140px;
-}
-
-.export-bar select:focus {
-    outline: 2px solid var(--enfasis-color);
-    outline-offset: 1px;
-    border-color: var(--enfasis-color);
-}
-
-/* Separador visual entre select y botón */
-.export-bar__divider {
-    display: block;
-    width: 1px;
-    height: 1.5rem;
-    background: var(--border-color);
-    flex-shrink: 0;
-}
-
-/* ---------- Preview iframe PDF ---------- */
-
-/*
-  El bloque comienza con la clase .is-hidden aplicada en el HTML.
-  JS la elimina al seleccionar el formato PDF y la restaura al cambiar.
-*/
+/* ---------- Vista previa del PDF ---------- */
 .pdf-preview-wrapper {
-    margin-bottom: 1.25rem;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid var(--border-color);
-    background: var(--card-bg-color);
+  margin-bottom: 1rem; overflow: hidden;
+  border: 1px solid var(--border-color); border-radius: 14px; background: var(--grad-surface);
 }
-
-.pdf-preview-wrapper.is-hidden {
-    display: none;
+.pdf-preview-wrapper.is-hidden { display: none; }
+.pdf-preview-wrapper h2 {
+  display: flex; align-items: center; gap: 0.5rem; margin: 0; padding: 0.7rem 1.1rem;
+  font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted-color);
+  border-bottom: 1px solid var(--border-color);
 }
+.pdf-preview-wrapper h2 i { color: var(--color-danger); }
+.pdf-preview { display: block; width: 100%; height: 600px; border: none; background: #fff; }   /* el PDF se pinta sobre blanco */
 
-.pdf-preview-wrapper__header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.65rem 1rem;
-    border-bottom: 1px solid var(--border-color);
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.pdf-preview-wrapper__header span {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--muted-color);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.pdf-preview-wrapper__header i {
-    color: var(--color-danger);
-    font-size: 0.85rem;
-}
-
-.pdf-preview {
-    display: block;
-    width: 100%;
-    height: 600px;
-    border: none;
-    background: #fff;
-}
-
-/* ---------- Tabla de documentos ---------- */
-
-/* Contenedor con margen superior */
-.table-container {
-    margin-top: 0;
-}
-
-/* Celda "sin resultados" */
-.table td.table__empty {
-    text-align: center;
-    color: var(--muted-color);
-    padding: 2rem 1rem;
-}
-
-/* Ancho controlado en columnas fijas */
-.table th:first-child,
-.table td:first-child {
-    width: 2.5rem;
-    text-align: center;
-    padding-left: 0.75rem;
-    padding-right: 0.5rem;
-}
-
-.table td.amount {
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-    color: var(--body-fg-color);
-    font-weight: 500;
-}
-
-/* Checkbox tema oscuro */
-.table input[type="checkbox"],
-#select-all {
-    width: 1rem;
-    height: 1rem;
-    accent-color: var(--enfasis-color);
-    cursor: pointer;
-}
-
-/* Columna acción sin padding excesivo */
-.table th:last-child,
-.table td:last-child {
-    width: 4rem;
-    text-align: center;
-}
-
-/* ---------- Responsive ---------- */
+/* ---------- Tabla ---------- */
+.table .col-select { width: 2.5rem; text-align: center; }
+.table input[type="checkbox"] { width: 1.05rem; height: 1.05rem; accent-color: var(--enfasis-color); cursor: pointer; }
 
 @media (max-width: 768px) {
-    .export-bar {
-        gap: 0.6rem;
-        padding: 0.8rem 1rem;
-    }
-
-    .export-bar__divider {
-        display: none;
-    }
-
-    .export-bar select {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .pdf-preview {
-        height: 420px;
-    }
+  .export-bar-format { flex: 1 1 100%; }
+  .export-bar-format select { flex: 1; min-width: 0; }
+  .export-bar-actions { flex: 1 1 100%; justify-content: flex-end; }
+  .pdf-preview { height: 420px; }
 }
-
 @media (max-width: 640px) {
-    .export-summary {
-        padding: 1.1rem 1.1rem;
-    }
-
-    .summary-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.6rem;
-    }
-
-    .summary-item {
-        padding: 0.7rem 0.8rem;
-    }
-
-    .summary-item .value {
-        font-size: 0.95rem;
-    }
-
-    .export-bar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .export-bar__label {
-        display: none;
-    }
-
-    .pdf-preview {
-        height: 320px;
-    }
-}
-
-@media (max-width: 480px) {
-    .summary-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .page-subtitle .non-exportable-warning {
-        display: block;
-        margin-left: 0;
-        margin-top: 0.4rem;
-        width: fit-content;
-    }
+  .export-bar-actions .btn-primary { flex: 1; }
+  .pdf-preview { height: 320px; }
 }
